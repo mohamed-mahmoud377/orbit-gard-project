@@ -11,6 +11,10 @@ target/
 dist/
 bin/
 
+# Maven
+.mvn/wrapper/maven-wrapper.jar
+!.mvn/wrapper/maven-wrapper.properties
+
 # Dependencies
 node_modules/
 
