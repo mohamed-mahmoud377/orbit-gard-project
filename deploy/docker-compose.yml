@@ -1,0 +1,58 @@
+# Production stack for the server (/root/orbit/docker-compose.yml).
+# The GitHub Actions "Deploy" workflow copies this file to the server and runs
+# `docker compose up -d`. The `db` service intentionally matches the existing
+# server definition so the running database and its volume are left untouched.
+#
+# Required variables (read from /root/orbit/.env on the server):
+#   POSTGRES_PASSWORD  - database password (already present)
+# Optional (injected by the deploy workflow):
+#   APP_IMAGE          - exact image tag to run; defaults to :latest
+
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: orbit-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: orbit
+      POSTGRES_USER: orbit
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - orbit-db-data:/var/lib/postgresql/data
+    command:
+      - postgres
+      - -c
+      - shared_buffers=128MB
+      - -c
+      - max_connections=50
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U orbit -d orbit"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    image: ${APP_IMAGE:-ghcr.io/mohamed-mahmoud377/orbit-gard-project:latest}
+    container_name: orbit-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/orbit
+      DB_USERNAME: orbit
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      SERVER_PORT: "8080"
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/api/ping || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+volumes:
+  orbit-db-data:
