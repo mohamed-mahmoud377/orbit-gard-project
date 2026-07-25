@@ -1,0 +1,2 @@
+# Flyway migrations go here.
+# Name them V<version>__<description>.sql, e.g. V1__create_products_table.sql
