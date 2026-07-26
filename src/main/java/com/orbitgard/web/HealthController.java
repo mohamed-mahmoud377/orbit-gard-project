@@ -10,6 +10,6 @@ public class HealthController {
 
     @GetMapping("/api/ping")
     public Map<String, String> ping() {
-        return Map.of("status", "ok", "service", "orbit graduation project is working fine on the remote server");
+        return Map.of("status", "ok", "service", "orbit graduation project is working fine on the remote server toz fe syam");
     }
 }
