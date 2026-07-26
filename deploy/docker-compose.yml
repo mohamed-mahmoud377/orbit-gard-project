@@ -18,7 +18,9 @@ services:
       POSTGRES_USER: orbit
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "127.0.0.1:5432:5432"
+      # Exposed publicly for direct external DB clients (0.0.0.0:5432).
+      # Postgres is reachable from the internet — the password is the only guard.
+      - "5432:5432"
     volumes:
       - orbit-db-data:/var/lib/postgresql/data
     command:
