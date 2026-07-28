@@ -1,0 +1,131 @@
+@use 'mixins';
+
+.child-shell {
+  display: grid;
+  min-height: 100vh;
+  grid-template-columns: 240px 1fr;
+  background: var(--bg-base);
+}
+
+aside {
+  display: flex;
+  height: 100vh;
+  flex-direction: column;
+  gap: 20px;
+  border-right: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  padding: 24px 16px;
+}
+
+.child-badge {
+  width: max-content;
+  border-radius: 999px;
+  background: var(--family-wash);
+  color: var(--family-primary);
+  padding: 5px 9px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+nav {
+  display: grid;
+  gap: 4px;
+
+  a {
+    display: flex;
+    gap: 10px;
+    border-radius: 10px;
+    color: var(--text-secondary);
+    padding: 11px 12px;
+    font-weight: 500;
+
+    &.active {
+      background: var(--family-wash);
+      color: var(--family-primary);
+    }
+  }
+}
+
+.spacer {
+  flex: 1;
+}
+
+.sign-out {
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  padding: 10px;
+}
+
+.account {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 12px;
+  background: var(--family-wash);
+  padding: 10px;
+
+  > span {
+    @include mixins.avatar(32px);
+    background: white;
+    color: var(--family-primary);
+    font-size: 12px;
+  }
+
+  div {
+    display: grid;
+  }
+}
+
+small {
+  color: var(--text-muted);
+}
+
+main {
+  min-width: 0;
+  padding: 32px 40px;
+}
+
+@include mixins.respond-to(lg) {
+  .child-shell {
+    display: block;
+  }
+
+  aside {
+    position: sticky;
+    z-index: 10;
+    top: 0;
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    align-items: center;
+    border-right: 0;
+    border-bottom: 1px solid var(--border-subtle);
+    padding: 12px 18px;
+
+    nav {
+      display: flex;
+      margin-left: auto;
+
+      a {
+        padding: 8px;
+
+        span {
+          display: none;
+        }
+      }
+    }
+  }
+
+  .child-badge,
+  .spacer,
+  .sign-out,
+  .account {
+    display: none;
+  }
+
+  main {
+    padding: 24px 20px;
+  }
+}

@@ -1,0 +1,142 @@
+import { Routes } from '@angular/router';
+import { childGuard, guestGuard, parentGuard } from './core/guards';
+
+export const routes: Routes = [
+  { path: '', pathMatch: 'full', redirectTo: 'auth/login' },
+  {
+    path: 'auth',
+    canActivate: [guestGuard],
+    loadComponent: () => import('./layouts/auth-layout').then((module) => module.AuthLayout),
+    children: [
+      {
+        path: 'login',
+        title: 'Sign in · Orbit',
+        loadComponent: () => import('./features/auth/auth-pages'),
+      },
+      {
+        path: 'sign-up',
+        title: 'Create account · Orbit',
+        loadComponent: () =>
+          import('./features/auth/auth-pages').then((module) => module.SignUpPage),
+      },
+      {
+        path: 'verify',
+        title: 'Verify account · Orbit',
+        loadComponent: () =>
+          import('./features/auth/auth-pages').then((module) => module.VerifyPage),
+      },
+      {
+        path: 'forgot-password',
+        title: 'Reset password · Orbit',
+        loadComponent: () =>
+          import('./features/auth/auth-pages').then((module) => module.ForgotPasswordPage),
+      },
+      { path: '', pathMatch: 'full', redirectTo: 'login' },
+    ],
+  },
+  {
+    path: '',
+    canActivateChild: [parentGuard],
+    loadComponent: () =>
+      import('./layouts/parent-layout').then((module) => module.ParentLayout),
+    children: [
+      {
+        path: 'dashboard',
+        title: 'Dashboard · Orbit',
+        loadComponent: () => import('./features/wallet/wallet-pages'),
+      },
+      {
+        path: 'top-up',
+        title: 'Top up · Orbit',
+        loadComponent: () =>
+          import('./features/wallet/wallet-pages').then((module) => module.TopUpPage),
+      },
+      {
+        path: 'send',
+        title: 'Send money · Orbit',
+        loadComponent: () =>
+          import('./features/wallet/wallet-pages').then((module) => module.SendMoneyPage),
+      },
+      {
+        path: 'transactions',
+        title: 'Transactions · Orbit',
+        loadComponent: () =>
+          import('./features/wallet/wallet-pages').then((module) => module.TransactionsPage),
+      },
+      {
+        path: 'transactions/:id',
+        title: 'Transaction details · Orbit',
+        loadComponent: () =>
+          import('./features/wallet/wallet-pages').then(
+            (module) => module.TransactionDetailPage,
+          ),
+      },
+      {
+        path: 'family',
+        title: 'Family · Orbit',
+        loadComponent: () => import('./features/family/family-pages'),
+      },
+      {
+        path: 'family/add',
+        title: 'Add a child · Orbit',
+        loadComponent: () =>
+          import('./features/family/family-pages').then((module) => module.AddChildPage),
+      },
+      {
+        path: 'family/:childId',
+        title: 'Child wallet · Orbit',
+        loadComponent: () =>
+          import('./features/family/family-pages').then((module) => module.ChildDetailPage),
+      },
+      {
+        path: 'settings',
+        title: 'Settings · Orbit',
+        loadComponent: () => import('./features/account/account-pages'),
+      },
+      {
+        path: 'settings/devices',
+        title: 'Devices · Orbit',
+        loadComponent: () =>
+          import('./features/account/account-pages').then((module) => module.DevicesPage),
+      },
+      {
+        path: 'settings/password',
+        title: 'Change password · Orbit',
+        loadComponent: () =>
+          import('./features/account/account-pages').then(
+            (module) => module.ChangePasswordPage,
+          ),
+      },
+    ],
+  },
+  {
+    path: '',
+    canActivateChild: [childGuard],
+    loadComponent: () =>
+      import('./layouts/child-layout').then((module) => module.ChildLayout),
+    children: [
+      {
+        path: 'my-wallet',
+        title: 'My wallet · Orbit',
+        loadComponent: () =>
+          import('./features/family/family-pages').then((module) => module.ChildWalletPage),
+      },
+      {
+        path: 'my-activity',
+        title: 'My activity · Orbit',
+        loadComponent: () =>
+          import('./features/family/family-pages').then((module) => module.ChildActivityPage),
+      },
+    ],
+  },
+  {
+    path: 'pay/:merchantSlug',
+    title: 'Pay with Orbit',
+    loadComponent: () => import('./features/merchant/merchant-pay'),
+  },
+  {
+    path: '**',
+    title: 'Page not found · Orbit',
+    loadComponent: () => import('./features/not-found'),
+  },
+];

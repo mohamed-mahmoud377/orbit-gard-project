@@ -1,0 +1,100 @@
+@use 'mixins';
+
+.auth-card {
+  display: grid;
+  width: min(100%, 420px);
+  gap: 20px;
+
+  h1 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 30px;
+  }
+
+  header p {
+    margin: 6px 0 0;
+    color: var(--text-muted);
+  }
+}
+
+.auth-form,
+.auth-fields {
+  display: grid;
+  gap: 16px;
+}
+
+.auth-form .btn {
+  width: 100%;
+}
+
+.password-input {
+  position: relative;
+
+  .input {
+    padding-right: 64px;
+  }
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  padding: 7px;
+  transform: translateY(-50%);
+  font-size: 12px;
+}
+
+.remember-row,
+.auth-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+}
+
+.auth-footer {
+  margin: 6px 0 0;
+  color: var(--text-muted);
+}
+
+.remember-row label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+}
+
+.text-link {
+  border: 0;
+  background: transparent;
+  color: var(--accent-primary);
+  font-weight: 500;
+}
+
+.demo-hint {
+  display: grid;
+  gap: 3px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  background: var(--bg-raised);
+  padding: 12px;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.verification-code {
+  text-align: center;
+  letter-spacing: 0.4em;
+}
+
+@include mixins.respond-to(sm) {
+  .remember-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

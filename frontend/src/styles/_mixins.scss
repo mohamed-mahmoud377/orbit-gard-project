@@ -1,0 +1,71 @@
+@use 'sass:map';
+
+$breakpoints: (
+  sm: 520px,
+  md: 640px,
+  lg: 760px,
+  xl: 900px,
+  2xl: 1000px,
+);
+
+@mixin respond-to($name) {
+  @media (max-width: map.get($breakpoints, $name)) {
+    @content;
+  }
+}
+
+@mixin focus-ring($color: rgb(26 79 176 / 0.25)) {
+  outline: 3px solid $color;
+  outline-offset: 2px;
+}
+
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin grid-center {
+  display: grid;
+  place-items: center;
+}
+
+@mixin truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@mixin card-surface {
+  border: 1px solid var(--border-subtle);
+  border-radius: 18px;
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-card);
+}
+
+@mixin summary-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+@mixin progress-track {
+  height: 7px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--bg-elevated);
+
+  > span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+  }
+}
+
+@mixin avatar($size: 42px) {
+  display: grid;
+  width: $size;
+  height: $size;
+  place-items: center;
+  border-radius: 50%;
+}
