@@ -1,0 +1,2 @@
+ALTER TABLE session
+DROP CONSTRAINT chk_session_revoked_reason;
