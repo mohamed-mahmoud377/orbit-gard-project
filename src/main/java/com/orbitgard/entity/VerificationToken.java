@@ -1,9 +1,14 @@
 package com.orbitgard.entity;
+import com.orbitgard.enums.TokenPurpose;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 import java.time.OffsetDateTime;
 
 @Entity
 @Table(name = "verification_token")
+@Getter
+@Setter
 public class VerificationToken {
 
     @Id
@@ -28,7 +33,5 @@ public class VerificationToken {
 
     @Column(name = "consumed_at")
     private OffsetDateTime consumedAt;
-
-    // getters/setters
 }
 
