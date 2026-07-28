@@ -13,9 +13,11 @@ import com.orbitgard.enums.UserStatus;
  * puts the pieces together, so there's exactly one place that decides
  * what "normalized" means.
  *
- * Assumes entity.User exposes standard getters/setters matching the
- * users table columns (see the Flyway migration). If User.java ends
- * up with different member names, update this file to match.
+ * Assumes entity.User exposes a builder (e.g. via Lombok's @Builder)
+ * with property names matching the users table columns, and a plain
+ * getter per column for toRegisterResponse. If User.java ends up
+ * without a builder, or with different property names, update this
+ * file to match.
  */
 public final class UserMapper {
 
@@ -29,18 +31,18 @@ public final class UserMapper {
             String canonicalPhoneNumber,
             String passwordHash
     ) {
-        User user = new User();
-        user.setAccountType(AccountType.USER);
-        user.setStatus(UserStatus.PENDING_VERIFICATION);
-        user.setFirstName(request.firstName().trim());
-        user.setLastName(request.lastName().trim());
-        user.setUsername(normalizedUsername);
-        user.setEmail(normalizedEmail);
-        user.setPhoneNumber(canonicalPhoneNumber);
-        user.setPasswordHash(passwordHash);
-        user.setPromoCodeEntered(request.promoCode());
-        // parent_id stays null — only CHILD accounts set it.
-        return user;
+        return User.builder()
+                .accountType(AccountType.USER)
+                .status(UserStatus.PENDING_VERIFICATION)
+                .firstName(request.firstName().trim())
+                .lastName(request.lastName().trim())
+                .username(normalizedUsername)
+                .email(normalizedEmail)
+                .phoneNumber(canonicalPhoneNumber)
+                .passwordHash(passwordHash)
+                .promoCodeEntered(request.promoCode())
+                // parent_id stays null — only CHILD accounts set it.
+                .build();
     }
 
     public static RegisterResponse toRegisterResponse(User user) {
