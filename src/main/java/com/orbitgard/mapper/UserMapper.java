@@ -5,6 +5,7 @@ import com.orbitgard.dto.response.RegisterResponse;
 import com.orbitgard.entity.User;
 import com.orbitgard.enums.AccountType;
 import com.orbitgard.enums.UserStatus;
+import org.springframework.stereotype.Component;
 
 /**
  * Assembly only — no normalization and no hashing happens here.
@@ -19,12 +20,13 @@ import com.orbitgard.enums.UserStatus;
  * without a builder, or with different property names, update this
  * file to match.
  */
+@Component
 public final class UserMapper {
 
     private UserMapper() {
     }
 
-    public static User toEntity(
+    public User toEntity(
             RegisterRequest request,
             String normalizedUsername,
             String normalizedEmail,
@@ -45,7 +47,7 @@ public final class UserMapper {
                 .build();
     }
 
-    public static RegisterResponse toRegisterResponse(User user) {
+    public RegisterResponse toRegisterResponse(User user) {
         return new RegisterResponse(
                 user.getId(),
                 user.getUsername(),
