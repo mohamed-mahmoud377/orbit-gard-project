@@ -1,5 +1,6 @@
-package com.orbitgard.service;
+package com.orbitgard.auth.service;
 
+import com.orbitgard.auth.event.UserRegisteredEvent;
 import com.orbitgard.dto.request.RegisterRequest;
 import com.orbitgard.dto.response.FieldErrorResponse;
 import com.orbitgard.dto.response.RegisterResponse;
@@ -11,6 +12,8 @@ import com.orbitgard.repository.UserRepository;
 import com.orbitgard.validation.NameValidator;
 import com.orbitgard.validation.PhoneNumberNormalizer;
 import com.orbitgard.validation.UsernameNormalizer;
+import jakarta.persistence.EntityManager;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -48,11 +51,15 @@ public class SignupService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final ApplicationEventPublisher publisher;
+    private final EntityManager entityManager;
 
-    public SignupService(UserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder) {
+    public SignupService(UserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder , ApplicationEventPublisher publisher, EntityManager entityManager) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
+        this.publisher = publisher;
+        this.entityManager = entityManager;
     }
 
     @Transactional
@@ -151,10 +158,16 @@ public class SignupService {
         User saved;
         try {
             saved = userRepository.save(user);
+
+            entityManager.flush();
+            entityManager.refresh(saved);
+
             log.info(
                     "User registered successfully. userId={}, username={}",
                     saved.getId(),
                     saved.getUsername());
+            publisher.publishEvent(new UserRegisteredEvent(saved));
+
         } catch (DataIntegrityViolationException e) {
             // Someone else took the same username/email/phone in the gap
             // between our existsBy... checks above and this insert. The
