@@ -67,6 +67,20 @@ public class GlobalExceptionHandler {
                 .build();
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
     }
+    @ExceptionHandler(RateLimitedException.class)
+    public ResponseEntity<ErrorResponse> handleRateLimited(RateLimitedException ex, HttpServletRequest request) {
+        ErrorResponse body = ErrorResponse.builder()
+                .type("https://orbit.local/errors/rate-limited")
+                .title(ex.getTitle())
+                .status(ex.getHttpStatus().value())
+                .code(ex.getErrorCode())
+                .detail(ex.getMessage())
+                .instance(request.getRequestURI())
+                .timestamp(OffsetDateTime.now())
+                .traceId(generateTraceId())
+                .build();
+        return ResponseEntity.status(ex.getHttpStatus()).body(body);
+    }
 
     private String generateTraceId() {
         return UUID.randomUUID().toString().substring(0, 8);

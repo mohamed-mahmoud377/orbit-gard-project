@@ -29,6 +29,9 @@ public class VerificationToken {
     @Column(name = "target_email", nullable = false)
     private String targetEmail;
 
+    @Column(name = "created_at", insertable = false, updatable = false)
+    private OffsetDateTime createdAt;
+
     @Column(name = "expires_at", nullable = false)
     private OffsetDateTime expiresAt;
 
