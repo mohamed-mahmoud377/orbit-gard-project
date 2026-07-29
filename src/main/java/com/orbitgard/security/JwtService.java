@@ -12,6 +12,7 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Date;
+import java.util.UUID;
 
 @Component
 public class JwtService {
@@ -31,7 +32,7 @@ public class JwtService {
         this.accessTokenTtlSeconds = accessTokenTtlSeconds;
     }
 
-    public String mintAccessToken(Long userId, String username, AccountType accountType, Long sessionId) {
+    public String mintAccessToken(UUID userId, String username, AccountType accountType, UUID sessionId) {
         Instant now = Instant.now();
         Instant expiry = now.plusSeconds(accessTokenTtlSeconds);
         return Jwts.builder()
@@ -46,7 +47,7 @@ public class JwtService {
                 .compact();
     }
 
-    public String mintRefreshToken(Long userId, Long sessionId, Instant expiresAt) {
+    public String mintRefreshToken(UUID userId, UUID sessionId, Instant expiresAt) {
         return Jwts.builder()
                 .subject(String.valueOf(userId))
                 .claim("sid", sessionId)

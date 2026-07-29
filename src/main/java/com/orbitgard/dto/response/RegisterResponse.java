@@ -3,6 +3,7 @@ package com.orbitgard.dto.response;
 import com.orbitgard.enums.UserStatus;
 
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 /**
  * 201 Created body for POST /api/v1/auth/register.
@@ -13,7 +14,7 @@ import java.time.OffsetDateTime;
  * this point; Jackson serialises it as "PENDING_VERIFICATION".
  */
 public record RegisterResponse(
-        Long id,
+        UUID id,
         String username,
         String email,
         UserStatus status,

@@ -1,8 +1,8 @@
 CREATE TABLE session (
 
-                         id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                         id UUID PRIMARY KEY,
 
-                         user_id BIGINT NOT NULL,
+                         user_id UUID NOT NULL,
 
                          refresh_token_hash VARCHAR(64) NOT NULL,
 

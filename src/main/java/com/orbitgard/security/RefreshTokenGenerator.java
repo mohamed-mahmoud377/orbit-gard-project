@@ -7,6 +7,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.HexFormat;
+import java.util.UUID;
 
 @Component
 public class RefreshTokenGenerator {
@@ -17,7 +18,7 @@ public class RefreshTokenGenerator {
         this.jwtService = jwtService;
     }
 
-    public String generate(Long userId, Long sessionId, Instant expiresAt) {
+    public String generate(UUID userId, UUID sessionId, Instant expiresAt) {
         return jwtService.mintRefreshToken(userId, sessionId, expiresAt);
     }
 

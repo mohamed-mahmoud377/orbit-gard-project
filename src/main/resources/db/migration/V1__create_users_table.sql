@@ -1,5 +1,5 @@
 CREATE TABLE users (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id UUID PRIMARY KEY,
 
     account_type VARCHAR(10) NOT NULL,
     status VARCHAR(24) NOT NULL,
@@ -16,7 +16,7 @@ CREATE TABLE users (
 
     password_hash VARCHAR(72) NOT NULL,
 
-    parent_id BIGINT,
+    parent_id UUID,
 
     promo_code_entered VARCHAR(32),
 

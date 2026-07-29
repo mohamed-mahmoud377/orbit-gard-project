@@ -1,6 +1,6 @@
 CREATE TABLE verification_token (
-                                    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-                                    user_id BIGINT NOT NULL,
+                                    id UUID PRIMARY KEY,
+                                    user_id UUID NOT NULL,
                                     token_hash VARCHAR(64) NOT NULL,
                                     purpose VARCHAR(24) NOT NULL,
                                     target_email VARCHAR(255) NOT NULL,
