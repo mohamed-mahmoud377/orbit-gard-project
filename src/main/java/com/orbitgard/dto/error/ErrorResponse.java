@@ -1,15 +1,22 @@
 package com.orbitgard.dto.error;
 
-import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 
 @Getter
-@AllArgsConstructor
+@Builder
 public class ErrorResponse {
 
+    private String type;
+    private String title;
+    private int status;
     private String code;
-    private String message;
+    private String detail;
+    private String instance;
     private OffsetDateTime timestamp;
+    private String traceId;
+    private List<FieldError> fieldErrors;
 }

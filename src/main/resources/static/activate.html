@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verify email</title>
+</head>
+<body>
+<p>Verifying your email</p>
+<script>
+    const token = new URLSearchParams(window.location.search).get("token");
+    if (token) {
+        fetch("/api/v1/auth/verify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ token })
+        });
+    }
+</script>
+</body>
+</html>
