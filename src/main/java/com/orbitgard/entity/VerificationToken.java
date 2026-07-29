@@ -17,7 +17,7 @@ public class VerificationToken {
     private UUID id;
 
     @Column(name = "user_id", nullable = false)
-    private Long userId;
+    private UUID userId;
 
     @Column(name = "token_hash", nullable = false, unique = true, length = 64)
     private String tokenHash;
