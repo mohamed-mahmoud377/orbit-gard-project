@@ -1,16 +1,26 @@
 package com.orbitgard.security;
 
 import org.springframework.stereotype.Component;
+import ua_parser.Client;
+import ua_parser.Parser;
 
 @Component
 public class DeviceLabelResolver {
+
+    private static final String UNKNOWN_FAMILY = "Other";
+
+    private final Parser uaParser = new Parser();
 
     public String resolve(String userAgent) {
         if (userAgent == null || userAgent.isBlank()) {
             return "Unknown device";
         }
-        String browser = detectBrowser(userAgent);
-        String os = detectOs(userAgent);
+
+        Client client = uaParser.parse(userAgent);
+
+        String browser = familyOrNull(client.userAgent.family);
+        String os = familyOrNull(client.os.family);
+
         if (browser == null && os == null) {
             return "Unknown device";
         }
@@ -23,41 +33,10 @@ public class DeviceLabelResolver {
         return browser + " on " + os;
     }
 
-    private String detectBrowser(String userAgent) {
-        if (userAgent.contains("Edg/")) {
-            return "Edge";
+    private String familyOrNull(String family) {
+        if (family == null || family.isBlank() || UNKNOWN_FAMILY.equals(family)) {
+            return null;
         }
-        if (userAgent.contains("OPR/") || userAgent.contains("Opera")) {
-            return "Opera";
-        }
-        if (userAgent.contains("Chrome/")) {
-            return "Chrome";
-        }
-        if (userAgent.contains("Firefox/")) {
-            return "Firefox";
-        }
-        if (userAgent.contains("Safari/")) {
-            return "Safari";
-        }
-        return null;
-    }
-
-    private String detectOs(String userAgent) {
-        if (userAgent.contains("Windows")) {
-            return "Windows";
-        }
-        if (userAgent.contains("Mac OS X") || userAgent.contains("Macintosh")) {
-            return "macOS";
-        }
-        if (userAgent.contains("Android")) {
-            return "Android";
-        }
-        if (userAgent.contains("iPhone") || userAgent.contains("iPad") || userAgent.contains("iOS")) {
-            return "iOS";
-        }
-        if (userAgent.contains("Linux")) {
-            return "Linux";
-        }
-        return null;
+        return family;
     }
 }
