@@ -17,7 +17,7 @@ id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
                        password_hash VARCHAR(72) NOT NULL,
 
-                       parent_id BIGINT,
+                       parent_id UUID,
 
                        promo_code_entered VARCHAR(32),
 
@@ -76,7 +76,7 @@ CREATE TRIGGER trg_users_updated_at
 
 CREATE TABLE verification_token (
                                     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                                    user_id BIGINT NOT NULL,
+                                    user_id UUID NOT NULL,
                                     token_hash VARCHAR(64) NOT NULL,
                                     purpose VARCHAR(24) NOT NULL,
                                     target_email VARCHAR(255) NOT NULL,
@@ -88,7 +88,7 @@ CREATE TABLE verification_token (
                                             ON DELETE CASCADE,
 
                                     CONSTRAINT uq_verification_token_hash
-                                        UNIQUE (token_hash),
+                                        UNIQUE (token_hash)
 
 );
 
@@ -98,7 +98,7 @@ CREATE TABLE session (
 
                          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
-                         user_id BIGINT NOT NULL,
+                         user_id UUID NOT NULL,
 
                          refresh_token_hash VARCHAR(64) NOT NULL,
 
@@ -140,7 +140,7 @@ CREATE TABLE session (
                                  (revoked_at IS NULL AND revoked_reason IS NULL)
                                      OR
                                  (revoked_at IS NOT NULL AND revoked_reason IS NOT NULL)
-                                 ),
+                                 )
 
 
 
