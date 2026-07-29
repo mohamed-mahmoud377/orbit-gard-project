@@ -3,5 +3,7 @@ package com.orbitgard.repository;
 import com.orbitgard.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface UserRepository extends JpaRepository<User, Long> {
+import java.util.UUID;
+
+public interface UserRepository extends JpaRepository<User, UUID> {
 }
