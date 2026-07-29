@@ -4,6 +4,7 @@ import com.orbitgard.dto.response.ErrorResponse;
 import com.orbitgard.dto.response.FieldErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -31,10 +32,10 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex,
                                                           HttpServletRequest request) {
         List<FieldErrorResponse> fieldErrors = ex.getBindingResult().getFieldErrors().stream()
-                .map(fe -> new FieldErrorResponse(fe.getField(), ErrorCode.VALIDATION_ERROR.name()))
+                .map(fe -> new FieldErrorResponse(fe.getField(), ErrorCode.FIELD_REQUIRED.name()))
                 .toList();
 
-        return buildResponse(ErrorCode.VALIDATION_ERROR, "One or more fields failed validation.",
+        return buildResponse(ErrorCode.FIELD_REQUIRED, "One or more required fields are missing.",
                 request, fieldErrors);
     }
 
@@ -67,8 +68,8 @@ public class GlobalExceptionHandler {
         HttpStatus status = errorCode.getHttpStatus();
 
         ErrorResponse body = new ErrorResponse(
-                "about:blank",              // type - placeholder; swap for a real problem-type URI if you have one
-                status.getReasonPhrase(),   // title
+                "https://orbit.local/errors/" + errorCode.getTypeSlug(),
+                errorCode.getTitle(),
                 status.value(),             // status
                 errorCode.name(),           // code
                 detail,                     // detail
@@ -78,6 +79,8 @@ public class GlobalExceptionHandler {
                 fieldErrors
         );
 
-        return ResponseEntity.status(status).body(body);
+        return ResponseEntity.status(status)
+                .contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .body(body);
     }
 }

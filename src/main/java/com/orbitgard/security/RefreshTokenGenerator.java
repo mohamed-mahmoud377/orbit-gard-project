@@ -5,21 +5,19 @@ import org.springframework.stereotype.Component;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.time.Instant;
+import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.HexFormat;
-import java.util.UUID;
 
 @Component
 public class RefreshTokenGenerator {
 
-    private final JwtService jwtService;
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
-    public RefreshTokenGenerator(JwtService jwtService) {
-        this.jwtService = jwtService;
-    }
-
-    public String generate(UUID userId, UUID sessionId, Instant expiresAt) {
-        return jwtService.mintRefreshToken(userId, sessionId, expiresAt);
+    public String generate() {
+        byte[] bytes = new byte[32];
+        SECURE_RANDOM.nextBytes(bytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 
     public String hash(String rawToken) {

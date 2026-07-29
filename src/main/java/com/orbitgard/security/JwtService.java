@@ -2,6 +2,7 @@ package com.orbitgard.security;
 
 import com.orbitgard.enums.AccountType;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -18,6 +19,9 @@ import java.util.UUID;
 public class JwtService {
 
     private static final String CLAIM_TYPE = "type";
+    private static final String CLAIM_USERNAME = "username";
+    private static final String CLAIM_ACCOUNT_TYPE = "accountType";
+    private static final String CLAIM_SID = "sid";
     private static final String TYPE_ACCESS = "access";
     private static final String TYPE_REFRESH = "refresh";
 
@@ -35,27 +39,32 @@ public class JwtService {
     public String mintAccessToken(UUID userId, String username, AccountType accountType, UUID sessionId) {
         Instant now = Instant.now();
         Instant expiry = now.plusSeconds(accessTokenTtlSeconds);
-        return Jwts.builder()
-                .subject(String.valueOf(userId))
-                .claim("username", username)
-                .claim("accountType", accountType.name())
-                .claim("sid", sessionId)
-                .claim(CLAIM_TYPE, TYPE_ACCESS)
-                .issuedAt(Date.from(now))
-                .expiration(Date.from(expiry))
-                .signWith(signingKey)
+        return baseBuilder(userId, sessionId, TYPE_ACCESS, now, expiry)
+                .claim(CLAIM_USERNAME, username)
+                .claim(CLAIM_ACCOUNT_TYPE, accountType.name())
                 .compact();
     }
 
     public String mintRefreshToken(UUID userId, UUID sessionId, Instant expiresAt) {
+        return baseBuilder(userId, sessionId, TYPE_REFRESH, Instant.now(), expiresAt)
+                .compact();
+    }
+
+    /**
+     * Every token -- access or refresh -- shares the same subject, session id,
+     * type claim, issued/expiry timestamps, and signing key. Only the extra
+     * claims layered on top by each mint method differ. Keeping this in one
+     * place means a change to the shared shape only has to happen once, and
+     * both token types stay in sync automatically.
+     */
+    private JwtBuilder baseBuilder(UUID userId, UUID sessionId, String type, Instant issuedAt, Instant expiresAt) {
         return Jwts.builder()
                 .subject(String.valueOf(userId))
-                .claim("sid", sessionId)
-                .claim(CLAIM_TYPE, TYPE_REFRESH)
-                .issuedAt(Date.from(Instant.now()))
+                .claim(CLAIM_SID, sessionId)
+                .claim(CLAIM_TYPE, type)
+                .issuedAt(Date.from(issuedAt))
                 .expiration(Date.from(expiresAt))
-                .signWith(signingKey)
-                .compact();
+                .signWith(signingKey);
     }
 
     public Jws<Claims> parse(String token) {

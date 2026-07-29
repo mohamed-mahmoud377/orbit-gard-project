@@ -12,6 +12,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -30,9 +31,9 @@ import java.util.UUID;
  * truth on columns and constraints). Adults and children share this
  * one table, distinguished by accountType.
  *
- * created_at and updated_at are excluded from inserts/updates —
- * the database sets them (a DEFAULT and a trigger respectively), so
- * the entity should never try to write them itself.
+ * created_at is assigned by the database DEFAULT. updated_at is maintained
+ * by JPA before an entity update, keeping the schema portable without a
+ * database-specific trigger function.
  */
 @Entity
 @Table(name = "users")
@@ -93,6 +94,11 @@ public class User {
     @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private OffsetDateTime createdAt;
 
-    @Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
+    @Column(name = "updated_at", nullable = false, insertable = false)
     private OffsetDateTime updatedAt;
+
+    @PreUpdate
+    private void updateTimestamp() {
+        updatedAt = OffsetDateTime.now(java.time.ZoneOffset.UTC);
+    }
 }

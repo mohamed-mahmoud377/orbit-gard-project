@@ -79,7 +79,7 @@ public class SignupService {
         }
         if (!isValidPasswordShape(request.password())) {
             log.warn("Password failed validation.");
-            errors.add(new FieldErrorResponse("password", ErrorCode.PASSWORD_INVALID.name()));
+            errors.add(new FieldErrorResponse("password", ErrorCode.PASSWORD_TOO_WEAK.name()));//changed to wrong temp error code
         }
         if (request.password() != null
                 && !request.password().equals(request.confirmPassword())) {
@@ -87,7 +87,7 @@ public class SignupService {
             log.warn("Password confirmation mismatch.");
             errors.add(new FieldErrorResponse(
                     "passwordConfirmation",
-                    ErrorCode.PASSWORD_CONFIRMATION_MISMATCH.name()));
+                    ErrorCode.PASSWORD_MISMATCH.name()));//changed to wrong temp error code
         }
 
         // --- Step 2: normalise. Nothing is compared or stored before this point. ---
