@@ -13,11 +13,11 @@ import java.util.UUID;
 public class VerificationToken {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(name = "user_id", nullable = false)
-    private Long userId;
+    private UUID userId;
 
     @Column(name = "token_hash", nullable = false, unique = true, length = 64)
     private String tokenHash;
