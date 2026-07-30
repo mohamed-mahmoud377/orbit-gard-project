@@ -28,4 +28,4 @@ logging:
 orbitgard:
   jwt:
     secret: ThisIsMyVerySecureJwtSecretKeyThatIsLongEnough123456789
-    access-token-ttl-seconds: 900
+    access-token-ttl-seconds: 300

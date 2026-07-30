@@ -1,8 +1,10 @@
 package com.orbitgard.controller;
 
 import com.orbitgard.dto.request.LoginRequest;
+import com.orbitgard.dto.request.RefreshTokenRequest;
 import com.orbitgard.dto.response.LoginResponse;
 import com.orbitgard.service.LoginService;
+import com.orbitgard.service.RefreshTokenService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
@@ -18,9 +20,11 @@ import java.util.Map;
 public class AuthController {
 
     private final LoginService loginService;
+    private final RefreshTokenService refreshTokenService;
 
-    public AuthController(LoginService loginService) {
+    public AuthController(LoginService loginService, RefreshTokenService refreshTokenService) {
         this.loginService = loginService;
+        this.refreshTokenService = refreshTokenService;
     }
 
     @PostMapping("/login")
@@ -30,10 +34,15 @@ public class AuthController {
             HttpServletRequest httpRequest) {
         return ResponseEntity.ok(loginService.login(request, userAgent, resolveRemoteAddress(httpRequest)));
     }
-@GetMapping("/farafero")
-public Map<String, String> ping() {
-    return Map.of("status", "ok", "service", "orbit graduation project is working fine on the remote server toz fe syam");
-}
+
+    @PostMapping("/refresh")
+    public ResponseEntity<LoginResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
+        return ResponseEntity.ok(refreshTokenService.refresh(request));
+    }
+    @GetMapping("/farafero")
+    public Map<String, String> ping() {
+        return Map.of("status", "ok", "service", "orbit graduation project is working fine on the remote server toz fe syam");
+    }
     private InetAddress resolveRemoteAddress(HttpServletRequest request) {
         try {
             return InetAddress.getByName(request.getRemoteAddr());

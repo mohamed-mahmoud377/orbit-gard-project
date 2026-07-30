@@ -69,8 +69,14 @@ public class LoginService {
         }
 
         OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
-        OffsetDateTime idleExpiresAt = now.plusHours(request.rememberMe() ? 24 * 7L : 12);
-        OffsetDateTime absoluteExpiresAt = now.plusDays(request.rememberMe() ? 30 : 1);
+        // Temporary Postman-test values. Production: Remember me = 7 days idle, 30 days absolute;
+        // otherwise = 12 hours idle, 24 hours absolute.
+        OffsetDateTime idleExpiresAt = request.rememberMe()
+                ? now.plusMinutes(8) // Original: 7 days
+                : now.plusMinutes(6); // Original: 12 hours
+        OffsetDateTime absoluteExpiresAt = request.rememberMe()
+                ? now.plusMinutes(10) // Original: 30 days
+                : now.plusMinutes(7); // Original: 24 hours
         String refreshToken = refreshTokenGenerator.generate();
 
         Session session = SessionMapper.toNewSession(
