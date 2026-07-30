@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
 
@@ -32,7 +33,10 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex,
                                                           HttpServletRequest request) {
         List<FieldErrorResponse> fieldErrors = ex.getBindingResult().getFieldErrors().stream()
-                .map(fe -> new FieldErrorResponse(fe.getField(), ErrorCode.FIELD_REQUIRED.name()))
+                .map(fe -> FieldErrorResponse.builder()
+                        .field(fe.getField())
+                        .code(ErrorCode.FIELD_REQUIRED.name())
+                        .build())
                 .toList();
 
         return buildResponse(ErrorCode.FIELD_REQUIRED, "One or more required fields are missing.",
@@ -46,7 +50,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<ErrorResponse> handleApiException(ApiException ex, HttpServletRequest request) {
         List<FieldErrorResponse> fieldErrors = ex.getField() != null
-                ? List.of(new FieldErrorResponse(ex.getField(), ex.getErrorCode().name()))
+                ? List.of(FieldErrorResponse.builder()
+                        .field(ex.getField())
+                        .code(ex.getErrorCode().name())
+                        .build())
                 : List.of();
 
         return buildResponse(ex.getErrorCode(), ex.getErrorCode().name(), request, fieldErrors);
@@ -67,17 +74,17 @@ public class GlobalExceptionHandler {
                                                         List<FieldErrorResponse> fieldErrors) {
         HttpStatus status = errorCode.getHttpStatus();
 
-        ErrorResponse body = new ErrorResponse(
-                "https://orbit.local/errors/" + errorCode.getTypeSlug(),
-                errorCode.getTitle(),
-                status.value(),             // status
-                errorCode.name(),           // code
-                detail,                     // detail
-                request.getRequestURI(),    // instance
-                OffsetDateTime.now(),       // timestamp
-                UUID.randomUUID().toString(), // traceId - placeholder; swap for MDC/tracing id if you have one
-                fieldErrors
-        );
+        ErrorResponse body = ErrorResponse.builder()
+                .type("https://orbit.local/errors/" + errorCode.getTypeSlug())
+                .title(errorCode.getTitle())
+                .status(status.value())
+                .code(errorCode.name())
+                .detail(detail)
+                .instance(request.getRequestURI())
+                .timestamp(OffsetDateTime.now(ZoneOffset.UTC))
+                .traceId(UUID.randomUUID().toString())
+                .fieldErrors(fieldErrors)
+                .build();
 
         return ResponseEntity.status(status)
                 .contentType(MediaType.APPLICATION_PROBLEM_JSON)

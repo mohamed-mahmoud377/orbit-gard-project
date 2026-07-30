@@ -38,4 +38,71 @@ public record RegisterRequest(
         // Optional — captured and stored, never evaluated here (ORB-005)
         String promoCode
 ) {
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static final class Builder {
+        private String firstName;
+        private String lastName;
+        private String username;
+        private String email;
+        private String phoneNumber;
+        private String password;
+        private String confirmPassword;
+        private String promoCode;
+
+        public Builder firstName(String firstName) {
+            this.firstName = firstName;
+            return this;
+        }
+
+        public Builder lastName(String lastName) {
+            this.lastName = lastName;
+            return this;
+        }
+
+        public Builder username(String username) {
+            this.username = username;
+            return this;
+        }
+
+        public Builder email(String email) {
+            this.email = email;
+            return this;
+        }
+
+        public Builder phoneNumber(String phoneNumber) {
+            this.phoneNumber = phoneNumber;
+            return this;
+        }
+
+        public Builder password(String password) {
+            this.password = password;
+            return this;
+        }
+
+        public Builder confirmPassword(String confirmPassword) {
+            this.confirmPassword = confirmPassword;
+            return this;
+        }
+
+        public Builder promoCode(String promoCode) {
+            this.promoCode = promoCode;
+            return this;
+        }
+
+        public RegisterRequest build() {
+            return new RegisterRequest(
+                    firstName,
+                    lastName,
+                    username,
+                    email,
+                    phoneNumber,
+                    password,
+                    confirmPassword,
+                    promoCode
+            );
+        }
+    }
 }

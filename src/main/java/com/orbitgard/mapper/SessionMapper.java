@@ -14,23 +14,23 @@ public final class SessionMapper {
     }
 
     public static LoginResponse toLoginResponse(User user, String accessToken, String refreshToken, long expiresInSeconds) {
-        return new LoginResponse(
-                accessToken,
-                refreshToken,
-                "Bearer",
-                expiresInSeconds,
-                toUserSummary(user)
-        );
+        return LoginResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .tokenType("Bearer")
+                .expiresIn(expiresInSeconds)
+                .user(toUserSummary(user))
+                .build();
     }
 
     public static UserSummaryResponse toUserSummary(User user) {
-        return new UserSummaryResponse(
-                user.getId(),
-                user.getUsername(),
-                user.getFirstName(),
-                user.getLastName(),
-                user.getAccountType()
-        );
+        return UserSummaryResponse.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .accountType(user.getAccountType())
+                .build();
     }
 
     public static Session toNewSession(

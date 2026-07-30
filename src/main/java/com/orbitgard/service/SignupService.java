@@ -69,32 +69,45 @@ public class SignupService {
 
         if (firstNameStatus != NameValidator.Status.VALID) {
             log.warn("First name validation failed. Status={}", firstNameStatus);
-            errors.add(new FieldErrorResponse("firstName", ErrorCode.NAME_INVALID.name()));
+            errors.add(FieldErrorResponse.builder()
+                    .field("firstName")
+                    .code(ErrorCode.NAME_INVALID.name())
+                    .build());
         }
         NameValidator.Status lastNameStatus = NameValidator.validate(lastName).status();
 
         if (lastNameStatus != NameValidator.Status.VALID) {
             log.warn("Last name validation failed. Status={}", lastNameStatus);
-            errors.add(new FieldErrorResponse("lastName", ErrorCode.NAME_INVALID.name()));
+            errors.add(FieldErrorResponse.builder()
+                    .field("lastName")
+                    .code(ErrorCode.NAME_INVALID.name())
+                    .build());
         }
         if (!isValidPasswordShape(request.password())) {
             log.warn("Password failed validation.");
-            errors.add(new FieldErrorResponse("password", ErrorCode.PASSWORD_TOO_WEAK.name()));//changed to wrong temp error code
+            errors.add(FieldErrorResponse.builder()
+                    .field("password")
+                    .code(ErrorCode.PASSWORD_TOO_WEAK.name())
+                    .build());
         }
         if (request.password() != null
                 && !request.password().equals(request.confirmPassword())) {
 
             log.warn("Password confirmation mismatch.");
-            errors.add(new FieldErrorResponse(
-                    "passwordConfirmation",
-                    ErrorCode.PASSWORD_MISMATCH.name()));//changed to wrong temp error code
+            errors.add(FieldErrorResponse.builder()
+                    .field("passwordConfirmation")
+                    .code(ErrorCode.PASSWORD_MISMATCH.name())
+                    .build());
         }
 
         // --- Step 2: normalise. Nothing is compared or stored before this point. ---
         String normalizedUsername = UsernameNormalizer.normalize(request.username());
         if (!UsernameNormalizer.isValidFormat(normalizedUsername)) {
             log.warn("Username format validation failed.");
-            errors.add(new FieldErrorResponse("username", ErrorCode.USERNAME_INVALID.name()));
+            errors.add(FieldErrorResponse.builder()
+                    .field("username")
+                    .code(ErrorCode.USERNAME_INVALID.name())
+                    .build());
         }
 
         String normalizedEmail = request.email() == null ? null : request.email().trim().toLowerCase();
@@ -109,9 +122,15 @@ public class SignupService {
         }
 
         if (phoneStatus == PhoneNumberNormalizer.Status.INVALID) {
-            errors.add(new FieldErrorResponse("phoneNumber", ErrorCode.PHONE_INVALID.name()));
+            errors.add(FieldErrorResponse.builder()
+                    .field("phoneNumber")
+                    .code(ErrorCode.PHONE_INVALID.name())
+                    .build());
         } else if (phoneStatus == PhoneNumberNormalizer.Status.NOT_EGYPTIAN) {
-            errors.add(new FieldErrorResponse("phoneNumber", ErrorCode.PHONE_NOT_EGYPTIAN.name()));
+            errors.add(FieldErrorResponse.builder()
+                    .field("phoneNumber")
+                    .code(ErrorCode.PHONE_NOT_EGYPTIAN.name())
+                    .build());
         }
 
         // Shape/format failures stop here - uniqueness checks against bad
@@ -123,15 +142,24 @@ public class SignupService {
         // --- Step 3: uniqueness against normalised values. Collect all three. ---
         if (userRepository.existsByUsername(normalizedUsername)) {
             log.warn("Username already exists. username={}", normalizedUsername);
-            errors.add(new FieldErrorResponse("username", ErrorCode.USERNAME_TAKEN.name()));
+            errors.add(FieldErrorResponse.builder()
+                    .field("username")
+                    .code(ErrorCode.USERNAME_TAKEN.name())
+                    .build());
         }
         if (userRepository.existsByEmail(normalizedEmail)) {
             log.warn("Email already exists. email={}", normalizedEmail);
-            errors.add(new FieldErrorResponse("email", ErrorCode.EMAIL_TAKEN.name()));
+            errors.add(FieldErrorResponse.builder()
+                    .field("email")
+                    .code(ErrorCode.EMAIL_TAKEN.name())
+                    .build());
         }
         if (userRepository.existsByPhoneNumber(normalizedPhone)) {
             log.warn("Phone number already exists. phone number={}", normalizedPhone);
-            errors.add(new FieldErrorResponse("phoneNumber", ErrorCode.PHONE_TAKEN.name()));
+            errors.add(FieldErrorResponse.builder()
+                    .field("phoneNumber")
+                    .code(ErrorCode.PHONE_TAKEN.name())
+                    .build());
         }
 
         throwIfErrors(errors);
@@ -231,13 +259,22 @@ public class SignupService {
         }
         String lower = constraintName.toLowerCase(Locale.ROOT);
         if (lower.contains("username")) {
-            errors.add(new FieldErrorResponse("username", ErrorCode.USERNAME_TAKEN.name()));
+            errors.add(FieldErrorResponse.builder()
+                    .field("username")
+                    .code(ErrorCode.USERNAME_TAKEN.name())
+                    .build());
         }
         if (lower.contains("email")) {
-            errors.add(new FieldErrorResponse("email", ErrorCode.EMAIL_TAKEN.name()));
+            errors.add(FieldErrorResponse.builder()
+                    .field("email")
+                    .code(ErrorCode.EMAIL_TAKEN.name())
+                    .build());
         }
         if (lower.contains("phone")) {
-            errors.add(new FieldErrorResponse("phoneNumber", ErrorCode.PHONE_TAKEN.name()));
+            errors.add(FieldErrorResponse.builder()
+                    .field("phoneNumber")
+                    .code(ErrorCode.PHONE_TAKEN.name())
+                    .build());
         }
         return errors;
     }

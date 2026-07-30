@@ -39,7 +39,7 @@ public class AuthController {
     public ResponseEntity<LoginResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
         return ResponseEntity.ok(refreshTokenService.refresh(request));
     }
-    @GetMapping("/farafero")
+    @GetMapping("/hi")
     public Map<String, String> ping() {
         return Map.of("status", "ok", "service", "orbit graduation project is working fine on the remote server toz fe syam");
     }

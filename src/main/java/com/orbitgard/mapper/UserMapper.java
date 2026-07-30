@@ -48,12 +48,12 @@ public final class UserMapper {
     }
 
     public RegisterResponse toRegisterResponse(User user) {
-        return new RegisterResponse(
-                user.getId(),
-                user.getUsername(),
-                user.getEmail(),
-                user.getStatus(),
-                user.getCreatedAt()
-        );
+        return RegisterResponse.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .status(user.getStatus())
+                .createdAt(user.getCreatedAt())
+                .build();
     }
 }
