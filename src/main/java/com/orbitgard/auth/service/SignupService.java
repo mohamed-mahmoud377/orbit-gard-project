@@ -27,19 +27,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * Orchestrates ORB-001 registration, in the exact step order the API
- * contract specifies:
- *
- * 1. Validate shape - collect every failure, never return on the first one.
- * 2. Normalise - lowercase username/email, canonical +20 phone.
- * 3. Check uniqueness against normalised values - again collect all three.
- * 4. Hash the password with BCrypt. The raw password is never stored or logged.
- * 5. Insert the row, status = PENDING_VERIFICATION, inside a transaction.
- * 6. Create the verification token in the same transaction.
- * 7. Commit.
- * 8. Send the email - after commit, never inside the transaction.
- */
 @Service
 public class SignupService {
 
@@ -64,40 +51,54 @@ public class SignupService {
 
     @Transactional
     public RegisterResponse register(RegisterRequest request) {
-
         log.info("Starting registration request.");
-        // --- Step 1: shape validation. Collect every failure. ---
+
         List<FieldErrorResponse> errors = new ArrayList<>();
 
+        validateShape(request, errors);
+        NormalizedInput normalized = normalizeInput(request, errors);
+        throwIfErrors(errors);
+
+        checkUniqueness(normalized, errors);
+        throwIfErrors(errors);
+
+        User saved = persistUser(request, normalized);
+        scheduleActivationEmail(saved);
+
+        return userMapper.toRegisterResponse(saved);
+    }
+
+    private void validateShape(RegisterRequest request, List<FieldErrorResponse> errors) {
         String firstName = trimOrEmpty(request.firstName());
         String lastName = trimOrEmpty(request.lastName());
 
         NameValidator.Status firstNameStatus = NameValidator.validate(firstName).status();
-
         if (firstNameStatus != NameValidator.Status.VALID) {
             log.warn("First name validation failed. Status={}", firstNameStatus);
             errors.add(new FieldErrorResponse("firstName", ErrorCode.NAME_INVALID.name()));
         }
-        NameValidator.Status lastNameStatus = NameValidator.validate(lastName).status();
 
+        NameValidator.Status lastNameStatus = NameValidator.validate(lastName).status();
         if (lastNameStatus != NameValidator.Status.VALID) {
             log.warn("Last name validation failed. Status={}", lastNameStatus);
             errors.add(new FieldErrorResponse("lastName", ErrorCode.NAME_INVALID.name()));
         }
+
         if (!isValidPasswordShape(request.password())) {
             log.warn("Password failed validation.");
             errors.add(new FieldErrorResponse("password", ErrorCode.PASSWORD_INVALID.name()));
         }
+
         if (request.password() != null
                 && !request.password().equals(request.confirmPassword())) {
-
             log.warn("Password confirmation mismatch.");
             errors.add(new FieldErrorResponse(
                     "passwordConfirmation",
                     ErrorCode.PASSWORD_CONFIRMATION_MISMATCH.name()));
         }
+    }
 
-        // --- Step 2: normalise. Nothing is compared or stored before this point. ---
+    private NormalizedInput normalizeInput(RegisterRequest request, List<FieldErrorResponse> errors) {
         String normalizedUsername = UsernameNormalizer.normalize(request.username());
         if (!UsernameNormalizer.isValidFormat(normalizedUsername)) {
             log.warn("Username format validation failed.");
@@ -106,9 +107,7 @@ public class SignupService {
 
         String normalizedEmail = request.email() == null ? null : request.email().trim().toLowerCase();
 
-        PhoneNumberNormalizer.Result phoneResult =
-                PhoneNumberNormalizer.normalize(request.phoneNumber());
-
+        PhoneNumberNormalizer.Result phoneResult = PhoneNumberNormalizer.normalize(request.phoneNumber());
         PhoneNumberNormalizer.Status phoneStatus = phoneResult.status();
 
         if (phoneStatus != PhoneNumberNormalizer.Status.VALID) {
@@ -121,44 +120,38 @@ public class SignupService {
             errors.add(new FieldErrorResponse("phoneNumber", ErrorCode.PHONE_NOT_EGYPTIAN.name()));
         }
 
-        // Shape/format failures stop here - uniqueness checks against bad
-        // data would be meaningless.
-        throwIfErrors(errors);
+        return new NormalizedInput(normalizedUsername, normalizedEmail, phoneResult.canonicalNumber());
+    }
 
-        String normalizedPhone = phoneResult.canonicalNumber();
-
-        // --- Step 3: uniqueness against normalised values. Collect all three. ---
-        if (userRepository.existsByUsername(normalizedUsername)) {
-            log.warn("Username already exists. username={}", normalizedUsername);
+    private void checkUniqueness(NormalizedInput normalized, List<FieldErrorResponse> errors) {
+        if (userRepository.existsByUsername(normalized.username())) {
+            log.warn("Username already exists. username={}", normalized.username());
             errors.add(new FieldErrorResponse("username", ErrorCode.USERNAME_TAKEN.name()));
         }
-        if (userRepository.existsByEmail(normalizedEmail)) {
-            log.warn("Email already exists. email={}", normalizedEmail);
+        if (userRepository.existsByEmail(normalized.email())) {
+            log.warn("Email already exists. email={}", normalized.email());
             errors.add(new FieldErrorResponse("email", ErrorCode.EMAIL_TAKEN.name()));
         }
-        if (userRepository.existsByPhoneNumber(normalizedPhone)) {
-            log.warn("Phone number already exists. phone number={}", normalizedPhone);
+        if (userRepository.existsByPhoneNumber(normalized.phone())) {
+            log.warn("Phone number already exists. phone number={}", normalized.phone());
             errors.add(new FieldErrorResponse("phoneNumber", ErrorCode.PHONE_TAKEN.name()));
         }
+    }
 
-        throwIfErrors(errors);
-
-        // --- Step 4: hash. Raw password never touches storage or logs from here on. ---
+    private User persistUser(RegisterRequest request, NormalizedInput normalized) {
         String passwordHash = passwordEncoder.encode(request.password());
 
-        // --- Step 5: insert, PENDING_VERIFICATION, inside this transaction. ---
         User user = userMapper.toEntity(
                 request,
-                normalizedUsername,
-                normalizedEmail,
-                normalizedPhone,
+                normalized.username(),
+                normalized.email(),
+                normalized.phone(),
                 passwordHash
         );
 
         User saved;
         try {
             saved = userRepository.save(user);
-
             entityManager.flush();
             entityManager.refresh(saved);
 
@@ -166,50 +159,28 @@ public class SignupService {
                     "User registered successfully. userId={}, username={}",
                     saved.getId(),
                     saved.getUsername());
-            publisher.publishEvent(new UserRegisteredEvent(saved));
-
         } catch (DataIntegrityViolationException e) {
-            // Someone else took the same username/email/phone in the gap
-            // between our existsBy... checks above and this insert. The
-            // pre-check is guidance, not a guarantee - this is the real
-            // guarantee, enforced by the DB's own unique constraints.
             log.warn(
                     "Database unique constraint violated during registration. constraint={}",
                     extractConstraintName(e));
             List<FieldErrorResponse> raceErrors = mapConstraintViolation(e);
             if (raceErrors.isEmpty()) {
-                // Not a uniqueness violation we recognise - let it surface
-                // as a genuine 500 rather than mislabel it.
                 throw e;
             }
             throw new ValidationException(raceErrors);
         }
 
-        // --- Step 6: verification token, same transaction. ---
-        // TODO: build once the verification_token entity/repository exist.
-        // Generate a long random value, store only its hash (never the raw
-        // token), purpose = EMAIL_VERIFICATION, targetEmail = normalizedEmail,
-        // expiresAt = now + 12 hours.
+        return saved;
+    }
 
-        // TODO: promo code - request.promoCode() is stored only, not applied
-        // at this stage. Storage location isn't specified by any document
-        // reviewed so far (no promo_code column has been confirmed on the
-        // users table) - needs a decision before this is wired in.
-
-        // --- Step 7 & 8: commit happens when this method returns; the send
-        // is registered to fire only after that commit succeeds, and never
-        // runs at all if the transaction rolls back. ---
+    private void scheduleActivationEmail(User saved) {
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
-                    // TODO: call EmailService.sendActivationEmail(saved.getEmail(), token), Add Logging
-                    // once EmailService and the verification token exist.
                 }
             });
         }
-
-        return userMapper.toRegisterResponse(saved);
     }
 
     private boolean isValidPasswordShape(String password) {
@@ -228,14 +199,6 @@ public class SignupService {
         return value == null ? "" : value.trim();
     }
 
-    /**
-     * Maps a unique-constraint violation to the field(s) it actually
-     * belongs to, by matching the constraint name Postgres/Hibernate
-     * reports. ASSUMPTION: matches on the constraint name containing
-     * "username" / "email" / "phone" - confirm this against your real
-     * Flyway migration's actual constraint names (e.g. uq_users_username).
-     * If your naming differs, adjust the substrings below.
-     */
     private List<FieldErrorResponse> mapConstraintViolation(DataIntegrityViolationException e) {
         List<FieldErrorResponse> errors = new ArrayList<>();
         String constraintName = extractConstraintName(e);
@@ -269,4 +232,6 @@ public class SignupService {
             throw new ValidationException(errors);
         }
     }
+
+    private record NormalizedInput(String username, String email, String phone) {}
 }

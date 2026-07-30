@@ -7,6 +7,8 @@ import com.orbitgard.enums.AccountType;
 import com.orbitgard.enums.UserStatus;
 import org.springframework.stereotype.Component;
 
+import java.time.OffsetDateTime;
+
 /**
  * Assembly only — no normalization and no hashing happens here.
  * SignupService must have already normalized the username/email/phone
@@ -43,7 +45,8 @@ public final class UserMapper {
                 .phoneNumber(canonicalPhoneNumber)
                 .passwordHash(passwordHash)
                 .promoCodeEntered(request.promoCode())
-                // parent_id stays null — only CHILD accounts set it.
+                .createdAt(OffsetDateTime.now(java.time.ZoneOffset.UTC))
+                .updatedAt(OffsetDateTime.now(java.time.ZoneOffset.UTC))
                 .build();
     }
 

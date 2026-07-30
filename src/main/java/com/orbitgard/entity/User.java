@@ -2,7 +2,18 @@ package com.orbitgard.entity;
 
 import com.orbitgard.enums.AccountType;
 import com.orbitgard.enums.UserStatus;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,6 +26,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Maps the users table (see the Flyway migration for the source of
+ * truth on columns and constraints). Adults and children share this
+ * one table, distinguished by accountType.
+ *
+ * created_at is assigned by the database DEFAULT. updated_at is maintained
+ * by JPA before an entity update, keeping the schema portable without a
+ * database-specific trigger function.
+ */
 @Entity
 @Table(name = "users")
 @Getter
@@ -33,7 +53,7 @@ public class User {
     private AccountType accountType;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 24)
+    @Column(name = "status", nullable = false, length = 24)
     private UserStatus status;
 
     @Column(name = "first_name", nullable = false, length = 30)
@@ -42,38 +62,46 @@ public class User {
     @Column(name = "last_name", nullable = false, length = 30)
     private String lastName;
 
-    @Column(nullable = false, unique = true, length = 30)
+    // Unique, lowercase, never editable after creation.
+    @Column(name = "username", nullable = false, length = 30, unique = true)
     private String username;
 
-    @Column(unique = true, length = 255)
+    // Null for a CHILD.
+    @Column(name = "email", length = 255, unique = true)
     private String email;
 
+    // A requested new address awaiting confirmation (email-change flow).
     @Column(name = "pending_email", length = 255)
     private String pendingEmail;
 
-    @Column(name = "phone_number", unique = true, length = 13)
+    // Canonical +20 form only. Null for a CHILD.
+    @Column(name = "phone_number", length = 13, unique = true)
     private String phoneNumber;
 
     @Column(name = "password_hash", nullable = false, length = 72)
     private String passwordHash;
 
+    // Set for a CHILD, null for a USER. Self-referencing — exactly one
+    // level deep, enforced at the database level, not here.
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
     private User parent;
 
-    @OneToMany(mappedBy = "parent")
-    private List<User> children = new ArrayList<>();
-
+    // Captured at signup, applied later — ORB-005.
     @Column(name = "promo_code_entered", length = 32)
     private String promoCodeEntered;
 
-    @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
-    private OffsetDateTime createdAt;
+    @Column(name = "created_at", nullable = false)
+    private OffsetDateTime createdAt = OffsetDateTime.now(java.time.ZoneOffset.UTC);
 
-    @Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
+    @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Session> sessions = new ArrayList<>();
+    @PreUpdate
+    private void updateTimestamp() {
+        updatedAt = OffsetDateTime.now(java.time.ZoneOffset.UTC);
+        createdAt = OffsetDateTime.now(java.time.ZoneOffset.UTC);
+    }
+
 
 }
