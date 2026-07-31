@@ -12,7 +12,6 @@ import com.orbitgard.repository.UserRepository;
 import com.orbitgard.validation.NameValidator;
 import com.orbitgard.validation.PhoneNumberNormalizer;
 import com.orbitgard.validation.UsernameNormalizer;
-import jakarta.persistence.EntityManager;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -39,18 +38,17 @@ public class SignupService {
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final ApplicationEventPublisher publisher;
-    private final EntityManager entityManager;
 
     public SignupService(UserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder , ApplicationEventPublisher publisher, EntityManager entityManager) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
         this.publisher = publisher;
-        this.entityManager = entityManager;
     }
 
     @Transactional
     public RegisterResponse register(RegisterRequest request) {
+
         log.info("Starting registration request.");
 
         List<FieldErrorResponse> errors = new ArrayList<>();
@@ -73,28 +71,40 @@ public class SignupService {
         String lastName = trimOrEmpty(request.lastName());
 
         NameValidator.Status firstNameStatus = NameValidator.validate(firstName).status();
+
         if (firstNameStatus != NameValidator.Status.VALID) {
             log.warn("First name validation failed. Status={}", firstNameStatus);
-            errors.add(new FieldErrorResponse("firstName", ErrorCode.NAME_INVALID.name()));
+            errors.add(FieldErrorResponse.builder()
+                    .field("firstName")
+                    .code(ErrorCode.NAME_INVALID.name())
+                    .build());
         }
 
         NameValidator.Status lastNameStatus = NameValidator.validate(lastName).status();
         if (lastNameStatus != NameValidator.Status.VALID) {
             log.warn("Last name validation failed. Status={}", lastNameStatus);
-            errors.add(new FieldErrorResponse("lastName", ErrorCode.NAME_INVALID.name()));
+            errors.add(FieldErrorResponse.builder()
+                    .field("lastName")
+                    .code(ErrorCode.NAME_INVALID.name())
+                    .build());
         }
 
         if (!isValidPasswordShape(request.password())) {
             log.warn("Password failed validation.");
-            errors.add(new FieldErrorResponse("password", ErrorCode.PASSWORD_INVALID.name()));
+            errors.add(FieldErrorResponse.builder()
+                    .field("password")
+                    .code(ErrorCode.PASSWORD_TOO_WEAK.name())
+                    .build());
         }
 
         if (request.password() != null
                 && !request.password().equals(request.confirmPassword())) {
+
             log.warn("Password confirmation mismatch.");
-            errors.add(new FieldErrorResponse(
-                    "passwordConfirmation",
-                    ErrorCode.PASSWORD_CONFIRMATION_MISMATCH.name()));
+            errors.add(FieldErrorResponse.builder()
+                    .field("passwordConfirmation")
+                    .code(ErrorCode.PASSWORD_MISMATCH.name())
+                    .build());
         }
     }
 
@@ -102,7 +112,10 @@ public class SignupService {
         String normalizedUsername = UsernameNormalizer.normalize(request.username());
         if (!UsernameNormalizer.isValidFormat(normalizedUsername)) {
             log.warn("Username format validation failed.");
-            errors.add(new FieldErrorResponse("username", ErrorCode.USERNAME_INVALID.name()));
+            errors.add(FieldErrorResponse.builder()
+                    .field("username")
+                    .code(ErrorCode.USERNAME_INVALID.name())
+                    .build());
         }
 
         String normalizedEmail = request.email() == null ? null : request.email().trim().toLowerCase();
@@ -115,9 +128,15 @@ public class SignupService {
         }
 
         if (phoneStatus == PhoneNumberNormalizer.Status.INVALID) {
-            errors.add(new FieldErrorResponse("phoneNumber", ErrorCode.PHONE_INVALID.name()));
+            errors.add(FieldErrorResponse.builder()
+                    .field("phoneNumber")
+                    .code(ErrorCode.PHONE_INVALID.name())
+                    .build());
         } else if (phoneStatus == PhoneNumberNormalizer.Status.NOT_EGYPTIAN) {
-            errors.add(new FieldErrorResponse("phoneNumber", ErrorCode.PHONE_NOT_EGYPTIAN.name()));
+            errors.add(FieldErrorResponse.builder()
+                    .field("phoneNumber")
+                    .code(ErrorCode.PHONE_NOT_EGYPTIAN.name())
+                    .build());
         }
 
         return new NormalizedInput(normalizedUsername, normalizedEmail, phoneResult.canonicalNumber());
@@ -152,9 +171,6 @@ public class SignupService {
         User saved;
         try {
             saved = userRepository.save(user);
-            entityManager.flush();
-            entityManager.refresh(saved);
-
             log.info(
                     "User registered successfully. userId={}, username={}",
                     saved.getId(),
@@ -181,6 +197,8 @@ public class SignupService {
                 }
             });
         }
+
+        return userMapper.toRegisterResponse(saved);
     }
 
     private boolean isValidPasswordShape(String password) {
@@ -207,13 +225,22 @@ public class SignupService {
         }
         String lower = constraintName.toLowerCase(Locale.ROOT);
         if (lower.contains("username")) {
-            errors.add(new FieldErrorResponse("username", ErrorCode.USERNAME_TAKEN.name()));
+            errors.add(FieldErrorResponse.builder()
+                    .field("username")
+                    .code(ErrorCode.USERNAME_TAKEN.name())
+                    .build());
         }
         if (lower.contains("email")) {
-            errors.add(new FieldErrorResponse("email", ErrorCode.EMAIL_TAKEN.name()));
+            errors.add(FieldErrorResponse.builder()
+                    .field("email")
+                    .code(ErrorCode.EMAIL_TAKEN.name())
+                    .build());
         }
         if (lower.contains("phone")) {
-            errors.add(new FieldErrorResponse("phoneNumber", ErrorCode.PHONE_TAKEN.name()));
+            errors.add(FieldErrorResponse.builder()
+                    .field("phoneNumber")
+                    .code(ErrorCode.PHONE_TAKEN.name())
+                    .build());
         }
         return errors;
     }

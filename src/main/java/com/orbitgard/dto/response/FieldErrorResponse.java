@@ -9,4 +9,26 @@ public record FieldErrorResponse(
         String field,
         String code
 ) {
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static final class Builder {
+        private String field;
+        private String code;
+
+        public Builder field(String field) {
+            this.field = field;
+            return this;
+        }
+
+        public Builder code(String code) {
+            this.code = code;
+            return this;
+        }
+
+        public FieldErrorResponse build() {
+            return new FieldErrorResponse(field, code);
+        }
+    }
 }

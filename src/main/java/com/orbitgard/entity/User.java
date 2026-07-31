@@ -26,15 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Maps the users table (see the Flyway migration for the source of
- * truth on columns and constraints). Adults and children share this
- * one table, distinguished by accountType.
- *
- * created_at is assigned by the database DEFAULT. updated_at is maintained
- * by JPA before an entity update, keeping the schema portable without a
- * database-specific trigger function.
- */
 @Entity
 @Table(name = "users")
 @Getter
@@ -62,32 +53,29 @@ public class User {
     @Column(name = "last_name", nullable = false, length = 30)
     private String lastName;
 
-    // Unique, lowercase, never editable after creation.
     @Column(name = "username", nullable = false, length = 30, unique = true)
     private String username;
 
-    // Null for a CHILD.
     @Column(name = "email", length = 255, unique = true)
     private String email;
 
-    // A requested new address awaiting confirmation (email-change flow).
     @Column(name = "pending_email", length = 255)
     private String pendingEmail;
 
-    // Canonical +20 form only. Null for a CHILD.
+
     @Column(name = "phone_number", length = 13, unique = true)
     private String phoneNumber;
 
     @Column(name = "password_hash", nullable = false, length = 72)
     private String passwordHash;
 
-    // Set for a CHILD, null for a USER. Self-referencing — exactly one
-    // level deep, enforced at the database level, not here.
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
     private User parent;
 
-    // Captured at signup, applied later — ORB-005.
+    @OneToMany(mappedBy = "parent")
+    private List<User> children = new ArrayList<>();
+
     @Column(name = "promo_code_entered", length = 32)
     private String promoCodeEntered;
 
@@ -97,11 +85,11 @@ public class User {
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
-    @PreUpdate
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Session> sessions = new ArrayList<>();
+
     private void updateTimestamp() {
         updatedAt = OffsetDateTime.now(java.time.ZoneOffset.UTC);
-        createdAt = OffsetDateTime.now(java.time.ZoneOffset.UTC);
     }
-
 
 }
