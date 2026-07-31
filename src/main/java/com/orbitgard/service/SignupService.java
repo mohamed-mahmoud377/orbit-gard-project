@@ -1,6 +1,5 @@
-package com.orbitgard.auth.service;
+package com.orbitgard.service;
 
-import com.orbitgard.auth.event.UserRegisteredEvent;
 import com.orbitgard.dto.request.RegisterRequest;
 import com.orbitgard.dto.response.FieldErrorResponse;
 import com.orbitgard.dto.response.RegisterResponse;

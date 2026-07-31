@@ -1,6 +1,6 @@
-package com.orbitgard.auth.controller;
+package com.orbitgard.controller;
 
-import com.orbitgard.auth.service.SignupService;
+import com.orbitgard.service.SignupService;
 import com.orbitgard.dto.request.RegisterRequest;
 import com.orbitgard.dto.response.RegisterResponse;
 import jakarta.validation.Valid;
