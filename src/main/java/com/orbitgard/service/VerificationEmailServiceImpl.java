@@ -1,6 +1,6 @@
 package com.orbitgard.service;
 
-import com.orbitgard.dto.auth.ResendVerificationResponse;
+import com.orbitgard.dto.response.ResendVerificationResponse;
 import com.orbitgard.entity.User;
 import com.orbitgard.entity.VerificationToken;
 import com.orbitgard.enums.TokenPurpose;

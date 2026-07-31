@@ -1,9 +1,9 @@
 package com.orbitgard.controller;
 
-import com.orbitgard.dto.auth.ResendVerificationRequest;
-import com.orbitgard.dto.auth.ResendVerificationResponse;
-import com.orbitgard.dto.auth.VerifyEmailRequest;
-import com.orbitgard.dto.auth.VerifyEmailResponse;
+import com.orbitgard.dto.request.ResendVerificationRequest;
+import com.orbitgard.dto.response.ResendVerificationResponse;
+import com.orbitgard.dto.request.VerifyEmailRequest;
+import com.orbitgard.dto.response.VerifyEmailResponse;
 import com.orbitgard.service.AuthService;
 import com.orbitgard.service.VerificationEmailService;
 import jakarta.validation.Valid;

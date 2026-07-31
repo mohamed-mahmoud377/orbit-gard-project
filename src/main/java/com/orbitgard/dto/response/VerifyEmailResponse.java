@@ -1,4 +1,4 @@
-package com.orbitgard.dto.auth;
+package com.orbitgard.dto.response;
 
 import com.orbitgard.enums.UserStatus;
 import lombok.AllArgsConstructor;

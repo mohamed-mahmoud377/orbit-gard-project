@@ -7,7 +7,7 @@ import com.orbitgard.enums.UserStatus;
 import com.orbitgard.exception.TokenAlreadyUsedException;
 import com.orbitgard.exception.TokenExpiredException;
 import com.orbitgard.exception.TokenInvalidException;
-import com.orbitgard.dto.auth.VerifyEmailResponse;
+import com.orbitgard.dto.response.VerifyEmailResponse;
 import com.orbitgard.repository.UserRepository;
 import com.orbitgard.repository.VerificationTokenRepository;
 import com.orbitgard.util.TokenGenerator;
