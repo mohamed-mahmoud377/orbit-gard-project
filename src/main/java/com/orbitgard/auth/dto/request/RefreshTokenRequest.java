@@ -1,4 +1,4 @@
-package com.orbitgard.dto.request;
+package com.orbitgard.auth.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 

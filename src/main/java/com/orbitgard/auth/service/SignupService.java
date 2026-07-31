@@ -1,17 +1,18 @@
 package com.orbitgard.auth.service;
 
-import com.orbitgard.auth.event.UserRegisteredEvent;
-import com.orbitgard.dto.request.RegisterRequest;
+import com.orbitgard.auth.dto.request.RegisterRequest;
 import com.orbitgard.dto.response.FieldErrorResponse;
-import com.orbitgard.dto.response.RegisterResponse;
+import com.orbitgard.auth.dto.response.RegisterResponse;
 import com.orbitgard.entity.User;
 import com.orbitgard.exceptions.ErrorCode;
 import com.orbitgard.exceptions.ValidationException;
 import com.orbitgard.mapper.UserMapper;
 import com.orbitgard.repository.UserRepository;
-import com.orbitgard.validation.NameValidator;
 import com.orbitgard.validation.PhoneNumberNormalizer;
 import com.orbitgard.validation.UsernameNormalizer;
+import jakarta.validation.constraints.Email;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -19,8 +20,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,20 +29,18 @@ import java.util.Locale;
 public class SignupService {
 
     private static final Logger log = LoggerFactory.getLogger(SignupService.class);
-
-    private static final int PASSWORD_MIN_LENGTH = 8;
-    private static final int PASSWORD_MAX_LENGTH = 64;
-
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final ApplicationEventPublisher publisher;
+    private final EmailVerificationService emailVerificationService;
 
-    public SignupService(UserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder , ApplicationEventPublisher publisher, EntityManager entityManager) {
+    public SignupService(UserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder , ApplicationEventPublisher publisher, EmailVerificationService emailVerificationService) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
         this.publisher = publisher;
+        this.emailVerificationService = emailVerificationService;
     }
 
     @Transactional
@@ -53,7 +50,9 @@ public class SignupService {
 
         List<FieldErrorResponse> errors = new ArrayList<>();
 
-        validateShape(request, errors);
+        validatePasswordMatch(request, errors);
+        throwIfErrors(errors);
+
         NormalizedInput normalized = normalizeInput(request, errors);
         throwIfErrors(errors);
 
@@ -66,45 +65,15 @@ public class SignupService {
         return userMapper.toRegisterResponse(saved);
     }
 
-    private void validateShape(RegisterRequest request, List<FieldErrorResponse> errors) {
-        String firstName = trimOrEmpty(request.firstName());
-        String lastName = trimOrEmpty(request.lastName());
+    private void validatePasswordMatch(RegisterRequest request,
+                                       List<FieldErrorResponse> errors) {
 
-        NameValidator.Status firstNameStatus = NameValidator.validate(firstName).status();
-
-        if (firstNameStatus != NameValidator.Status.VALID) {
-            log.warn("First name validation failed. Status={}", firstNameStatus);
-            errors.add(FieldErrorResponse.builder()
-                    .field("firstName")
-                    .code(ErrorCode.NAME_INVALID.name())
-                    .build());
-        }
-
-        NameValidator.Status lastNameStatus = NameValidator.validate(lastName).status();
-        if (lastNameStatus != NameValidator.Status.VALID) {
-            log.warn("Last name validation failed. Status={}", lastNameStatus);
-            errors.add(FieldErrorResponse.builder()
-                    .field("lastName")
-                    .code(ErrorCode.NAME_INVALID.name())
-                    .build());
-        }
-
-        if (!isValidPasswordShape(request.password())) {
-            log.warn("Password failed validation.");
-            errors.add(FieldErrorResponse.builder()
-                    .field("password")
-                    .code(ErrorCode.PASSWORD_TOO_WEAK.name())
-                    .build());
-        }
-
-        if (request.password() != null
-                && !request.password().equals(request.confirmPassword())) {
-
+        if (!request.password().equals(request.confirmPassword())) {
             log.warn("Password confirmation mismatch.");
-            errors.add(FieldErrorResponse.builder()
-                    .field("passwordConfirmation")
-                    .code(ErrorCode.PASSWORD_MISMATCH.name())
-                    .build());
+            errors.add(new FieldErrorResponse(
+                    "confirmPassword",
+                    ErrorCode.PASSWORD_MISMATCH.name()
+            ));
         }
     }
 
@@ -189,7 +158,7 @@ public class SignupService {
         return saved;
     }
 
-    private void scheduleActivationEmail(User saved) {
+    private RegisterResponse scheduleActivationEmail(User saved) {
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
@@ -201,21 +170,6 @@ public class SignupService {
         return userMapper.toRegisterResponse(saved);
     }
 
-    private boolean isValidPasswordShape(String password) {
-        if (password == null) {
-            return false;
-        }
-        if (password.length() < PASSWORD_MIN_LENGTH || password.length() > PASSWORD_MAX_LENGTH) {
-            return false;
-        }
-        boolean hasLetter = password.chars().anyMatch(Character::isLetter);
-        boolean hasDigit = password.chars().anyMatch(Character::isDigit);
-        return hasLetter && hasDigit;
-    }
-
-    private String trimOrEmpty(String value) {
-        return value == null ? "" : value.trim();
-    }
 
     private List<FieldErrorResponse> mapConstraintViolation(DataIntegrityViolationException e) {
         List<FieldErrorResponse> errors = new ArrayList<>();

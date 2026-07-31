@@ -24,3 +24,8 @@ server:
 logging:
   level:
     org.hibernate.SQL: ${SQL_LOG_LEVEL:info}
+
+orbitgard:
+  jwt:
+    secret: ThisIsMyVerySecureJwtSecretKeyThatIsLongEnough123456789
+    access-token-ttl-seconds: 300

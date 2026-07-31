@@ -43,6 +43,19 @@ public class GlobalExceptionHandler {
                 request, fieldErrors);
     }
 
+    @ExceptionHandler(ValidationException.class)
+    public ResponseEntity<ErrorResponse> handleValidationException(
+            ValidationException ex,
+            HttpServletRequest request) {
+
+        return buildResponse(
+                ErrorCode.VALIDATION_ERROR,
+                "One or more fields are invalid.",
+                request,
+                ex.getFieldErrors()
+        );
+    }
+
     /**
      * Business-rule failures thrown deliberately by services - taken
      * username, invalid phone format, and so on.
