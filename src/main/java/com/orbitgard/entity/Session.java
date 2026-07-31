@@ -11,8 +11,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.net.InetAddress;
 import java.time.OffsetDateTime;
@@ -22,6 +21,9 @@ import java.util.UUID;
 @Table(name = "session")
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class Session {
 
     @Id

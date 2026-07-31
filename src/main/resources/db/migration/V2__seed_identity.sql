@@ -11,70 +11,70 @@ BEGIN;
 
 WITH users_seed AS (
 
-INSERT INTO users (
-    id,
-    account_type,
-    status,
-    first_name,
-    last_name,
-    username,
-    email,
-    pending_email,
-    phone_number,
-    password_hash,
-    parent_id,
-    promo_code_entered
+    INSERT INTO users (
+                       id,
+                       account_type,
+                       status,
+                       first_name,
+                       last_name,
+                       username,
+                       email,
+                       pending_email,
+                       phone_number,
+                       password_hash,
+                       parent_id,
+                       promo_code_entered
+        )
+        VALUES
+
+            (
+                '11111111-1111-1111-1111-111111111111',
+                'USER',
+                'ACTIVE',
+                'Omar',
+                'Hassan',
+                'omar.hassan',
+                'omar.hassan@example.com',
+                NULL,
+                '+201012345678',
+                '$2b$10$uA93cVbREkpxYxjHHPIdleR.B0k7HBi3rNGtODzw08KhfbAmW.E8.',
+                NULL,
+                'WELCOME50'
+            ),
+
+            (
+                '22222222-2222-2222-2222-222222222222',
+                'USER',
+                'ACTIVE',
+                'Sara',
+                'Ibrahim',
+                'sara.ibrahim',
+                'sara.ibrahim@example.com',
+                NULL,
+                '+201112345678',
+                '$2b$10$yIkJRyF1/pSGpbEGT2qCR.2rjbb3oc2ffwf7V44rVXKhOH.fUwqmS',
+                NULL,
+                NULL
+            ),
+
+            (
+                '33333333-3333-3333-3333-333333333333',
+                'USER',
+                'PENDING_VERIFICATION',
+                'Karim',
+                'Adel',
+                'karim.adel',
+                'karim.adel@example.com',
+                NULL,
+                '+201212345678',
+                '$2b$10$6qVJytaVEJOqFmjKJbfOWO1Ik4shrWZa7CQsqevwgEHXfNXTDHdSi',
+                NULL,
+                'SUMMER2026'
+            )
+
+        RETURNING id
+
 )
-VALUES
-
-    (
-    '11111111-1111-1111-1111-111111111111',
-    'USER',
-    'ACTIVE',
-    'Omar',
-    'Hassan',
-    'omar.hassan',
-    'omar.hassan@example.com',
-    NULL,
-    '+201012345678',
-    '$2b$10$uA93cVbREkpxYxjHHPIdleR.B0k7HBi3rNGtODzw08KhfbAmW.E8.',
-    NULL,
-    'WELCOME50'
-    ),
-
-    (
-    '22222222-2222-2222-2222-222222222222',
-    'USER',
-    'ACTIVE',
-    'Sara',
-    'Ibrahim',
-    'sara.ibrahim',
-    'sara.ibrahim@example.com',
-    NULL,
-    '+201112345678',
-    '$2b$10$yIkJRyF1/pSGpbEGT2qCR.2rjbb3oc2ffwf7V44rVXKhOH.fUwqmS',
-    NULL,
-    NULL
-    ),
-
-    (
-    '33333333-3333-3333-3333-333333333333',
-    'USER',
-    'PENDING_VERIFICATION',
-    'Karim',
-    'Adel',
-    'karim.adel',
-    'karim.adel@example.com',
-    NULL,
-    '+201212345678',
-    '$2b$10$6qVJytaVEJOqFmjKJbfOWO1Ik4shrWZa7CQsqevwgEHXfNXTDHdSi',
-    NULL,
-    'SUMMER2026'
-    )
-
-    RETURNING id
-
-    )
 
 SELECT COUNT(*) FROM users_seed;
 

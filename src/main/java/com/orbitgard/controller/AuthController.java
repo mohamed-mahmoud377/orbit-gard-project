@@ -1,36 +1,53 @@
 package com.orbitgard.controller;
 
-import com.orbitgard.dto.request.ResendVerificationRequest;
-import com.orbitgard.dto.response.ResendVerificationResponse;
-import com.orbitgard.dto.request.VerifyEmailRequest;
-import com.orbitgard.dto.response.VerifyEmailResponse;
-import com.orbitgard.service.AuthService;
-import com.orbitgard.service.VerificationEmailService;
+import com.orbitgard.dto.request.LoginRequest;
+import com.orbitgard.dto.request.RefreshTokenRequest;
+import com.orbitgard.dto.response.LoginResponse;
+import com.orbitgard.service.LoginService;
+import com.orbitgard.service.RefreshTokenService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/auth")
-@RequiredArgsConstructor
 public class AuthController {
 
-    private final AuthService authService;
-    private final VerificationEmailService verificationEmailService;
+    private final LoginService loginService;
+    private final RefreshTokenService refreshTokenService;
 
-    @PostMapping("/verify")
-    public ResponseEntity<VerifyEmailResponse> verify(@Valid @RequestBody VerifyEmailRequest request) {
-        return ResponseEntity.ok(authService.verifyEmail(request.getToken()));
+    public AuthController(LoginService loginService, RefreshTokenService refreshTokenService) {
+        this.loginService = loginService;
+        this.refreshTokenService = refreshTokenService;
     }
 
-    @PostMapping("/verify/resend")
-    public ResponseEntity<ResendVerificationResponse> resend(@Valid @RequestBody ResendVerificationRequest request) {
-        ResendVerificationResponse response = verificationEmailService.resendVerification(request.getEmail());
-        return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(
+            @Valid @RequestBody LoginRequest request,
+            @RequestHeader(value = HttpHeaders.USER_AGENT, required = false) String userAgent,
+            HttpServletRequest httpRequest) {
+        return ResponseEntity.ok(loginService.login(request, userAgent, resolveRemoteAddress(httpRequest)));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<LoginResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
+        return ResponseEntity.ok(refreshTokenService.refresh(request));
+    }
+    @GetMapping("/hi")
+    public Map<String, String> ping() {
+        return Map.of("status", "ok", "service", "orbit graduation project is working fine on the remote server toz fe syam");
+    }
+    private InetAddress resolveRemoteAddress(HttpServletRequest request) {
+        try {
+            return InetAddress.getByName(request.getRemoteAddr());
+        } catch (UnknownHostException ex) {
+            throw new IllegalStateException("Unable to resolve request IP address", ex);
+        }
     }
 }

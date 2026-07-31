@@ -20,4 +20,44 @@ public record RegisterResponse(
         UserStatus status,
         OffsetDateTime createdAt
 ) {
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static final class Builder {
+        private UUID id;
+        private String username;
+        private String email;
+        private UserStatus status;
+        private OffsetDateTime createdAt;
+
+        public Builder id(UUID id) {
+            this.id = id;
+            return this;
+        }
+
+        public Builder username(String username) {
+            this.username = username;
+            return this;
+        }
+
+        public Builder email(String email) {
+            this.email = email;
+            return this;
+        }
+
+        public Builder status(UserStatus status) {
+            this.status = status;
+            return this;
+        }
+
+        public Builder createdAt(OffsetDateTime createdAt) {
+            this.createdAt = createdAt;
+            return this;
+        }
+
+        public RegisterResponse build() {
+            return new RegisterResponse(id, username, email, status, createdAt);
+        }
+    }
 }
