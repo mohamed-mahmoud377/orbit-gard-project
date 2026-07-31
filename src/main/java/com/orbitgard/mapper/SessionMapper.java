@@ -1,7 +1,7 @@
 package com.orbitgard.mapper;
 
-import com.orbitgard.dto.response.LoginResponse;
-import com.orbitgard.dto.response.UserSummaryResponse;
+import com.orbitgard.auth.dto.response.LoginResponse;
+import com.orbitgard.auth.dto.response.UserSummaryResponse;
 import com.orbitgard.entity.Session;
 import com.orbitgard.entity.User;
 
