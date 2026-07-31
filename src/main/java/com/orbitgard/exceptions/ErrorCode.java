@@ -22,7 +22,17 @@ public enum ErrorCode {
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "invalid-refresh-token", "Invalid or expired refresh token"),
     ACCOUNT_NOT_VERIFIED(HttpStatus.FORBIDDEN, "account-not-verified", "Account not verified"),
     ACCOUNT_SUSPENDED(HttpStatus.FORBIDDEN, "account-suspended", "Account suspended"),
-    TOO_MANY_ATTEMPTS(HttpStatus.TOO_MANY_REQUESTS, "too-many-attempts", "Too many attempts");
+    TOO_MANY_ATTEMPTS(HttpStatus.TOO_MANY_REQUESTS, "too-many-attempts", "Too many attempts"),
+
+    // Activation (ORB-002) — POST /api/v1/auth/verify
+    TOKEN_INVALID(HttpStatus.BAD_REQUEST, "token-invalid", "Invalid token"),
+    TOKEN_EXPIRED(HttpStatus.GONE, "token-expired", "Token expired"),
+    TOKEN_ALREADY_USED(HttpStatus.GONE, "token-already-used", "Token already used"),
+    // Not a failure: the account was already active. Kept in this enum so the
+    // response still carries a machine-readable code the frontend can key its
+    // "framed positively" success screen off of, same mechanism as every
+    // other code here — just with a 200 instead of an error status.
+    ALREADY_VERIFIED(HttpStatus.OK, "already-verified", "Account already verified");
 
     private final HttpStatus httpStatus;
     private final String typeSlug;
