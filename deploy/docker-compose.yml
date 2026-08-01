@@ -5,6 +5,8 @@
 #
 # Required variables (read from /root/orbit/.env on the server):
 #   POSTGRES_PASSWORD  - database password (already present)
+#   FRONTEND_BASE_URL  - public frontend origin, e.g. http://203.0.113.10:4200
+#   GMAIL_USERNAME, GMAIL_APP_PASSWORD, JWT_SECRET - application secrets
 # Optional (injected by the deploy workflow):
 #   APP_IMAGE          - exact image tag to run; defaults to :latest
 
@@ -47,6 +49,11 @@ services:
       DB_USERNAME: orbit
       DB_PASSWORD: ${POSTGRES_PASSWORD}
       SERVER_PORT: "8080"
+      GMAIL_USERNAME: ${GMAIL_USERNAME}
+      GMAIL_APP_PASSWORD: ${GMAIL_APP_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      # Set this in the server .env file. It is deliberately not a hard-coded IP.
+      FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:-http://localhost:4200}
     ports:
       - "8080:8080"
     healthcheck:

@@ -23,7 +23,8 @@ public enum ErrorCode {
     ACCOUNT_NOT_VERIFIED(HttpStatus.FORBIDDEN, "account-not-verified", "Account not verified"),
     ACCOUNT_SUSPENDED(HttpStatus.FORBIDDEN, "account-suspended", "Account suspended"),
     TOO_MANY_ATTEMPTS(HttpStatus.TOO_MANY_REQUESTS, "too-many-attempts", "Too many attempts"),
-
+    PASSWORD_INVALID(HttpStatus.BAD_REQUEST, "password-invalid", "Invalid password"),
+    PASSWORD_CONFIRMATION_MISMATCH(HttpStatus.BAD_REQUEST, "password-confirmation-mismatch", "Password confirmation does not match"),
     // Activation (ORB-002) — POST /api/v1/auth/verify
     TOKEN_INVALID(HttpStatus.BAD_REQUEST, "token-invalid", "Invalid token"),
     TOKEN_EXPIRED(HttpStatus.GONE, "token-expired", "Token expired"),

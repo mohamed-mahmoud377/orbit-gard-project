@@ -5,11 +5,12 @@ import com.orbitgard.entity.User;
 import com.orbitgard.entity.VerificationToken;
 import com.orbitgard.enums.TokenPurpose;
 import com.orbitgard.enums.UserStatus;
-import com.orbitgard.exception.RateLimitedException;
+import com.orbitgard.exceptions.ApiException;
+import com.orbitgard.exceptions.ErrorCode;
 import com.orbitgard.repository.UserRepository;
 import com.orbitgard.repository.VerificationTokenRepository;
-import com.orbitgard.util.TokenGenerator;
 import com.orbitgard.util.TokenHasher;
+import com.orbitgard.security.JwtService;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -33,14 +34,14 @@ public class VerificationEmailServiceImpl implements VerificationEmailService {
     private final JavaMailSender mailSender;
     private final UserRepository userRepository;
     private final VerificationTokenRepository verificationTokenRepository;
-    private final TokenGenerator tokenGenerator;
+    private final JwtService jwtService;
 
     @Value("${app.frontend.base-url}")
     private String frontendBaseUrl;
 
     @Override
-    public void sendVerificationEmail(User user) {
-        generateAndSendToken(user);
+    public void sendVerificationEmail(String email, String token) {
+        sendEmail(email, token);
     }
 
     @Override
@@ -57,7 +58,7 @@ public class VerificationEmailServiceImpl implements VerificationEmailService {
                 .ifPresent(lastToken -> {
                     long secondsSinceLast = Duration.between(lastToken.getCreatedAt(), OffsetDateTime.now()).getSeconds();
                     if (secondsSinceLast < COOLDOWN_SECONDS) {
-                        throw new RateLimitedException(COOLDOWN_SECONDS - secondsSinceLast);
+                        throw new ApiException(ErrorCode.RATE_LIMITED);
                     }
                 });
 
@@ -68,15 +69,16 @@ public class VerificationEmailServiceImpl implements VerificationEmailService {
         liveTokens.forEach(t -> t.setConsumedAt(now));
         verificationTokenRepository.saveAll(liveTokens);
 
-        generateAndSendToken(user);
+        String rawToken = createVerificationToken(user);
+        sendVerificationEmail(user.getEmail(), rawToken);
 
         return new ResendVerificationResponse(GENERIC_RESEND_MESSAGE, COOLDOWN_SECONDS);
     }
 
-    private void generateAndSendToken(User user) {
-
-        Duration validity = Duration.ofHours(12);
-        String rawToken = tokenGenerator.generate(user.getId(), TokenPurpose.EMAIL_VERIFICATION, user.getEmail(), validity);
+    private String createVerificationToken(User user) {
+        OffsetDateTime expiresAt = OffsetDateTime.now().plusHours(12);
+        String rawToken = jwtService.mintEmailVerificationToken(
+                user.getId(), user.getEmail(), expiresAt.toInstant());
         String hash = TokenHasher.sha256Hex(rawToken);
 
         VerificationToken token = new VerificationToken();
@@ -84,27 +86,31 @@ public class VerificationEmailServiceImpl implements VerificationEmailService {
         token.setTokenHash(hash);
         token.setPurpose(TokenPurpose.EMAIL_VERIFICATION);
         token.setTargetEmail(user.getEmail());
-        token.setExpiresAt(OffsetDateTime.now().plusHours(12));
-        verificationTokenRepository.save(token);
+        token.setExpiresAt(expiresAt);
+        verificationTokenRepository.saveAndFlush(token);
 
+        return rawToken;
+    }
+
+    private void sendEmail(String email, String rawToken) {
         String activationLink = frontendBaseUrl + "/activate?token=" + rawToken;
 
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setTo(user.getEmail());
+            helper.setTo(email);
             helper.setSubject("Confirm your email to activate your Orbit wallet");
-            helper.setText(buildHtmlBody(user.getFirstName(), activationLink), true);
+            helper.setText(buildHtmlBody(activationLink), true);
             mailSender.send(message);
         } catch (MessagingException e) {
             throw new IllegalStateException("Failed to send verification email", e);
         }
     }
 
-    private String buildHtmlBody(String firstName, String activationLink) {
+    private String buildHtmlBody(String activationLink) {
         return """
                 <div style="font-family: Arial, sans-serif; max-width: 480px; margin: auto;">
-                    <p>Hi %s,</p>
+                    <p>Hi,</p>
                     <p>Welcome to Orbit. Confirm this email address and your wallet will be ready to use.</p>
                     <p style="text-align: center; margin: 32px 0;">
                         <a href="%s" style="background-color: #1a1a2e; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold;">
@@ -120,6 +126,6 @@ public class VerificationEmailServiceImpl implements VerificationEmailService {
                         If you did not create an Orbit account, you can safely ignore this email — no wallet will be activated and no further messages will be sent.
                     </p>
                 </div>
-                """.formatted(firstName, activationLink, activationLink, activationLink);
+                """.formatted(activationLink, activationLink, activationLink);
     }
 }

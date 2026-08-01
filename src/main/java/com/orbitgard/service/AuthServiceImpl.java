@@ -4,14 +4,13 @@ import com.orbitgard.entity.User;
 import com.orbitgard.entity.VerificationToken;
 import com.orbitgard.enums.TokenPurpose;
 import com.orbitgard.enums.UserStatus;
-import com.orbitgard.exception.TokenAlreadyUsedException;
-import com.orbitgard.exception.TokenExpiredException;
-import com.orbitgard.exception.TokenInvalidException;
+import com.orbitgard.exceptions.ApiException;
+import com.orbitgard.exceptions.ErrorCode;
 import com.orbitgard.dto.response.VerifyEmailResponse;
 import com.orbitgard.repository.UserRepository;
 import com.orbitgard.repository.VerificationTokenRepository;
-import com.orbitgard.util.TokenGenerator;
 import com.orbitgard.util.TokenHasher;
+import com.orbitgard.security.JwtService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +26,7 @@ public class AuthServiceImpl implements AuthService {
 
     private final VerificationTokenRepository verificationTokenRepository;
     private final UserRepository userRepository;
-    private final TokenGenerator tokenGenerator;
+    private final JwtService jwtService;
 
     @Override
     @Transactional
@@ -35,25 +34,25 @@ public class AuthServiceImpl implements AuthService {
 
         Claims claims = parseClaims(rawToken);
         if (!TokenPurpose.EMAIL_VERIFICATION.name().equals(claims.get("purpose", String.class))) {
-            throw new TokenInvalidException();
+            throw new ApiException(ErrorCode.TOKEN_INVALID);
         }
 
         String hash = TokenHasher.sha256Hex(rawToken);
 
         VerificationToken token = verificationTokenRepository.findByTokenHash(hash)
-                .orElseThrow(TokenInvalidException::new);
+                .orElseThrow(() -> new ApiException(ErrorCode.TOKEN_INVALID));
 
         if (token.getPurpose() != TokenPurpose.EMAIL_VERIFICATION) {
-            throw new TokenInvalidException();
+            throw new ApiException(ErrorCode.TOKEN_INVALID);
         }
 
         UUID userId = UUID.fromString(claims.getSubject());
         if (!token.getUserId().equals(userId)) {
-            throw new TokenInvalidException();
+            throw new ApiException(ErrorCode.TOKEN_INVALID);
         }
 
         User user = userRepository.findById(token.getUserId())
-                .orElseThrow(TokenInvalidException::new);
+                .orElseThrow(() -> new ApiException(ErrorCode.TOKEN_INVALID));
 
         // Already active -> this is a repeat click. Return success, not an error.
         if (user.getStatus() == UserStatus.ACTIVE) {
@@ -61,11 +60,11 @@ public class AuthServiceImpl implements AuthService {
         }
 
         if (token.getConsumedAt() != null) {
-            throw new TokenAlreadyUsedException();
+            throw new ApiException(ErrorCode.TOKEN_ALREADY_USED);
         }
 
         if (token.getExpiresAt().isBefore(OffsetDateTime.now())) {
-            throw new TokenExpiredException();
+            throw new ApiException(ErrorCode.TOKEN_EXPIRED);
         }
 
         OffsetDateTime now = OffsetDateTime.now();
@@ -80,9 +79,9 @@ public class AuthServiceImpl implements AuthService {
 
     private Claims parseClaims(String rawToken) {
         try {
-            return tokenGenerator.parseClaims(rawToken);
+            return jwtService.parse(rawToken).getPayload();
         } catch (JwtException | IllegalArgumentException ex) {
-            throw new TokenInvalidException();
+            throw new ApiException(ErrorCode.TOKEN_INVALID);
         }
     }
 }

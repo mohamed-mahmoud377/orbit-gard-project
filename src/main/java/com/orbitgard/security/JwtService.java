@@ -1,6 +1,7 @@
 package com.orbitgard.security;
 
 import com.orbitgard.enums.AccountType;
+import com.orbitgard.enums.TokenPurpose;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jws;
@@ -22,6 +23,8 @@ public class JwtService {
     private static final String CLAIM_USERNAME = "username";
     private static final String CLAIM_ACCOUNT_TYPE = "accountType";
     private static final String CLAIM_SID = "sid";
+    private static final String CLAIM_PURPOSE = "purpose";
+    private static final String CLAIM_EMAIL = "email";
     private static final String TYPE_ACCESS = "access";
     private static final String TYPE_REFRESH = "refresh";
 
@@ -47,6 +50,19 @@ public class JwtService {
 
     public String mintRefreshToken(UUID userId, UUID sessionId, Instant expiresAt) {
         return baseBuilder(userId, sessionId, TYPE_REFRESH, Instant.now(), expiresAt)
+                .compact();
+    }
+
+    public String mintEmailVerificationToken(UUID userId, String email, Instant expiresAt) {
+        Instant now = Instant.now();
+        return Jwts.builder()
+                .id(UUID.randomUUID().toString())
+                .subject(userId.toString())
+                .claim(CLAIM_PURPOSE, TokenPurpose.EMAIL_VERIFICATION.name())
+                .claim(CLAIM_EMAIL, email)
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(expiresAt))
+                .signWith(signingKey)
                 .compact();
     }
 

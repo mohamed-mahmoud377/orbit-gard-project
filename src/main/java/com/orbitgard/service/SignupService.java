@@ -4,27 +4,30 @@ import com.orbitgard.dto.request.RegisterRequest;
 import com.orbitgard.dto.response.FieldErrorResponse;
 import com.orbitgard.dto.response.RegisterResponse;
 import com.orbitgard.entity.User;
+import com.orbitgard.entity.VerificationToken;
+import com.orbitgard.enums.TokenPurpose;
 import com.orbitgard.exceptions.ErrorCode;
 import com.orbitgard.exceptions.ValidationException;
 import com.orbitgard.mapper.UserMapper;
 import com.orbitgard.repository.UserRepository;
+import com.orbitgard.repository.VerificationTokenRepository;
+import com.orbitgard.security.JwtService;
+import com.orbitgard.util.TokenHasher;
 import com.orbitgard.validation.NameValidator;
 import com.orbitgard.validation.PhoneNumberNormalizer;
 import com.orbitgard.validation.UsernameNormalizer;
 import jakarta.persistence.EntityManager;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.time.OffsetDateTime;
 
 @Service
 public class SignupService {
@@ -37,15 +40,22 @@ public class SignupService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
-    private final ApplicationEventPublisher publisher;
     private final EntityManager entityManager;
+    private final JwtService jwtService;
+    private final VerificationTokenRepository verificationTokenRepository;
+    private final VerificationEmailService verificationEmailService;
 
-    public SignupService(UserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder , ApplicationEventPublisher publisher, EntityManager entityManager) {
+    public SignupService(UserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder,
+                         EntityManager entityManager, JwtService jwtService,
+                         VerificationTokenRepository verificationTokenRepository,
+                         VerificationEmailService verificationEmailService) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
-        this.publisher = publisher;
         this.entityManager = entityManager;
+        this.jwtService = jwtService;
+        this.verificationTokenRepository = verificationTokenRepository;
+        this.verificationEmailService = verificationEmailService;
     }
 
     @Transactional
@@ -62,7 +72,14 @@ public class SignupService {
         throwIfErrors(errors);
 
         User saved = persistUser(request, normalized);
-        scheduleActivationEmail(saved);
+        String verificationToken = createVerificationToken(saved);
+        try {
+            verificationEmailService.sendVerificationEmail(saved.getEmail(), verificationToken);
+        } catch (RuntimeException ex) {
+            // Email is an external dependency. Keep the account and its stored
+            // token so the user can request a new verification email later.
+            log.error("Verification email delivery failed after registration. userId={}", saved.getId(), ex);
+        }
 
         return userMapper.toRegisterResponse(saved);
     }
@@ -172,14 +189,19 @@ public class SignupService {
         return saved;
     }
 
-    private void scheduleActivationEmail(User saved) {
-        if (TransactionSynchronizationManager.isSynchronizationActive()) {
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                @Override
-                public void afterCommit() {
-                }
-            });
-        }
+    private String createVerificationToken(User user) {
+        OffsetDateTime expiresAt = OffsetDateTime.now().plusHours(12);
+        String rawToken = jwtService.mintEmailVerificationToken(user.getId(), user.getEmail(), expiresAt.toInstant());
+
+        VerificationToken token = new VerificationToken();
+        token.setUserId(user.getId());
+        token.setTokenHash(TokenHasher.sha256Hex(rawToken));
+        token.setPurpose(TokenPurpose.EMAIL_VERIFICATION);
+        token.setTargetEmail(user.getEmail());
+        token.setExpiresAt(expiresAt);
+        verificationTokenRepository.saveAndFlush(token);
+
+        return rawToken;
     }
 
     private boolean isValidPasswordShape(String password) {

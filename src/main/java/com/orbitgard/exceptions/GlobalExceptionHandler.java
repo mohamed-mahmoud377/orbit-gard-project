@@ -60,6 +60,17 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Validation failures that contain every invalid field discovered during
+     * service-level validation.
+     */
+    @ExceptionHandler(ValidationException.class)
+    public ResponseEntity<ErrorResponse> handleValidationException(ValidationException ex,
+                                                                    HttpServletRequest request) {
+        return buildResponse(ErrorCode.VALIDATION_ERROR, "One or more fields failed validation.",
+                request, ex.getFieldErrors());
+    }
+
+    /**
      * Anything unhandled. Never leak the raw exception message to the
      * client - log it server-side and return a generic code.
      */

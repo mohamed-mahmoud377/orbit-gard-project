@@ -1,9 +1,8 @@
 package com.orbitgard.service;
 
 import com.orbitgard.dto.response.ResendVerificationResponse;
-import com.orbitgard.entity.User;
 
 public interface VerificationEmailService {
-    void sendVerificationEmail(User user);
+    void sendVerificationEmail(String email, String token);
     ResendVerificationResponse resendVerification(String email);
 }
