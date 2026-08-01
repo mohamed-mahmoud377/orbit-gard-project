@@ -53,9 +53,6 @@ public record RegisterRequest(
         )
         String password,
 
-        @NotBlank(message = "FIELD_REQUIRED")
-        String confirmPassword,
-
         // Optional — captured and stored, never evaluated here (ORB-005)
         String promoCode
 

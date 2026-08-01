@@ -9,7 +9,7 @@ import lombok.Setter;
 @Setter
 public class ResendVerificationRequest {
 
-    @NotBlank(message = "Email is required")
-    @Email(message = "Email must be a valid address")
+    @NotBlank(message = "FIELD_REQUIRED")
+    @Email(message = "EMAIL_INVALID")
     private String email;
 }

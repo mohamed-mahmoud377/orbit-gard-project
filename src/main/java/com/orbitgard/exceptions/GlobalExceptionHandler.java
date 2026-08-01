@@ -35,7 +35,7 @@ public class GlobalExceptionHandler {
         List<FieldErrorResponse> fieldErrors = ex.getBindingResult().getFieldErrors().stream()
                 .map(fe -> FieldErrorResponse.builder()
                         .field(fe.getField())
-                        .code(ErrorCode.FIELD_REQUIRED.name())
+                        .code(fe.getDefaultMessage())
                         .build())
                 .toList();
 
