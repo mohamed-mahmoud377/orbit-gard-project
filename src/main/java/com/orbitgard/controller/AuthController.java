@@ -1,10 +1,10 @@
-package com.orbitgard.auth.controller;
+package com.orbitgard.controller;
 
-import com.orbitgard.auth.dto.request.LoginRequest;
-import com.orbitgard.auth.dto.request.RefreshTokenRequest;
-import com.orbitgard.auth.dto.response.LoginResponse;
-import com.orbitgard.auth.service.LoginService;
-import com.orbitgard.auth.service.RefreshTokenService;
+import com.orbitgard.dto.request.LoginRequest;
+import com.orbitgard.dto.request.RefreshTokenRequest;
+import com.orbitgard.dto.response.LoginResponse;
+import com.orbitgard.service.LoginService;
+import com.orbitgard.service.RefreshTokenService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;

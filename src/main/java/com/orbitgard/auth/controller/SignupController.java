@@ -1,8 +1,8 @@
 package com.orbitgard.auth.controller;
 
 import com.orbitgard.auth.service.SignupService;
-import com.orbitgard.auth.dto.request.RegisterRequest;
-import com.orbitgard.auth.dto.response.RegisterResponse;
+import com.orbitgard.dto.request.RegisterRequest;
+import com.orbitgard.dto.response.RegisterResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +23,9 @@ public class SignupController {
             @Valid @RequestBody RegisterRequest request) {
 
         RegisterResponse response = signupService.register(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
     }
 }

@@ -1,7 +1,7 @@
 package com.orbitgard.mapper;
 
-import com.orbitgard.auth.dto.request.RegisterRequest;
-import com.orbitgard.auth.dto.response.RegisterResponse;
+import com.orbitgard.dto.request.RegisterRequest;
+import com.orbitgard.dto.response.RegisterResponse;
 import com.orbitgard.entity.User;
 import com.orbitgard.enums.AccountType;
 import com.orbitgard.enums.UserStatus;

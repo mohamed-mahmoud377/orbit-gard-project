@@ -1,7 +1,7 @@
-package com.orbitgard.auth.service;
+package com.orbitgard.service;
 
-import com.orbitgard.auth.dto.request.LoginRequest;
-import com.orbitgard.auth.dto.response.LoginResponse;
+import com.orbitgard.dto.request.LoginRequest;
+import com.orbitgard.dto.response.LoginResponse;
 import com.orbitgard.entity.Session;
 import com.orbitgard.entity.User;
 import com.orbitgard.enums.AccountType;
