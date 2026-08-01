@@ -5,7 +5,6 @@ import com.orbitgard.dto.request.RefreshTokenRequest;
 import com.orbitgard.dto.request.RegisterRequest;
 import com.orbitgard.dto.response.LoginResponse;
 import com.orbitgard.dto.response.RegisterResponse;
-import com.orbitgard.security.JwtPrincipal;
 import com.orbitgard.service.AuthService;
 import com.orbitgard.service.RefreshTokenService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,16 +12,13 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/auth")
+@RequestMapping("/auth")
 public class AuthController {
 
     private final AuthService authService;
@@ -45,17 +41,7 @@ public class AuthController {
     public ResponseEntity<LoginResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
         return ResponseEntity.ok(refreshTokenService.refresh(request));
     }
-    @GetMapping("/hi")
-    public Map<String, String> hi(@AuthenticationPrincipal JwtPrincipal principal) {
-        return Map.of("message", "hi " + principal.username());
-    }
-    private InetAddress resolveRemoteAddress(HttpServletRequest request) {
-        try {
-            return InetAddress.getByName(request.getRemoteAddr());
-        } catch (UnknownHostException ex) {
-            throw new IllegalStateException("Unable to resolve request IP address", ex);
-        }
-    }
+
     @PostMapping("/register")
     public ResponseEntity<RegisterResponse> register(
             @Valid @RequestBody RegisterRequest request) {
@@ -65,5 +51,13 @@ public class AuthController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(response);
+    }
+
+    private InetAddress resolveRemoteAddress(HttpServletRequest request) {
+        try {
+            return InetAddress.getByName(request.getRemoteAddr());
+        } catch (UnknownHostException ex) {
+            throw new IllegalStateException("Unable to resolve request IP address", ex);
+        }
     }
 }

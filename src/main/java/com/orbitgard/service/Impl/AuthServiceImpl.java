@@ -1,4 +1,4 @@
-package com.orbitgard.service;
+package com.orbitgard.service.Impl;
 
 import com.orbitgard.dto.request.LoginRequest;
 import com.orbitgard.dto.request.RegisterRequest;
@@ -23,6 +23,8 @@ import com.orbitgard.repository.VerificationTokenRepository;
 import com.orbitgard.security.DeviceLabelResolver;
 import com.orbitgard.security.JwtService;
 import com.orbitgard.security.RefreshTokenGenerator;
+import com.orbitgard.service.AuthService;
+import com.orbitgard.service.VerificationEmailService;
 import com.orbitgard.util.TokenHasher;
 import com.orbitgard.validation.NameValidator;
 import com.orbitgard.validation.PhoneNumberNormalizer;

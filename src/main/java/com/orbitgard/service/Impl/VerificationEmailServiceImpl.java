@@ -1,4 +1,4 @@
-package com.orbitgard.service;
+package com.orbitgard.service.Impl;
 
 import com.orbitgard.dto.response.ResendVerificationResponse;
 import com.orbitgard.entity.User;
@@ -9,6 +9,7 @@ import com.orbitgard.exceptions.ApiException;
 import com.orbitgard.exceptions.ErrorCode;
 import com.orbitgard.repository.UserRepository;
 import com.orbitgard.repository.VerificationTokenRepository;
+import com.orbitgard.service.VerificationEmailService;
 import com.orbitgard.util.TokenHasher;
 import com.orbitgard.security.JwtService;
 import jakarta.mail.MessagingException;

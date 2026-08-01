@@ -1,4 +1,4 @@
-package com.orbitgard.service;
+package com.orbitgard.service.Impl;
 
 import com.orbitgard.dto.request.RefreshTokenRequest;
 import com.orbitgard.dto.response.LoginResponse;
@@ -11,6 +11,7 @@ import com.orbitgard.mapper.SessionMapper;
 import com.orbitgard.repository.SessionRepository;
 import com.orbitgard.security.JwtService;
 import com.orbitgard.security.RefreshTokenGenerator;
+import com.orbitgard.service.RefreshTokenService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
