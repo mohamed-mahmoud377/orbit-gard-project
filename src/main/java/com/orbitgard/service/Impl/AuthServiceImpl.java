@@ -26,7 +26,6 @@ import com.orbitgard.security.RefreshTokenGenerator;
 import com.orbitgard.service.AuthService;
 import com.orbitgard.service.VerificationEmailService;
 import com.orbitgard.util.TokenHasher;
-import com.orbitgard.validation.NameValidator;
 import com.orbitgard.validation.PhoneNumberNormalizer;
 import com.orbitgard.validation.UsernameNormalizer;
 import io.jsonwebtoken.Claims;
@@ -104,7 +103,6 @@ public class AuthServiceImpl implements AuthService {
 
         List<FieldErrorResponse> errors = new ArrayList<>();
 
-        validateShape(request, errors);
         NormalizedInput normalized = normalizeInput(request, errors);
         throwIfErrors(errors);
 
@@ -124,35 +122,6 @@ public class AuthServiceImpl implements AuthService {
         return userMapper.toRegisterResponse(saved);
     }
 
-    private void validateShape(RegisterRequest request, List<FieldErrorResponse> errors) {
-        String firstName = trimOrEmpty(request.firstName());
-        String lastName = trimOrEmpty(request.lastName());
-
-        NameValidator.Status firstNameStatus = NameValidator.validate(firstName).status();
-        if (firstNameStatus != NameValidator.Status.VALID) {
-            log.warn("First name validation failed. Status={}", firstNameStatus);
-            errors.add(new FieldErrorResponse("firstName", ErrorCode.NAME_INVALID.name()));
-        }
-
-        NameValidator.Status lastNameStatus = NameValidator.validate(lastName).status();
-        if (lastNameStatus != NameValidator.Status.VALID) {
-            log.warn("Last name validation failed. Status={}", lastNameStatus);
-            errors.add(new FieldErrorResponse("lastName", ErrorCode.NAME_INVALID.name()));
-        }
-
-        if (!isValidPasswordShape(request.password())) {
-            log.warn("Password failed validation.");
-            errors.add(new FieldErrorResponse("password", ErrorCode.PASSWORD_INVALID.name()));
-        }
-
-        if (request.password() != null
-                && !request.password().equals(request.confirmPassword())) {
-            log.warn("Password confirmation mismatch.");
-            errors.add(new FieldErrorResponse(
-                    "passwordConfirmation",
-                    ErrorCode.PASSWORD_CONFIRMATION_MISMATCH.name()));
-        }
-    }
 
     private NormalizedInput normalizeInput(RegisterRequest request, List<FieldErrorResponse> errors) {
         String normalizedUsername = UsernameNormalizer.normalize(request.username());

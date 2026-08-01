@@ -8,6 +8,6 @@ import lombok.Setter;
 @Setter
 public class VerifyEmailRequest {
 
-    @NotBlank(message = "Token is required")
+    @NotBlank(message = "FIELD_REQUIRED")
     private String token;
 }
