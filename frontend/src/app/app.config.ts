@@ -1,3 +1,4 @@
+import { APP_BASE_HREF, PlatformLocation } from '@angular/common';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { ApplicationConfig, provideBrowserGlobalErrorListeners, provideZoneChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
@@ -13,5 +14,10 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     provideHttpClient(withInterceptors([authBearerInterceptor])),
     provideAuthGateway(),
+    {
+      provide: APP_BASE_HREF,
+      useFactory: (platformLocation: PlatformLocation) => platformLocation.getBaseHrefFromDOM(),
+      deps: [PlatformLocation],
+    },
   ],
 };
