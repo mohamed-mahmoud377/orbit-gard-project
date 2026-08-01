@@ -45,6 +45,8 @@
           },
           "configurations": {
             "production": {
+              "baseHref": "/orbit/",
+              "deployUrl": "/orbit/",
               "budgets": [
                 {
                   "type": "initial",

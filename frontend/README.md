@@ -17,6 +17,14 @@ npm start
 Open `http://localhost:4200`. Development builds proxy `/api` to `http://localhost:8080`
 via `proxy.conf.json`.
 
+## Production
+
+Production is served at [http://46.224.100.97/orbit/](http://46.224.100.97/orbit/) with
+`baseHref: /orbit/` and `deployUrl: /orbit/`. The nginx container proxies `/api/*` to Spring Boot
+at the domain root, so `apiBaseUrl: '/api/v1'` works same-origin without a path prefix.
+
+`useMockAuth` remains `true` in production until auth APIs are deployed on the server.
+
 ## Auth mode switch
 
 Configured in:
@@ -41,6 +49,8 @@ After sign-up, the mock gateway exposes the latest activation token on
 `window.__orbitLastVerifyToken` for local testing. Activation route:
 
 `http://localhost:4200/activate?token=<token>&email=<email>`
+
+Production activation links should use `https://<host>/orbit/activate?token=…`.
 
 ## Implemented auth flows
 

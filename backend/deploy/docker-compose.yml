@@ -6,7 +6,8 @@
 # Required variables (read from /root/orbit/.env on the server):
 #   POSTGRES_PASSWORD  - database password (already present)
 # Optional (injected by the deploy workflow):
-#   APP_IMAGE          - exact image tag to run; defaults to :latest
+#   APP_IMAGE          - backend image tag; defaults to :backend-latest
+#   WEB_IMAGE          - frontend/nginx image tag; defaults to :frontend-latest
 
 services:
   db:
@@ -36,7 +37,7 @@ services:
       retries: 5
 
   app:
-    image: ${APP_IMAGE:-ghcr.io/mohamed-mahmoud377/orbit-gard-project:latest}
+    image: ${APP_IMAGE:-ghcr.io/mohamed-mahmoud377/orbit-gard-project:backend-latest}
     container_name: orbit-app
     restart: unless-stopped
     depends_on:
@@ -47,14 +48,28 @@ services:
       DB_USERNAME: orbit
       DB_PASSWORD: ${POSTGRES_PASSWORD}
       SERVER_PORT: "8080"
-    ports:
-      - "8080:8080"
+      SPRING_PROFILES_ACTIVE: prod
+      # Reserved for auth branch merge:
+      # JWT_SECRET: ${JWT_SECRET}
+      # MAIL_HOST: ${MAIL_HOST}
+      # MAIL_USER: ${MAIL_USER}
+      # MAIL_PASSWORD: ${MAIL_PASSWORD}
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:8080/api/ping || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 5
       start_period: 60s
+
+  web:
+    image: ${WEB_IMAGE:-ghcr.io/mohamed-mahmoud377/orbit-gard-project:frontend-latest}
+    container_name: orbit-web
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    ports:
+      - "80:80"
 
 volumes:
   orbit-db-data:
