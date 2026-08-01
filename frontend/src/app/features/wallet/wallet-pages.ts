@@ -2,6 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { AssetUrlPipe } from '../../core/asset-url';
 import { DemoStore } from '../../data-access';
 import { Transaction, User } from '../../shared/models';
 import { PageHeader } from '../../shared/ui/page-header';
@@ -28,14 +29,14 @@ function listItem(transaction: Transaction): TransactionListItem {
 
 @Component({
   selector: 'app-dashboard-page',
-  imports: [RouterLink, PageHeader, TransactionList],
+  imports: [RouterLink, PageHeader, TransactionList, AssetUrlPipe],
   template: `
     <section class="page stack" data-node-id="3:2">
       <app-page-header
         [title]="'Good evening, ' + (store.currentUser()?.fullName?.split(' ')?.[0] ?? 'Mohamed')"
         subtitle="Saturday, 25 July 2026"
       >
-        <img src="/assets/notifications.svg" width="40" height="40" alt="Notifications" />
+        <img [src]="'assets/notifications.svg' | assetUrl" width="40" height="40" alt="Notifications" />
       </app-page-header>
 
       <div class="balance-card">
@@ -55,7 +56,7 @@ function listItem(transaction: Transaction): TransactionListItem {
             </div>
           </div>
         </div>
-        <img class="balance-graphic" src="/assets/orbit-graphic.svg" alt="" aria-hidden="true" />
+        <img class="balance-graphic" [src]="'assets/orbit-graphic.svg' | assetUrl" alt="" aria-hidden="true" />
       </div>
 
       <div class="quick-actions">

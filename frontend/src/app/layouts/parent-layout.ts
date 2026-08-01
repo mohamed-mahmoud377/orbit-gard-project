@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { AssetUrlPipe, assetUrl } from '../core/asset-url';
 import { AuthFacade } from '../features/auth/data-access';
 import { OrbitLogo } from '../shared/ui/orbit-logo';
 
@@ -13,7 +14,7 @@ interface NavigationItem {
 
 @Component({
   selector: 'app-parent-layout',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, OrbitLogo],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, OrbitLogo, AssetUrlPipe],
   template: `
     <div class="shell">
       <aside class="sidebar">
@@ -54,7 +55,7 @@ interface NavigationItem {
 
           <p class="nav-heading">Family</p>
           <a class="nav-item" routerLink="/family" routerLinkActive="active">
-            <img src="/assets/nav-family.svg" alt="" aria-hidden="true" />
+            <img [src]="'assets/nav-family.svg' | assetUrl" alt="" aria-hidden="true" />
             <span>Family</span>
             <span class="badge">2</span>
           </a>
@@ -63,7 +64,7 @@ interface NavigationItem {
         <div class="sidebar-spacer"></div>
 
         <a class="nav-item" routerLink="/settings" routerLinkActive="active">
-          <img src="/assets/nav-settings.svg" alt="" aria-hidden="true" />
+          <img [src]="'assets/nav-settings.svg' | assetUrl" alt="" aria-hidden="true" />
           <span>Settings</span>
         </a>
 
@@ -106,18 +107,18 @@ export class ParentLayout {
     {
       label: 'Dashboard',
       route: '/dashboard',
-      icon: '/assets/nav-dashboard.svg',
+      icon: assetUrl('assets/nav-dashboard.svg'),
       exact: true,
     },
   ];
 
   protected readonly moneyNavigation: readonly NavigationItem[] = [
-    { label: 'Top up', route: '/top-up', icon: '/assets/nav-topup.svg' },
-    { label: 'Send money', route: '/send', icon: '/assets/nav-send.svg' },
+    { label: 'Top up', route: '/top-up', icon: assetUrl('assets/nav-topup.svg') },
+    { label: 'Send money', route: '/send', icon: assetUrl('assets/nav-send.svg') },
     {
       label: 'Transactions',
       route: '/transactions',
-      icon: '/assets/nav-transactions.svg',
+      icon: assetUrl('assets/nav-transactions.svg'),
       badge: '2',
     },
   ];
@@ -125,8 +126,8 @@ export class ParentLayout {
   protected readonly mobileNavigation: readonly NavigationItem[] = [
     ...this.mainNavigation,
     ...this.moneyNavigation.slice(0, 2),
-    { label: 'Family', route: '/family', icon: '/assets/nav-family.svg' },
-    { label: 'Settings', route: '/settings', icon: '/assets/nav-settings.svg' },
+    { label: 'Family', route: '/family', icon: assetUrl('assets/nav-family.svg') },
+    { label: 'Settings', route: '/settings', icon: assetUrl('assets/nav-settings.svg') },
   ];
 
   protected logout(): void {

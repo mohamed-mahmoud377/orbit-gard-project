@@ -1,6 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { AssetUrlPipe } from '../../core/asset-url';
 import { DemoStore } from '../../data-access';
 import { ChildLimits, ChildWallet, Transaction, User } from '../../shared/models';
 import { PageHeader } from '../../shared/ui/page-header';
@@ -289,7 +290,7 @@ export class AddChildPage {
 
 @Component({
   selector: 'app-child-wallet-page',
-  imports: [RouterLink, PageHeader, TransactionList],
+  imports: [RouterLink, PageHeader, TransactionList, AssetUrlPipe],
   template: `
     <section class="page stack" data-node-id="31:2">
       <app-page-header
@@ -305,7 +306,7 @@ export class AddChildPage {
             {{ money(store.wallet()?.heldMinor ?? 0) }}
           </p>
         </div>
-        <img src="/assets/child-orbit-graphic.svg" alt="" aria-hidden="true" />
+        <img [src]="'assets/child-orbit-graphic.svg' | assetUrl" alt="" aria-hidden="true" />
       </article>
       <div class="restriction">
         Your parent funds this wallet. Direct top-ups and transfers are not available.
