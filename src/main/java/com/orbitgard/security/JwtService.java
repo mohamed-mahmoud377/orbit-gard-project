@@ -48,10 +48,7 @@ public class JwtService {
                 .compact();
     }
 
-    public String mintRefreshToken(UUID userId, UUID sessionId, Instant expiresAt) {
-        return baseBuilder(userId, sessionId, TYPE_REFRESH, Instant.now(), expiresAt)
-                .compact();
-    }
+
 
     public String mintEmailVerificationToken(UUID userId, String email, Instant expiresAt) {
         Instant now = Instant.now();
@@ -94,9 +91,6 @@ public class JwtService {
         return TYPE_ACCESS.equals(parsed.getPayload().get(CLAIM_TYPE, String.class));
     }
 
-    public boolean isRefreshToken(Jws<Claims> parsed) {
-        return TYPE_REFRESH.equals(parsed.getPayload().get(CLAIM_TYPE, String.class));
-    }
 
     public long accessTokenTtlSeconds() {
         return accessTokenTtlSeconds;

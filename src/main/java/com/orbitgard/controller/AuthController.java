@@ -2,16 +2,20 @@ package com.orbitgard.controller;
 
 import com.orbitgard.dto.request.LoginRequest;
 import com.orbitgard.dto.request.RefreshTokenRequest;
+import com.orbitgard.dto.request.RegisterRequest;
 import com.orbitgard.dto.response.LoginResponse;
+import com.orbitgard.dto.response.RegisterResponse;
 import com.orbitgard.security.JwtPrincipal;
-import com.orbitgard.service.LoginService;
+import com.orbitgard.service.AuthService;
 import com.orbitgard.service.RefreshTokenService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -21,11 +25,11 @@ import java.util.Map;
 @RequestMapping("/api/v1/auth")
 public class AuthController {
 
-    private final LoginService loginService;
+    private final AuthService authService;
     private final RefreshTokenService refreshTokenService;
 
-    public AuthController(LoginService loginService, RefreshTokenService refreshTokenService) {
-        this.loginService = loginService;
+    public AuthController(AuthService authService, RefreshTokenService refreshTokenService) {
+        this.authService = authService;
         this.refreshTokenService = refreshTokenService;
     }
 
@@ -34,7 +38,7 @@ public class AuthController {
             @Valid @RequestBody LoginRequest request,
             @RequestHeader(value = HttpHeaders.USER_AGENT, required = false) String userAgent,
             HttpServletRequest httpRequest) {
-        return ResponseEntity.ok(loginService.login(request, userAgent, resolveRemoteAddress(httpRequest)));
+        return ResponseEntity.ok(authService.login(request, userAgent, resolveRemoteAddress(httpRequest)));
     }
 
     @PostMapping("/refresh")
@@ -51,5 +55,15 @@ public class AuthController {
         } catch (UnknownHostException ex) {
             throw new IllegalStateException("Unable to resolve request IP address", ex);
         }
+    }
+    @PostMapping("/register")
+    public ResponseEntity<RegisterResponse> register(
+            @Valid @RequestBody RegisterRequest request) {
+
+        RegisterResponse response = authService.register(request);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
     }
 }
