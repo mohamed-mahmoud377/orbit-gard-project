@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { DemoStore } from '../data-access';
+import { AuthFacade } from '../features/auth/data-access';
 import { OrbitLogo } from '../shared/ui/orbit-logo';
 
 interface NavigationItem {
@@ -99,7 +99,7 @@ interface NavigationItem {
   styleUrl: './parent-layout.scss',
 })
 export class ParentLayout {
-  private readonly store = inject(DemoStore);
+  private readonly auth = inject(AuthFacade);
   private readonly router = inject(Router);
 
   protected readonly mainNavigation: readonly NavigationItem[] = [
@@ -130,7 +130,7 @@ export class ParentLayout {
   ];
 
   protected logout(): void {
-    this.store.logout();
+    this.auth.logoutLocal();
     void this.router.navigateByUrl('/auth/login');
   }
 }

@@ -1,8 +1,11 @@
 # Orbit Frontend
 
-Angular 20, Tailwind, and SCSS implementation of the Orbit digital-wallet Figma flows. The app
-uses a typed, persistent browser mock store, so it runs independently from the Spring backend.
-Shared tokens, mixins, and component styles live under `src/styles/`.
+Angular 20, Tailwind, and SCSS implementation of the Orbit digital-wallet Figma flows.
+
+Authentication (ORB-001 / ORB-002 / ORB-003) is wired to the Identity and Authentication API
+contract through an `AuthFacade`. By default the app uses a contract-faithful **mock gateway**
+so every acceptance path works before the Spring APIs are deployed. Wallet/money screens still
+use the local demo store until those APIs exist.
 
 ## Run locally
 
@@ -11,25 +14,61 @@ npm install
 npm start
 ```
 
-Open `http://localhost:4200`.
+Open `http://localhost:4200`. Development builds proxy `/api` to `http://localhost:8080`
+via `proxy.conf.json`.
 
-## Demo accounts
+## Auth mode switch
+
+Configured in:
+
+- `src/environments/environment.development.ts`
+- `src/environments/environment.ts`
+
+| Flag | Meaning |
+|------|---------|
+| `useMockAuth: true` | Default. Uses `MockAuthGateway` (no backend required). |
+| `useMockAuth: false` | Calls `HttpAuthGateway` against `apiBaseUrl` (`/api/v1`). |
+
+When APIs are deployed, set `useMockAuth: false` and confirm the cutover checklist below.
+
+## Mock auth accounts
 
 - Parent: `mohamed` / `Orbit@123`
 - Child: `youssef` / `Youssef@123`
-- Sign-up verification code: `123456`
-- Merchant demo: `http://localhost:4200/pay/nile-books`
+- Merchant demo: `http://localhost:4200/pay/nile-books` (requires an active signed-in session)
 
-State persists in local storage. Use **Settings → Reset demo** to restore the original fixtures.
+After sign-up, the mock gateway exposes the latest activation token on
+`window.__orbitLastVerifyToken` for local testing. Activation route:
 
-## Implemented flows
+`http://localhost:4200/activate?token=<token>&email=<email>`
 
-- Sign in, sign up, verification, expired-token, and password-reset states
-- Parent dashboard, balance breakdown, top-up success/failure, transfers, and transaction details
-- Family overview, child creation, funding, spending limits, and child-restricted wallet views
-- Public merchant `/pay` flow with pending hold, settlement, and rejection
-- Account profile, active session revocation, and password change with global sign-out
-- Desktop and mobile navigation shells derived from the Orbit Figma variables and assets
+## Implemented auth flows
+
+- Sign up with first/last name, username availability, Egyptian mobile, password rules, promo code capture
+- Check-inbox + resend with 2-minute countdown driven by `retryAfterSeconds`
+- Email activation via `/activate?token=…` (`POST /auth/verify`) — never auto-signs in
+- Username-only sign-in, remember-me payload, generic credential failures, unverified-account handling
+- Bearer access-token interceptor and local session store (refresh/logout APIs intentionally not invented yet)
+
+Out of scope for this release: password reset APIs, child-specific sign-in story, refresh/logout,
+and device session management endpoints.
+
+## Backend deployment cutover checklist
+
+Before flipping `useMockAuth` to `false`:
+
+1. Registration is served at `POST /api/v1/auth/register` (not `/api/auth/register`).
+2. All five controllers exist on one deployed branch:
+   - `GET /api/v1/auth/username-available`
+   - `POST /api/v1/auth/register`
+   - `POST /api/v1/auth/verify`
+   - `POST /api/v1/auth/verify/resend`
+   - `POST /api/v1/auth/login`
+3. Base URL / port matches the Angular proxy or `apiBaseUrl`.
+4. CORS permits the frontend origin (`http://localhost:4200` in development).
+5. Failures return `application/problem+json` with the documented `code` and `fieldErrors`.
+6. Sign-in currently sends **username only** (literal contract field). Revisit if product later
+   accepts email in the same field.
 
 ## Quality checks
 
@@ -40,5 +79,5 @@ npm run build
 npm run e2e
 ```
 
-Playwright runs the connected parent, child, family, and merchant journeys on desktop Chromium
-and a mobile Pixel 7 viewport.
+Playwright covers login landing, credential failures, signup → activate → sign-in, unverified
+login blocking, parent/child wallet shells, and merchant payment with an explicit session.

@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { DemoStore } from '../data-access';
+import { AuthFacade } from '../features/auth/data-access';
 import { OrbitLogo } from '../shared/ui/orbit-logo';
 
 @Component({
@@ -28,11 +28,11 @@ import { OrbitLogo } from '../shared/ui/orbit-logo';
   styleUrl: './child-layout.scss',
 })
 export class ChildLayout {
-  private readonly store = inject(DemoStore);
+  private readonly auth = inject(AuthFacade);
   private readonly router = inject(Router);
 
   protected logout(): void {
-    this.store.logout();
+    this.auth.logoutLocal();
     void this.router.navigateByUrl('/auth/login');
   }
 }

@@ -11,28 +11,43 @@ export const routes: Routes = [
       {
         path: 'login',
         title: 'Sign in · Orbit',
-        loadComponent: () => import('./features/auth/auth-pages'),
+        loadComponent: () => import('./features/auth/pages/login.page'),
       },
       {
         path: 'sign-up',
         title: 'Create account · Orbit',
         loadComponent: () =>
-          import('./features/auth/auth-pages').then((module) => module.SignUpPage),
+          import('./features/auth/pages/sign-up.page').then((module) => module.SignUpPage),
+      },
+      {
+        path: 'check-inbox',
+        title: 'Check your inbox · Orbit',
+        loadComponent: () =>
+          import('./features/auth/pages/check-inbox.page').then(
+            (module) => module.CheckInboxPage,
+          ),
       },
       {
         path: 'verify',
-        title: 'Verify account · Orbit',
-        loadComponent: () =>
-          import('./features/auth/auth-pages').then((module) => module.VerifyPage),
+        pathMatch: 'full',
+        redirectTo: 'check-inbox',
       },
       {
         path: 'forgot-password',
         title: 'Reset password · Orbit',
         loadComponent: () =>
-          import('./features/auth/auth-pages').then((module) => module.ForgotPasswordPage),
+          import('./features/auth/pages/forgot-password.page').then(
+            (module) => module.ForgotPasswordPage,
+          ),
       },
       { path: '', pathMatch: 'full', redirectTo: 'login' },
     ],
+  },
+  {
+    path: 'activate',
+    title: 'Activate wallet · Orbit',
+    loadComponent: () =>
+      import('./features/auth/pages/activate.page').then((module) => module.ActivatePage),
   },
   {
     path: '',

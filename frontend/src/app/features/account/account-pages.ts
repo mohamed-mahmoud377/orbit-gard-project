@@ -3,6 +3,8 @@ import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { DemoStore, DEMO_CREDENTIALS } from '../../data-access';
+import { AuthFacade } from '../auth/data-access';
+import { MOCK_AUTH_SEED } from '../auth/data-access/mock-auth.gateway';
 import { PageHeader } from '../../shared/ui/page-header';
 import { StatusView } from '../../shared/ui/status-view';
 
@@ -66,6 +68,7 @@ import { StatusView } from '../../shared/ui/status-view';
 })
 export default class SettingsPage {
   protected readonly store = inject(DemoStore);
+  private readonly auth = inject(AuthFacade);
   protected readonly saved = signal(false);
   protected firstName = 'Mohamed';
   protected lastName = 'Mahmoud';
@@ -87,8 +90,17 @@ export default class SettingsPage {
   protected resetDemo(): void {
     this.store.resetDemoData();
     this.restore();
-    const login = this.store.login(DEMO_CREDENTIALS.parent);
-    this.saved.set(login.ok);
+    this.auth.logoutLocal();
+    this.auth
+      .login({
+        username: MOCK_AUTH_SEED.parent.username,
+        password: MOCK_AUTH_SEED.parent.password,
+        rememberMe: false,
+      })
+      .subscribe({
+        next: () => this.saved.set(true),
+        error: () => this.saved.set(false),
+      });
   }
 }
 
@@ -124,6 +136,7 @@ export default class SettingsPage {
 })
 export class DevicesPage {
   protected readonly store = inject(DemoStore);
+  private readonly auth = inject(AuthFacade);
   private readonly router = inject(Router);
   protected readonly message = signal('');
 
@@ -134,6 +147,7 @@ export class DevicesPage {
       return;
     }
     if (!this.store.isAuthenticated()) {
+      this.auth.logoutLocal();
       void this.router.navigateByUrl('/auth/login');
       return;
     }
@@ -177,6 +191,7 @@ export class DevicesPage {
 })
 export class ChangePasswordPage {
   private readonly store = inject(DemoStore);
+  private readonly auth = inject(AuthFacade);
   private readonly router = inject(Router);
   protected readonly error = signal('');
   protected readonly complete = signal(false);
@@ -197,6 +212,7 @@ export class ChangePasswordPage {
       this.error.set(result.message);
       return;
     }
+    this.auth.logoutLocal();
     this.complete.set(true);
   }
 

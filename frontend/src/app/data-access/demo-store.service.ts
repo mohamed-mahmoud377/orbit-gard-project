@@ -546,6 +546,62 @@ export class DemoStore {
     });
   }
 
+  /**
+   * Compatibility seam: mirror an API/mock auth principal into the wallet demo store
+   * so existing mocked money screens keep working until their APIs arrive.
+   */
+  adoptAuthenticatedUser(input: {
+    readonly username: string;
+    readonly firstName: string;
+    readonly lastName: string;
+    readonly accountType: 'USER' | 'CHILD';
+  }): void {
+    const state = this.state();
+    const username = input.username.trim().replace(/^@/, '').toLowerCase();
+    let user = state.users.find((candidate) => candidate.username === username);
+    let nextState = state;
+
+    if (!user) {
+      const sequence = state.sequence + 1;
+      user = {
+        id: `usr_auth_${username}_${sequence}`,
+        role: input.accountType === 'CHILD' ? 'child' : 'parent',
+        status: 'active',
+        fullName: `${input.firstName} ${input.lastName}`.trim(),
+        username,
+        createdAt: this.timestamp(sequence),
+      };
+      nextState = {
+        ...state,
+        users: [...state.users, user],
+        wallets: { ...state.wallets, [user.id]: wallet(0, 0, user.createdAt) },
+        sequence,
+      };
+    }
+
+    const sequence = nextState.sequence + 1;
+    const now = this.timestamp(sequence);
+    const session: Session = {
+      id: `session_auth_${sequence}`,
+      userId: user.id,
+      device: this.makeDevice({ name: 'Orbit Web' }, sequence),
+      createdAt: now,
+      lastActiveAt: now,
+      current: true,
+    };
+    const sessions = nextState.sessions.map((existing) =>
+      existing.userId === user!.id && existing.current
+        ? { ...existing, current: false }
+        : existing,
+    );
+    this.commit({
+      ...nextState,
+      sessions: [...sessions, session],
+      currentSessionId: session.id,
+      sequence,
+    });
+  }
+
   signUp(
     input: SignUpInput,
   ): ActionResult<SignUpSuccess, SignUpErrorCode> {
@@ -1255,7 +1311,8 @@ export class DemoStore {
       const parsed: unknown = JSON.parse(raw);
       if (!isDemoState(parsed)) return createFixtures();
       this.assertWalletInvariants(parsed);
-      return parsed;
+      // Auth session ownership moved to AuthTokenStore; keep wallet demo logged out on boot.
+      return { ...parsed, currentSessionId: null };
     } catch {
       return createFixtures();
     }

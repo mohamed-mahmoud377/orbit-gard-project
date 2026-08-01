@@ -1,5 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { DemoStore, DEMO_CREDENTIALS } from '../../data-access';
+import { RouterLink } from '@angular/router';
+import { DemoStore } from '../../data-access';
 import { StatusView } from '../../shared/ui/status-view';
 import { OrbitLogo } from '../../shared/ui/orbit-logo';
 import { formatMoney } from '../../shared/utils/money';
@@ -8,7 +9,7 @@ type MerchantStage = 'product' | 'checkout' | 'pending' | 'settled' | 'rejected'
 
 @Component({
   selector: 'app-merchant-pay-page',
-  imports: [OrbitLogo, StatusView],
+  imports: [OrbitLogo, StatusView, RouterLink],
   template: `
     <main class="merchant-page">
       <header class="store-bar">
@@ -44,10 +45,20 @@ type MerchantStage = 'product' | 'checkout' | 'pending' | 'settled' | 'rejected'
             <div class="charge"><strong>Charge to &#64;mohamed</strong><strong>{{ money(product().priceMinor) }}</strong></div>
           </div>
           @if (!store.isAuthenticated()) {
-            <div class="notice notice-info">This demo will sign in the Mohamed fixture before placing the hold.</div>
+            <div class="notice notice-info">
+              Sign in to Orbit before confirming this payment.
+              <a class="text-link" routerLink="/auth/login">Sign in</a>
+            </div>
           }
           @if (error()) { <div class="notice notice-danger">{{ error() }}</div> }
-          <button class="btn btn-primary" type="button" (click)="confirm()">Confirm payment</button>
+          <button
+            class="btn btn-primary"
+            type="button"
+            [disabled]="!store.isAuthenticated()"
+            (click)="confirm()"
+          >
+            Confirm payment
+          </button>
           <div class="notice notice-held">
             This demonstration identifies the payer by username alone. Production would require a
             signed payment token or redirect-based consent.
@@ -100,11 +111,8 @@ export default class MerchantPayPage {
 
   protected confirm(): void {
     if (!this.store.isAuthenticated()) {
-      const login = this.store.login(DEMO_CREDENTIALS.parent);
-      if (!login.ok) {
-        this.error.set(login.message);
-        return;
-      }
+      this.error.set('Sign in to Orbit before confirming this payment.');
+      return;
     }
     const product = this.product();
     const result = this.store.startMerchantPayment(product.id);

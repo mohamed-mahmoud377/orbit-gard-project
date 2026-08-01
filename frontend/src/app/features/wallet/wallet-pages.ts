@@ -162,7 +162,8 @@ type TopUpStage = 'form' | 'pending' | 'success' | 'failure';
                 <span>EGP</span>
                 <input
                   class="input amount-input"
-                  [(ngModel)]="amount"
+                  [ngModel]="amount()"
+                  (ngModelChange)="amount.set($event)"
                   inputmode="decimal"
                   aria-label="Top-up amount"
                 />
@@ -173,7 +174,7 @@ type TopUpStage = 'form' | 'pending' | 'success' | 'failure';
                     class="chip"
                     [class.active]="amountMinor() === quick * 100"
                     type="button"
-                    (click)="amount = quick.toString()"
+                    (click)="amount.set(quick.toString())"
                   >
                     {{ quick | number }}
                   </button>
@@ -215,8 +216,8 @@ export class TopUpPage {
   protected readonly error = signal('');
   protected readonly quickAmounts = [100, 250, 500, 1000, 2000] as const;
   protected readonly money = formatMoney;
-  protected amount = '500';
-  protected amountMinor = computed(() => parseMoney(this.amount));
+  protected readonly amount = signal('500');
+  protected readonly amountMinor = computed(() => parseMoney(this.amount()));
 
   protected continueToPaymob(): void {
     const amount = this.amountMinor();
