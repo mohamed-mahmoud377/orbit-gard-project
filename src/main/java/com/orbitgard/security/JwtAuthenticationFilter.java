@@ -1,5 +1,6 @@
 package com.orbitgard.security;
 
+import com.orbitgard.enums.AccountType;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jws;
@@ -16,6 +17,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.UUID;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -31,27 +33,32 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         try {
             String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-            
+
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
                 String token = authHeader.substring(7);
                 Jws<Claims> parsedToken = jwtService.parse(token);
-                
-                // Verify it's an access token
+
                 if (jwtService.isAccessToken(parsedToken)) {
                     Claims claims = parsedToken.getPayload();
-                    String userId = claims.getSubject();
-                    
-                    UsernamePasswordAuthenticationToken authentication = 
-                        new UsernamePasswordAuthenticationToken(userId, null, new ArrayList<>());
+
+                    JwtPrincipal principal = new JwtPrincipal(
+                            UUID.fromString(claims.getSubject()),
+                            claims.get("username", String.class),
+                            AccountType.valueOf(claims.get("accountType", String.class)),
+                            UUID.fromString(claims.get("sid", String.class))
+                    );
+
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(principal, null, new ArrayList<>());
                     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    
+
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
             }
         } catch (JwtException | IllegalArgumentException ex) {
-            logger.error("JWT token validation failed", ex);
+            logger.debug("JWT token validation failed", ex);
         }
-        
+
         filterChain.doFilter(request, response);
     }
 }

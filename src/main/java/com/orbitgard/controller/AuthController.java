@@ -3,12 +3,14 @@ package com.orbitgard.controller;
 import com.orbitgard.dto.request.LoginRequest;
 import com.orbitgard.dto.request.RefreshTokenRequest;
 import com.orbitgard.dto.response.LoginResponse;
+import com.orbitgard.security.JwtPrincipal;
 import com.orbitgard.service.LoginService;
 import com.orbitgard.service.RefreshTokenService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.InetAddress;
@@ -40,8 +42,8 @@ public class AuthController {
         return ResponseEntity.ok(refreshTokenService.refresh(request));
     }
     @GetMapping("/hi")
-    public Map<String, String> ping() {
-        return Map.of("status", "ok", "service", "orbit graduation project is working fine on the remote server toz fe syam");
+    public Map<String, String> hi(@AuthenticationPrincipal JwtPrincipal principal) {
+        return Map.of("message", "hi " + principal.username());
     }
     private InetAddress resolveRemoteAddress(HttpServletRequest request) {
         try {
