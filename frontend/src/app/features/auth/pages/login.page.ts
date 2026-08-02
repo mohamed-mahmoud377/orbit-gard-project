@@ -20,7 +20,7 @@ import { environment } from '../../../../environments/environment';
       </header>
 
       @if (banner()) {
-        <div class="notice notice-danger" role="alert" tabindex="-1" #bannerEl>
+        <div class="notice notice-danger" role="alert" aria-live="assertive">
           {{ banner() }}
         </div>
       }
@@ -145,9 +145,6 @@ export default class LoginPage {
           this.banner.set(AUTH_MESSAGES.networkError);
         }
         // Preserve typed values — never clear the form on failure.
-        queueMicrotask(() => {
-          document.querySelector<HTMLElement>('.notice-danger')?.focus();
-        });
       },
     });
   }

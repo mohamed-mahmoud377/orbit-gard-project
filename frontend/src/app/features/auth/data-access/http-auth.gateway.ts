@@ -38,21 +38,23 @@ export class HttpAuthGateway implements AuthGateway {
     return this.http
       .get<BackendUsernameAvailabilityResponse>(`${this.baseUrl}/auth/username-available`, { params })
       .pipe(
-        map((body) => normalizeUsernameAvailability(username, body)),
+        map((body: BackendUsernameAvailabilityResponse) =>
+          normalizeUsernameAvailability(username, body),
+        ),
         catchError((error) => this.mapError(error)),
       );
   }
 
   register(request: RegisterRequest): Observable<RegisterResponse> {
     return this.http.post<BackendRegisterResponse>(`${this.baseUrl}/auth/register`, request).pipe(
-      map((body) => normalizeRegisterResponse(body)),
+      map((body: BackendRegisterResponse) => normalizeRegisterResponse(body)),
       catchError((error) => this.mapError(error)),
     );
   }
 
   verify(request: VerifyRequest): Observable<VerifyResponse> {
     return this.http.post<BackendVerifyResponse>(`${this.baseUrl}/auth/verify`, request).pipe(
-      map((body) => normalizeVerifyResponse(body)),
+      map((body: BackendVerifyResponse) => normalizeVerifyResponse(body)),
       catchError((error) => this.mapError(error)),
     );
   }
@@ -65,7 +67,7 @@ export class HttpAuthGateway implements AuthGateway {
 
   login(request: LoginRequest): Observable<LoginResponse> {
     return this.http.post<BackendLoginResponse>(`${this.baseUrl}/auth/login`, request).pipe(
-      map((body) => normalizeLoginResponse(body)),
+      map((body: BackendLoginResponse) => normalizeLoginResponse(body)),
       catchError((error) => this.mapError(error)),
     );
   }

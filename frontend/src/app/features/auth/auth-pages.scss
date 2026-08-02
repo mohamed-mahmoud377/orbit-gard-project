@@ -1,8 +1,18 @@
 @use 'mixins';
 
+:host {
+  display: block;
+  min-width: 0;
+  width: 100%;
+}
+
 .auth-card {
   display: grid;
+  justify-items: stretch;
   width: min(100%, 420px);
+  min-width: 0;
+  max-width: 100%;
+  margin-inline: auto;
   gap: 20px;
 
   h1 {
@@ -20,6 +30,11 @@
 
 .auth-card-wide {
   width: min(100%, 520px);
+}
+
+.auth-card > .notice {
+  width: 100%;
+  min-width: 0;
 }
 
 .auth-form,

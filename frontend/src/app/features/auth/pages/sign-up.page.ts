@@ -16,6 +16,7 @@ import { AuthApiError } from '../data-access/auth.models';
 import { fieldErrorsFromApi, bannerMessageFromApi } from '../data-access/auth-error.mapper';
 import {
   AUTH_MESSAGES,
+  FieldErrors,
   isValidUsername,
   normalizeUsername,
   validateRegisterForm,
@@ -71,7 +72,7 @@ type AvailabilityState = 'idle' | 'checking' | 'available' | 'taken' | 'invalid'
           </div>
         </div>
 
-        <div class="field" [class.field-invalid]="fieldErrors()['username']">
+        <div class="field" [class.field-invalid]="usernameShowsInvalid()">
           <label for="username">Username</label>
           <input
             class="input"
@@ -79,7 +80,7 @@ type AvailabilityState = 'idle' | 'checking' | 'available' | 'taken' | 'invalid'
             formControlName="username"
             autocomplete="username"
             placeholder="omar.hassan"
-            [attr.aria-invalid]="!!fieldErrors()['username']"
+            [attr.aria-invalid]="usernameShowsInvalid()"
             [attr.aria-describedby]="usernameDescribedBy()"
           />
           @if (availability() === 'checking') {
@@ -93,7 +94,7 @@ type AvailabilityState = 'idle' | 'checking' | 'available' | 'taken' | 'invalid'
           } @else if (availability() === 'invalid' && form.controls.username.value.trim()) {
             <p class="field-error" id="username-availability">{{ AUTH_MESSAGES.usernameInvalid }}</p>
           }
-          @if (fieldErrors()['username'] && availability() !== 'taken' && availability() !== 'invalid') {
+          @if (fieldErrors()['username'] && availability() === 'idle') {
             <p class="field-error" id="username-error">{{ fieldErrors()['username'] }}</p>
           }
         </div>
@@ -195,7 +196,7 @@ type AvailabilityState = 'idle' | 'checking' | 'available' | 'taken' | 'invalid'
         <button
           class="btn btn-primary"
           type="submit"
-          [disabled]="submitting() || availability() === 'taken' || availability() === 'checking'"
+          [disabled]="submitting() || availability() === 'taken' || availability() === 'checking' || availability() === 'invalid'"
         >
           {{ submitting() ? 'Creating account…' : 'Create account' }}
         </button>
@@ -240,6 +241,7 @@ export class SignUpPage {
         distinctUntilChanged(),
         switchMap((value) => {
           const trimmed = value.trim();
+          this.clearFieldError('username');
           if (!trimmed) {
             this.availability.set('idle');
             return of(null);
@@ -275,12 +277,23 @@ export class SignUpPage {
     return null;
   }
 
+  protected usernameShowsInvalid(): boolean {
+    const avail = this.availability();
+    if (avail === 'taken' || avail === 'invalid') return true;
+    if (avail === 'available' || avail === 'checking') return false;
+    return !!this.fieldErrors()['username'];
+  }
+
   protected submit(): void {
     this.banner.set('');
     const value = this.form.getRawValue();
     const localErrors = validateRegisterForm(value);
     if (this.availability() === 'taken') {
       localErrors.username = AUTH_MESSAGES.usernameTaken;
+    } else if (this.availability() === 'invalid') {
+      localErrors.username = AUTH_MESSAGES.usernameInvalid;
+    } else if (this.availability() === 'available') {
+      delete localErrors.username;
     }
     this.fieldErrors.set(localErrors);
     if (Object.keys(localErrors).length) {
@@ -322,5 +335,12 @@ export class SignUpPage {
     queueMicrotask(() => {
       document.querySelector<HTMLElement>('.field-invalid .input')?.focus();
     });
+  }
+
+  private clearFieldError(field: keyof FieldErrors): void {
+    if (!this.fieldErrors()[field]) return;
+    const next = { ...this.fieldErrors() };
+    delete next[field];
+    this.fieldErrors.set(next);
   }
 }
