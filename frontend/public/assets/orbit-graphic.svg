@@ -1,0 +1,10 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Orbit graphic">
+<circle id="Ring 200" cx="100" cy="100" r="99.25" stroke="#0E2C6B" stroke-width="1.5"/>
+<circle id="Ring 152" cx="100" cy="100" r="75.25" stroke="#1668D9" stroke-width="1.5"/>
+<circle id="Ring 104" cx="100" cy="100" r="51" stroke="#1A4FB0" stroke-width="2"/>
+<circle id="Core" cx="100" cy="100" r="21.25" fill="#E7F0FD" stroke="#1A4FB0" stroke-width="1.5"/>
+<circle id="Satellite" cx="176" cy="67" r="7" fill="#1A4FB0"/>
+<circle id="Satellite 2" cx="35" cy="145" r="5" fill="#6941C6"/>
+</g>
+</svg>
