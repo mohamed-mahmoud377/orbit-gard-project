@@ -134,7 +134,7 @@ jobs:
               exit 1
             fi
 
-            curl -fsS http://localhost/api/ping
+            curl -fsS http://localhost/api/v1/ping
 
             ROOT_CODE=$(curl -fsS -o /dev/null -w '%{http_code}' http://localhost/)
             if [ "$ROOT_CODE" != "302" ]; then

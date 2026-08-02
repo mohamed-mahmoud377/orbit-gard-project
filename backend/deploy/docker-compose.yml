@@ -54,8 +54,8 @@ services:
     ports:
       - "8080:8080"
     healthcheck:
-      # context-path is /api/v1, HealthController maps /api/ping -> /api/v1/api/ping
-      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/api/v1/api/ping || exit 1"]
+      # context-path is /api/v1, HealthController maps /ping -> /api/v1/ping
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/api/v1/ping || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 5
