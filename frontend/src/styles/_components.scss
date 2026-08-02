@@ -122,9 +122,10 @@
 }
 
 .notice {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: break-word;
   border-radius: 14px;
   padding: 14px 18px;
 

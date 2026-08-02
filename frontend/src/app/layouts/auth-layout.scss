@@ -55,10 +55,16 @@
 }
 
 .form-panel {
-  display: grid;
-  place-items: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   min-width: 0;
+  width: 100%;
   padding: 48px clamp(32px, 7vw, 90px);
+
+  router-outlet {
+    display: contents;
+  }
 }
 
 @include mixins.respond-to(xl) {

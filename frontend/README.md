@@ -14,8 +14,15 @@ npm install
 npm start
 ```
 
-Open `http://localhost:4200`. Development builds proxy `/api` to `http://localhost:8080`
-via `proxy.conf.json`.
+Open `http://localhost:4200`. Development builds proxy `/api` to the **remote server**
+(`http://46.224.100.97`) via `proxy.conf.json`, so local UI hits the same APIs as production
+without running Spring Boot locally.
+
+To proxy to a local backend instead:
+
+```bash
+npm start -- --proxy-config proxy.conf.local.json
+```
 
 ## Production
 
