@@ -94,7 +94,7 @@ public class VerificationEmailServiceImpl implements VerificationEmailService {
     }
 
     private void sendEmail(String email, String rawToken) {
-        String activationLink = frontendBaseUrl + "/activate?token=" + rawToken;
+        String activationLink = frontendBaseUrl + "/orbit/activate?token=" + rawToken;
 
         try {
             MimeMessage message = mailSender.createMimeMessage();
