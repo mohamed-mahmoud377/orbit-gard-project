@@ -2,10 +2,7 @@ package com.orbitgard.service.Impl;
 
 import com.orbitgard.dto.request.LoginRequest;
 import com.orbitgard.dto.request.RegisterRequest;
-import com.orbitgard.dto.response.FieldErrorResponse;
-import com.orbitgard.dto.response.LoginResponse;
-import com.orbitgard.dto.response.RegisterResponse;
-import com.orbitgard.dto.response.VerifyEmailResponse;
+import com.orbitgard.dto.response.*;
 import com.orbitgard.entity.Session;
 import com.orbitgard.entity.User;
 import com.orbitgard.entity.VerificationToken;
@@ -146,6 +143,18 @@ public class AuthServiceImpl implements AuthService {
         }
 
         return new NormalizedInput(normalizedUsername, normalizedEmail, phoneResult.canonicalNumber());
+    }
+
+    @Override
+    public UsernameAvailabilityResponse checkUsernameAvailable(String username) {
+        String normalized = UsernameNormalizer.normalize(username);
+
+        boolean exists = userRepository.existsByUsername(normalized);
+
+        return UsernameAvailabilityResponse.builder()
+                .available(!exists)
+                .message(exists ? ErrorCode.USERNAME_TAKEN.name() : null)
+                .build();
     }
 
     private void checkUniqueness(NormalizedInput normalized, List<FieldErrorResponse> errors) {
