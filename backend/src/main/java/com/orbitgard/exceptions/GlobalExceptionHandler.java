@@ -3,6 +3,7 @@ package com.orbitgard.exceptions;
 import com.orbitgard.dto.response.ErrorResponse;
 import com.orbitgard.dto.response.FieldErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +23,7 @@ import java.util.UUID;
  * and services never build ErrorResponse by hand.
  */
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
     /**
@@ -76,6 +78,8 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnexpected(Exception ex, HttpServletRequest request) {
+        log.error("unexpected error: {}", ex.getMessage());
+        log.error(ex.getStackTrace().toString());
         return buildResponse(ErrorCode.INTERNAL_ERROR, "Something went wrong.", request, List.of());
     }
 
