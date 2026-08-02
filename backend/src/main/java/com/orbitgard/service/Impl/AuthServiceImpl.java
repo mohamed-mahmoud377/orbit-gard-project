@@ -149,6 +149,13 @@ public class AuthServiceImpl implements AuthService {
     public UsernameAvailabilityResponse checkUsernameAvailable(String username) {
         String normalized = UsernameNormalizer.normalize(username);
 
+        if (!UsernameNormalizer.isValidFormat(normalized)) {
+            return UsernameAvailabilityResponse.builder()
+                    .available(false)
+                    .message(ErrorCode.USERNAME_INVALID.name())
+                    .build();
+        }
+
         boolean exists = userRepository.existsByUsername(normalized);
 
         return UsernameAvailabilityResponse.builder()
