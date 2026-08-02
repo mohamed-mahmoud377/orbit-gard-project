@@ -6,11 +6,16 @@ spring:
     driver-class-name: org.h2.Driver
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: create-drop
   flyway:
     enabled: false
+  mail:
+    host: localhost
+    port: 3025
 
 app:
+  frontend:
+    base-url: http://localhost:4200
   jwt:
     secret: test-jwt-secret-at-least-32-characters-long
 
