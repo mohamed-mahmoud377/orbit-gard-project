@@ -1,0 +1,9 @@
+@use 'sass:meta';
+@use 'tokens';
+@use 'base';
+@use 'components';
+@use 'utilities';
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@include meta.load-css('tailwindcss');

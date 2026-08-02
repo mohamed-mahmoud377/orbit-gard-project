@@ -1,0 +1,46 @@
+.status-card {
+  display: grid;
+  width: min(100%, 560px);
+  justify-items: center;
+  gap: 18px;
+  padding: 48px 36px;
+  text-align: center;
+
+  h1 {
+    margin: 0 0 8px;
+    font-size: 24px;
+    line-height: 30px;
+  }
+
+  p {
+    margin: 0;
+    color: var(--text-muted);
+  }
+}
+
+.status-icon {
+  display: grid;
+  width: 64px;
+  height: 64px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--accent-wash);
+  color: var(--accent-primary);
+  font-size: 28px;
+  font-weight: 700;
+}
+
+[data-tone='success'] .status-icon {
+  background: var(--success-wash);
+  color: var(--success);
+}
+
+[data-tone='danger'] .status-icon {
+  background: var(--danger-wash);
+  color: var(--danger);
+}
+
+[data-tone='pending'] .status-icon {
+  background: var(--held-wash);
+  color: var(--held);
+}

@@ -1,0 +1,51 @@
+@use 'mixins';
+
+.amount {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+
+  &-positive {
+    color: var(--success);
+  }
+}
+
+.muted {
+  color: var(--text-muted);
+}
+
+.overline {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+
+  @include mixins.respond-to(lg) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.stack {
+  display: grid;
+  gap: 16px;
+}
+
+.skeleton {
+  border-radius: 8px;
+  background: linear-gradient(90deg, var(--bg-raised), var(--bg-elevated), var(--bg-raised));
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}

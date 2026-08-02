@@ -1,0 +1,68 @@
+@use 'tokens';
+@use 'mixins';
+
+@include tokens.root-tokens;
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  min-height: 100%;
+  background: var(--bg-base);
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 20px;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  border: 0;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+}
+
+:focus-visible {
+  @include mixins.focus-ring;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

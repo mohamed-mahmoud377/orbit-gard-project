@@ -1,0 +1,91 @@
+@use 'mixins';
+
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+.auth-shell {
+  display: grid;
+  min-height: 100vh;
+  grid-template-columns: minmax(420px, 600px) minmax(520px, 1fr);
+  background: var(--bg-base);
+}
+
+.brand-panel {
+  position: relative;
+  display: flex;
+  min-height: 100vh;
+  align-items: center;
+  overflow: hidden;
+  background: var(--bg-surface);
+  padding: 56px;
+}
+
+.brand-content {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  max-width: 470px;
+  gap: 24px;
+
+  h1 {
+    max-width: 430px;
+    margin: 0;
+    font-size: clamp(30px, 3vw, 40px);
+    font-weight: 700;
+    line-height: 1.18;
+  }
+
+  > p {
+    max-width: 470px;
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 16px;
+    line-height: 24px;
+  }
+}
+
+.rings {
+  position: absolute;
+  right: -150px;
+  bottom: -150px;
+  width: 420px;
+  height: 420px;
+}
+
+.form-panel {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  padding: 48px clamp(32px, 7vw, 90px);
+}
+
+@include mixins.respond-to(xl) {
+  .auth-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .brand-panel {
+    min-height: auto;
+    padding: 28px 24px;
+  }
+
+  .brand-content {
+    gap: 12px;
+
+    h1,
+    > p {
+      display: none;
+    }
+  }
+
+  .rings {
+    display: none;
+  }
+
+  .form-panel {
+    align-items: start;
+    padding: 48px 24px;
+  }
+}
