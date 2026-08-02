@@ -343,7 +343,7 @@ export class MockAuthGateway implements AuthGateway {
     }
 
     const response: RegisterResponse = {
-      id: account.id,
+      id: String(account.id),
       username: account.username,
       email: account.email!,
       status: account.status,
@@ -513,7 +513,7 @@ export class MockAuthGateway implements AuthGateway {
       tokenType: 'Bearer',
       expiresIn: 900,
       user: {
-        id: account.id,
+        id: String(account.id),
         username: account.username,
         firstName: account.firstName,
         lastName: account.lastName,

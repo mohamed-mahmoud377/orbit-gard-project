@@ -21,16 +21,32 @@ describe('HttpAuthGateway', () => {
     http.verify();
   });
 
-  it('checks username availability', () => {
+  it('checks username availability from contract-shaped payloads', () => {
     gateway.checkUsername('omar.hassan').subscribe((response) => {
-      expect(response.available).toBe(true);
+      expect(response).toEqual({
+        username: 'omar.hassan',
+        available: true,
+        reason: null,
+      });
     });
     const req = http.expectOne('/api/v1/auth/username-available?username=omar.hassan');
     expect(req.request.method).toBe('GET');
     req.flush({ username: 'omar.hassan', available: true, reason: null });
   });
 
-  it('posts register payloads', () => {
+  it('normalizes backend username availability payloads', () => {
+    gateway.checkUsername('taken.user').subscribe((response) => {
+      expect(response).toEqual({
+        username: 'taken.user',
+        available: false,
+        reason: 'TAKEN',
+      });
+    });
+    const req = http.expectOne('/api/v1/auth/username-available?username=taken.user');
+    req.flush({ available: false, message: 'USERNAME_TAKEN' });
+  });
+
+  it('posts register payloads and normalizes UUID ids', () => {
     const body = {
       firstName: 'Omar',
       lastName: 'Hassan',
@@ -42,12 +58,13 @@ describe('HttpAuthGateway', () => {
     };
     gateway.register(body).subscribe((response) => {
       expect(response.status).toBe('PENDING_VERIFICATION');
+      expect(response.id).toBe('82fb922f-1c0f-443d-9e02-245bb87d6139');
     });
     const req = http.expectOne('/api/v1/auth/register');
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual(body);
     req.flush({
-      id: 42,
+      id: '82fb922f-1c0f-443d-9e02-245bb87d6139',
       username: 'omar.hassan',
       email: 'omar@example.com',
       status: 'PENDING_VERIFICATION',
@@ -79,12 +96,35 @@ describe('HttpAuthGateway', () => {
     );
   });
 
+  it('normalizes login user ids to strings', () => {
+    gateway.login({ username: 'omar.hassan', password: 'Passw0rd!' }).subscribe((response) => {
+      expect(response.user.id).toBe('82fb922f-1c0f-443d-9e02-245bb87d6139');
+    });
+    const req = http.expectOne('/api/v1/auth/login');
+    req.flush({
+      accessToken: 'access',
+      refreshToken: 'refresh',
+      tokenType: 'Bearer',
+      expiresIn: 300,
+      user: {
+        id: '82fb922f-1c0f-443d-9e02-245bb87d6139',
+        username: 'omar.hassan',
+        firstName: 'Omar',
+        lastName: 'Hassan',
+        accountType: 'USER',
+      },
+    });
+  });
+
   it('posts verify and resend endpoints', () => {
-    gateway.verify({ token: 'abc' }).subscribe();
+    gateway.verify({ token: 'abc' }).subscribe((response) => {
+      expect(response.status).toBe('ACTIVE');
+      expect(response.alreadyVerified).toBeUndefined();
+    });
     http.expectOne('/api/v1/auth/verify').flush({
       username: 'omar.hassan',
       status: 'ACTIVE',
-      activatedAt: '2026-07-26T19:02:44Z',
+      activatedAt: new Date().toISOString(),
     });
 
     gateway.resendVerification({ email: 'omar@example.com' }).subscribe();

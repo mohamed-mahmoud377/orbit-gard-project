@@ -1,8 +1,18 @@
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, catchError, throwError } from 'rxjs';
+import { Observable, catchError, map, throwError } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
+import {
+  BackendLoginResponse,
+  BackendRegisterResponse,
+  BackendUsernameAvailabilityResponse,
+  BackendVerifyResponse,
+  normalizeLoginResponse,
+  normalizeRegisterResponse,
+  normalizeUsernameAvailability,
+  normalizeVerifyResponse,
+} from './http-auth-api.adapter';
 import { AuthGateway } from './auth.gateway';
 import {
   AuthApiError,
@@ -26,22 +36,25 @@ export class HttpAuthGateway implements AuthGateway {
   checkUsername(username: string): Observable<UsernameAvailabilityResponse> {
     const params = new HttpParams().set('username', username);
     return this.http
-      .get<UsernameAvailabilityResponse>(`${this.baseUrl}/auth/username-available`, {
-        params,
-      })
-      .pipe(catchError((error) => this.mapError(error)));
+      .get<BackendUsernameAvailabilityResponse>(`${this.baseUrl}/auth/username-available`, { params })
+      .pipe(
+        map((body) => normalizeUsernameAvailability(username, body)),
+        catchError((error) => this.mapError(error)),
+      );
   }
 
   register(request: RegisterRequest): Observable<RegisterResponse> {
-    return this.http
-      .post<RegisterResponse>(`${this.baseUrl}/auth/register`, request)
-      .pipe(catchError((error) => this.mapError(error)));
+    return this.http.post<BackendRegisterResponse>(`${this.baseUrl}/auth/register`, request).pipe(
+      map((body) => normalizeRegisterResponse(body)),
+      catchError((error) => this.mapError(error)),
+    );
   }
 
   verify(request: VerifyRequest): Observable<VerifyResponse> {
-    return this.http
-      .post<VerifyResponse>(`${this.baseUrl}/auth/verify`, request)
-      .pipe(catchError((error) => this.mapError(error)));
+    return this.http.post<BackendVerifyResponse>(`${this.baseUrl}/auth/verify`, request).pipe(
+      map((body) => normalizeVerifyResponse(body)),
+      catchError((error) => this.mapError(error)),
+    );
   }
 
   resendVerification(request: ResendVerifyRequest): Observable<ResendVerifyResponse> {
@@ -51,9 +64,10 @@ export class HttpAuthGateway implements AuthGateway {
   }
 
   login(request: LoginRequest): Observable<LoginResponse> {
-    return this.http
-      .post<LoginResponse>(`${this.baseUrl}/auth/login`, request)
-      .pipe(catchError((error) => this.mapError(error)));
+    return this.http.post<BackendLoginResponse>(`${this.baseUrl}/auth/login`, request).pipe(
+      map((body) => normalizeLoginResponse(body)),
+      catchError((error) => this.mapError(error)),
+    );
   }
 
   private mapError(error: unknown): Observable<never> {

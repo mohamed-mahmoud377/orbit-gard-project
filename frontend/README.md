@@ -23,7 +23,7 @@ Production is served at [http://46.224.100.97/orbit/](http://46.224.100.97/orbit
 `baseHref: /orbit/` and `deployUrl: /orbit/`. The nginx container proxies `/api/*` to Spring Boot
 at the domain root, so `apiBaseUrl: '/api/v1'` works same-origin without a path prefix.
 
-`useMockAuth` remains `true` in production until auth APIs are deployed on the server.
+`useMockAuth` is `false` in production — auth flows call the live `/api/v1/auth/*` endpoints. Development still uses the mock gateway by default.
 
 ## Auth mode switch
 

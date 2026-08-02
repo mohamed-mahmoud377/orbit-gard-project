@@ -19,7 +19,7 @@ describe('AuthTokenStore', () => {
         tokenType: 'Bearer',
         expiresIn: 900,
         user: {
-          id: 1,
+          id: '1',
           username: 'mohamed',
           firstName: 'Mohamed',
           lastName: 'Mahmoud',

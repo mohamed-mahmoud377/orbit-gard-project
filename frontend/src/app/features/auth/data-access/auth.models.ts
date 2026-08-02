@@ -23,7 +23,7 @@ export interface RegisterRequest {
 }
 
 export interface RegisterResponse {
-  readonly id: number;
+  readonly id: string;
   readonly username: string;
   readonly email: string;
   readonly status: AccountStatus;
@@ -58,7 +58,7 @@ export interface LoginRequest {
 }
 
 export interface AuthUserSummary {
-  readonly id: number;
+  readonly id: string;
   readonly username: string;
   readonly firstName: string;
   readonly lastName: string;
