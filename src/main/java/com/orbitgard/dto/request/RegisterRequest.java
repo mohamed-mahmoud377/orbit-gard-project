@@ -1,5 +1,7 @@
 package com.orbitgard.dto.request;
 
+import com.orbitgard.validation.annotation.ValidName;
+import com.orbitgard.validation.annotation.ValidUsername;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -9,32 +11,13 @@ import lombok.Builder;
 @Builder
 public record RegisterRequest(
 
-        @NotBlank(message = "FIELD_REQUIRED")
-        @Size(max = 30, message = "NAME_INVALID")
-        @Pattern(
-                regexp = "^[A-Za-z]+([ '\\-][A-Za-z]+)*$",
-                message = "NAME_INVALID"
-        )
+        @ValidName
         String firstName,
 
-        @NotBlank(message = "FIELD_REQUIRED")
-        @Size(max = 30, message = "NAME_INVALID")
-        @Pattern(
-                regexp = "^[A-Za-z]+([ '\\-][A-Za-z]+)*$",
-                message = "NAME_INVALID"
-        )
+        @ValidName
         String lastName,
 
-        @NotBlank(message = "FIELD_REQUIRED")
-        @Size(
-                min = 3,
-                max = 30,
-                message = "USERNAME_INVALID"
-        )
-        @Pattern(
-                regexp = "^[A-Za-z0-9._-]+$",
-                message = "USERNAME_INVALID"
-        )
+        @ValidUsername
         String username,
 
         @NotBlank(message = "FIELD_REQUIRED")
