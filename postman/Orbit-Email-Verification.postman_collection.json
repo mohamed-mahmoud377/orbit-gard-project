@@ -1,0 +1,313 @@
+{
+  "info": {
+    "name": "Orbit - Email Verification",
+    "description": "Set the collection variable inboxEmail to a Gmail inbox you control. Requests marked MANUAL require you to copy the token from the latest received email into verificationToken before continuing.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "inboxEmail", "value": "" },
+    { "key": "password", "value": "Password123" },
+    { "key": "email", "value": "" },
+    { "key": "username", "value": "" },
+    { "key": "verificationToken", "value": "" },
+    { "key": "previousToken", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "01 - Signup, verify, and sign in",
+      "item": [
+        {
+          "name": "01 Register pending account (email must arrive)",
+          "event": [{ "listen": "prerequest", "script": { "exec": [
+            "const inbox = pm.collectionVariables.get('inboxEmail');",
+            "if (!inbox || !inbox.includes('@')) throw new Error('Set collection variable inboxEmail first.');",
+            "const [local, domain] = inbox.split('@');",
+            "const suffix = Date.now().toString();",
+            "pm.collectionVariables.set('email', `${local}+orbit${suffix}@${domain}`);",
+            "pm.collectionVariables.set('username', `orbit${suffix}`.slice(0, 30));",
+            "pm.collectionVariables.set('verificationToken', '');",
+            "pm.collectionVariables.set('previousToken', '');"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"firstName\": \"Orbit\",\n  \"lastName\": \"Tester\",\n  \"username\": \"{{username}}\",\n  \"email\": \"{{email}}\",\n  \"phoneNumber\": \"+201012345678\",\n  \"password\": \"{{password}}\",\n  \"confirmPassword\": \"{{password}}\"\n}" },
+            "url": "{{baseUrl}}/api/auth/register"
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('returns 201 Created', () => pm.response.to.have.status(201));",
+            "const body = pm.response.json();",
+            "pm.test('account is pending verification', () => pm.expect(body.status).to.eql('PENDING_VERIFICATION'));",
+            "console.log('Copy the token from the confirmation email for:', pm.collectionVariables.get('email'));"
+          ] } }]
+        },
+        {
+          "name": "02 Login before verification is blocked",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"rememberMe\": false\n}" },
+            "url": "{{baseUrl}}/api/v1/auth/login"
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('returns 403', () => pm.response.to.have.status(403));",
+            "pm.test('reports unverified account', () => pm.expect(pm.response.json().code).to.eql('ACCOUNT_NOT_VERIFIED'));"
+          ] } }]
+        },
+        {
+          "name": "03 MANUAL: Verify current email token",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"token\": \"{{verificationToken}}\"\n}" },
+            "url": "{{baseUrl}}/api/v1/auth/verify",
+            "description": "Before sending, paste the token query parameter from the received email URL into collection variable verificationToken."
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('returns 200', () => pm.response.to.have.status(200));",
+            "const body = pm.response.json();",
+            "pm.test('account is active', () => pm.expect(body.status).to.eql('ACTIVE'));",
+            "pm.test('does not log the user in', () => pm.expect(body.accessToken).to.be.undefined);"
+          ] } }]
+        },
+        {
+          "name": "04 Login after verification succeeds",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"rememberMe\": false\n}" },
+            "url": "{{baseUrl}}/api/v1/auth/login"
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('returns 200', () => pm.response.to.have.status(200));",
+            "const body = pm.response.json();",
+            "pm.test('returns authentication tokens', () => { pm.expect(body.accessToken).to.be.a('string').and.not.empty; pm.expect(body.refreshToken).to.be.a('string').and.not.empty; });"
+          ] } }]
+        },
+        {
+          "name": "05 Same link after activation remains successful",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"token\": \"{{verificationToken}}\"\n}" },
+            "url": "{{baseUrl}}/api/v1/auth/verify"
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('returns 200 rather than an error', () => pm.response.to.have.status(200));",
+            "pm.test('still reports ACTIVE', () => pm.expect(pm.response.json().status).to.eql('ACTIVE'));"
+          ] } }]
+        },
+        {
+          "name": "06 Active account resend sends no email",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{email}}\"\n}" },
+            "url": "{{baseUrl}}/api/v1/auth/verify/resend",
+            "description": "Confirm manually that no email arrives. Current API intentionally returns a generic success response."
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('returns 202', () => pm.response.to.have.status(202));"
+          ] } }]
+        }
+      ]
+    },
+    {
+      "name": "02 - Resend, invalidation, and cooldown",
+      "item": [
+        {
+          "name": "01 Register a second pending account",
+          "event": [{ "listen": "prerequest", "script": { "exec": [
+            "const inbox = pm.collectionVariables.get('inboxEmail');",
+            "if (!inbox || !inbox.includes('@')) throw new Error('Set collection variable inboxEmail first.');",
+            "const [local, domain] = inbox.split('@');",
+            "const suffix = Date.now().toString();",
+            "pm.collectionVariables.set('email', `${local}+resend${suffix}@${domain}`);",
+            "pm.collectionVariables.set('username', `resend${suffix}`.slice(0, 30));",
+            "pm.collectionVariables.set('verificationToken', '');",
+            "pm.collectionVariables.set('previousToken', '');"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"firstName\": \"Orbit\",\n  \"lastName\": \"Resend\",\n  \"username\": \"{{username}}\",\n  \"email\": \"{{email}}\",\n  \"phoneNumber\": \"+201112345678\",\n  \"password\": \"{{password}}\",\n  \"confirmPassword\": \"{{password}}\"\n}" },
+            "url": "{{baseUrl}}/api/auth/register"
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('returns 201', () => pm.response.to.have.status(201));",
+            "console.log('Paste first email token into verificationToken, then run the next request.');"
+          ] } }]
+        },
+        {
+          "name": "02 Resend invalidates the first token",
+          "event": [{ "listen": "prerequest", "script": { "exec": [
+            "const token = pm.collectionVariables.get('verificationToken');",
+            "if (!token) throw new Error('Paste the first email token into verificationToken before running.');",
+            "pm.collectionVariables.set('previousToken', token);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{email}}\"\n}" },
+            "url": "{{baseUrl}}/api/v1/auth/verify/resend"
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('returns 202', () => pm.response.to.have.status(202));",
+            "console.log('Paste the NEW email token into verificationToken before running request 05.');"
+          ] } }]
+        },
+        {
+          "name": "03 Immediate resend is rate limited",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{email}}\"\n}" },
+            "url": "{{baseUrl}}/api/v1/auth/verify/resend"
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('returns 429', () => pm.response.to.have.status(429));",
+            "pm.test('reports rate limit', () => pm.expect(pm.response.json().code).to.eql('RATE_LIMITED'));"
+          ] } }]
+        },
+        {
+          "name": "04 MANUAL: Wait 120 seconds, then resend",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{email}}\"\n}" },
+            "url": "{{baseUrl}}/api/v1/auth/verify/resend",
+            "description": "Wait the full 120 seconds after request 02. This returns another email; paste that latest token into verificationToken."
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('returns 202 after the cooldown', () => pm.response.to.have.status(202));"
+          ] } }]
+        },
+        {
+          "name": "05 Earlier token is dead",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"token\": \"{{previousToken}}\"\n}" },
+            "url": "{{baseUrl}}/api/v1/auth/verify"
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('returns 410', () => pm.response.to.have.status(410));",
+            "pm.test('reports consumed token', () => pm.expect(pm.response.json().code).to.eql('TOKEN_ALREADY_USED'));"
+          ] } }]
+        },
+        {
+          "name": "06 MANUAL: Verify newest token",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"token\": \"{{verificationToken}}\"\n}" },
+            "url": "{{baseUrl}}/api/v1/auth/verify"
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('returns 200', () => pm.response.to.have.status(200));",
+            "pm.test('activates account', () => pm.expect(pm.response.json().status).to.eql('ACTIVE'));"
+          ] } }]
+        }
+      ]
+    },
+    {
+      "name": "03 - Invalid and expired tokens",
+      "item": [
+        {
+          "name": "01 Invented token is invalid",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"token\": \"abc.def.ghi\"\n}" },
+            "url": "{{baseUrl}}/api/v1/auth/verify"
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('returns 400', () => pm.response.to.have.status(400));",
+            "pm.test('reports invalid token', () => pm.expect(pm.response.json().code).to.eql('TOKEN_INVALID'));"
+          ] } }]
+        },
+        {
+          "name": "02 Register account for expiry test",
+          "event": [{ "listen": "prerequest", "script": { "exec": [
+            "const inbox = pm.collectionVariables.get('inboxEmail');",
+            "if (!inbox || !inbox.includes('@')) throw new Error('Set collection variable inboxEmail first.');",
+            "const [local, domain] = inbox.split('@');",
+            "const suffix = Date.now().toString();",
+            "pm.collectionVariables.set('email', `${local}+expiry${suffix}@${domain}`);",
+            "pm.collectionVariables.set('username', `expiry${suffix}`.slice(0, 30));",
+            "pm.collectionVariables.set('verificationToken', '');"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"firstName\": \"Orbit\",\n  \"lastName\": \"Expiry\",\n  \"username\": \"{{username}}\",\n  \"email\": \"{{email}}\",\n  \"phoneNumber\": \"+201212345678\",\n  \"password\": \"{{password}}\",\n  \"confirmPassword\": \"{{password}}\"\n}" },
+            "url": "{{baseUrl}}/api/auth/register"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('returns 201', () => pm.response.to.have.status(201));"] } }]
+        },
+        {
+          "name": "03 MANUAL: Verify an expired token",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"token\": \"{{verificationToken}}\"\n}" },
+            "url": "{{baseUrl}}/api/v1/auth/verify",
+            "description": "Copy the email token, then run: UPDATE verification_token vt SET expires_at = NOW() - INTERVAL '1 minute' FROM users u WHERE vt.user_id = u.id AND u.email = '{{email}}' AND vt.consumed_at IS NULL;"
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('returns 410', () => pm.response.to.have.status(410));",
+            "pm.test('reports expired token', () => pm.expect(pm.response.json().code).to.eql('TOKEN_EXPIRED'));"
+          ] } }]
+        }
+      ]
+    },
+    {
+      "name": "04 - Registration validation",
+      "item": [
+        {
+          "name": "01 Missing required fields",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": "{{baseUrl}}/api/auth/register"
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('returns 400', () => pm.response.to.have.status(400));",
+            "pm.test('reports required fields', () => pm.expect(pm.response.json().code).to.eql('FIELD_REQUIRED'));"
+          ] } }]
+        },
+        {
+          "name": "02 Invalid username, phone, password, and confirmation",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"firstName\": \"Orbit\",\n  \"lastName\": \"Tester\",\n  \"username\": \"!\",\n  \"email\": \"bad-email\",\n  \"phoneNumber\": \"123\",\n  \"password\": \"short\",\n  \"confirmPassword\": \"different\"\n}" },
+            "url": "{{baseUrl}}/api/auth/register"
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('returns 400', () => pm.response.to.have.status(400));",
+            "pm.test('returns validation error envelope', () => pm.expect(pm.response.json().code).to.eql('VALIDATION_ERROR'));",
+            "pm.test('includes field-level errors', () => pm.expect(pm.response.json().fieldErrors.length).to.be.above(0));"
+          ] } }]
+        },
+        {
+          "name": "03 Duplicate email is rejected",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"firstName\": \"Orbit\",\n  \"lastName\": \"Duplicate\",\n  \"username\": \"duplicate{{username}}\",\n  \"email\": \"{{email}}\",\n  \"phoneNumber\": \"+201512345678\",\n  \"password\": \"{{password}}\",\n  \"confirmPassword\": \"{{password}}\"\n}" },
+            "url": "{{baseUrl}}/api/auth/register",
+            "description": "Run after any successful registration."
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('returns 400 or 409', () => pm.expect([400, 409]).to.include(pm.response.code));",
+            "const body = pm.response.json();",
+            "pm.test('identifies the email conflict', () => pm.expect(body.fieldErrors.some(error => error.field === 'email' && error.code === 'EMAIL_TAKEN')).to.be.true);"
+          ] } }]
+        }
+      ]
+    }
+  ]
+}
