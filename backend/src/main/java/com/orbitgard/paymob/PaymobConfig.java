@@ -1,3 +1,5 @@
+package com.orbitgard.paymob;
+
 import com.orbitgard.paymob.PaymobProperties;
 import org.springframework.boot.http.client.ClientHttpRequestFactoryBuilder;
 import org.springframework.boot.http.client.HttpClientSettings;

@@ -23,17 +23,15 @@ public enum ErrorCode {
     ACCOUNT_NOT_VERIFIED(HttpStatus.FORBIDDEN, "account-not-verified", "Account not verified"),
     ACCOUNT_SUSPENDED(HttpStatus.FORBIDDEN, "account-suspended", "Account suspended"),
     TOO_MANY_ATTEMPTS(HttpStatus.TOO_MANY_REQUESTS, "too-many-attempts", "Too many attempts"),
-    PASSWORD_INVALID(HttpStatus.BAD_REQUEST, "password-invalid", "Invalid password"),
-    PASSWORD_CONFIRMATION_MISMATCH(HttpStatus.BAD_REQUEST, "password-confirmation-mismatch", "Password confirmation does not match"),
-    // Activation (ORB-002) — POST /api/v1/auth/verify
     TOKEN_INVALID(HttpStatus.BAD_REQUEST, "token-invalid", "Invalid token"),
     TOKEN_EXPIRED(HttpStatus.GONE, "token-expired", "Token expired"),
     TOKEN_ALREADY_USED(HttpStatus.GONE, "token-already-used", "Token already used"),
-    // Not a failure: the account was already active. Kept in this enum so the
-    // response still carries a machine-readable code the frontend can key its
-    // "framed positively" success screen off of, same mechanism as every
-    // other code here — just with a 200 instead of an error status.
-    ALREADY_VERIFIED(HttpStatus.OK, "already-verified", "Account already verified");
+    AMOUNT_BELOW_MINIMUM(HttpStatus.BAD_REQUEST, "amount-below-minimum", "Amount below minimum"),
+    AMOUNT_ABOVE_MAXIMUM(HttpStatus.BAD_REQUEST, "amount-above-maximum", "Amount above maximum"),
+    AMOUNT_INVALID(HttpStatus.BAD_REQUEST, "amount-invalid", "Amount must be greater than zero"),
+    CHILD_CANNOT_TOP_UP(HttpStatus.FORBIDDEN, "child-cannot-top-up", "Child accounts cannot add money"),
+    PAYMOB_UNREACHABLE(HttpStatus.SERVICE_UNAVAILABLE, "paymob-unreachable", "Payment provider unavailable"),
+    PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "payment-not-found", "Payment not found");
 
     private final HttpStatus httpStatus;
     private final String typeSlug;

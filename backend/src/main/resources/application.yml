@@ -36,9 +36,8 @@ app:
   frontend:
     base-url: ${FRONTEND_BASE_URL:http://localhost:4200}
 
-
 server:
-  port: ${SERVER_PORT:8081}
+  port: ${SERVER_PORT:8080}
   servlet:
     context-path: /api/v1
 
@@ -50,5 +49,14 @@ orbitgard:
   jwt:
     secret: ${JWT_SECRET}
     access-token-ttl-seconds: 300
-
-
+  paymob:
+    base-url: ${PAYMOB_BASE_URL:https://accept.paymob.com}
+    api-key: ${PAYMOB_API_KEY:not-configured}
+    secret-key: ${PAYMOB_SECRET_KEY:not-configured}
+    public-key: ${PAYMOB_PUBLIC_KEY:not-configured}
+    hmac-secret: ${PAYMOB_HMAC_SECRET:not-configured}
+    callback-url: ${PAYMOB_CALLBACK_URL:http://localhost:4200/payment/callback}
+    notification-url: ${PAYMOB_NOTIFICATION_URL:http://localhost:8080/api/v1/paymob/webhook}
+    payment-method-ids: ${PAYMOB_PAYMENT_METHOD_IDS:}
+    connect-timeout: PT5S
+    read-timeout: PT20S
