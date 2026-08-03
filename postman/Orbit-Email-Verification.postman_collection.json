@@ -11,7 +11,13 @@
     { "key": "email", "value": "" },
     { "key": "username", "value": "" },
     { "key": "verificationToken", "value": "" },
-    { "key": "previousToken", "value": "" }
+    { "key": "previousToken", "value": "" },
+    { "key": "accessToken", "value": "" },
+    { "key": "paymentId", "value": "" },
+    { "key": "checkoutUrl", "value": "" },
+    { "key": "paymobHmacSecret", "value": "" },
+    { "key": "webhookHmac", "value": "" },
+    { "key": "webhookPayload", "value": "" }
   ],
   "item": [
     {
@@ -306,6 +312,75 @@
             "const body = pm.response.json();",
             "pm.test('identifies the email conflict', () => pm.expect(body.fieldErrors.some(error => error.field === 'email' && error.code === 'EMAIL_TAKEN')).to.be.true);"
           ] } }]
+        }
+      ]
+    },
+    {
+      "name": "05 - Paymob top-up and webhook",
+      "description": "Set accessToken from a verified adult user's login response and paymobHmacSecret from PAYMOB_HMAC_SECRET. Request 01 creates a payment and stores paymentId; complete payment at the returned redirectUrl before sending the signed webhook.",
+      "item": [
+        {
+          "name": "01 Initiate top-up and save payment ID",
+          "event": [{ "listen": "prerequest", "script": { "exec": [
+            "if (!pm.collectionVariables.get('accessToken')) throw new Error('Set accessToken to a verified adult user access token first.');"
+          ] } }, { "listen": "test", "script": { "exec": [
+            "pm.test('returns 200 OK', () => pm.response.to.have.status(200));",
+            "const body = pm.response.json();",
+            "pm.test('returns a payment ID and checkout URL', () => { pm.expect(body.paymentId).to.be.a('string').and.not.empty; pm.expect(body.redirectUrl).to.be.a('string').and.not.empty; });",
+            "pm.collectionVariables.set('paymentId', body.paymentId);",
+            "pm.collectionVariables.set('checkoutUrl', body.redirectUrl);",
+            "console.log('Open checkoutUrl, complete the payment, then run request 03.');"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"amount\": 50.00\n}" },
+            "url": "{{baseUrl}}/api/v1/payments/topup"
+          }
+        },
+        {
+          "name": "02 Reject webhook with an invalid HMAC",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "hmac", "value": "not-a-valid-signature" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"obj\": {\n    \"id\": 100000001,\n    \"amount_cents\": 5000,\n    \"created_at\": \"2026-08-03T10:00:00.000000\",\n    \"currency\": \"EGP\",\n    \"order\": { \"id\": 1, \"merchant_order_id\": \"{{paymentId}}\" }\n  },\n  \"type\": \"TRANSACTION\"\n}" },
+            "url": "{{baseUrl}}/api/v1/payments/webhook/paymob"
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('returns 401 Unauthorized', () => pm.response.to.have.status(401));",
+            "pm.test('rejects the signature', () => pm.expect(pm.response.text()).to.eql('invalid signature'));"
+          ] } }]
+        },
+        {
+          "name": "03 Send a valid signed Paymob webhook",
+          "event": [{ "listen": "prerequest", "script": { "exec": [
+            "const secret = pm.collectionVariables.get('paymobHmacSecret');",
+            "const paymentId = pm.collectionVariables.get('paymentId');",
+            "if (!secret) throw new Error('Set paymobHmacSecret from PAYMOB_HMAC_SECRET first.');",
+            "if (!paymentId) throw new Error('Run request 01 first so paymentId is set.');",
+            "const obj = { id: 100000001, pending: false, success: true, currency: 'EGP', amount_cents: 5000, is_auth: false, is_capture: false, is_standalone_payment: true, is_voided: false, is_refunded: false, is_3d_secure: false, error_occured: false, integration_id: 1, has_parent_transaction: false, created_at: '2026-08-03T10:00:00.000000', owner: '1', order: { id: 1, merchant_order_id: paymentId }, source_data: { pan: '2346', sub_type: 'MasterCard', type: 'card' } };",
+            "const data = `${obj.amount_cents}${obj.created_at}${obj.currency}${obj.error_occured}${obj.has_parent_transaction}${obj.id}${obj.integration_id}${obj.is_3d_secure}${obj.is_auth}${obj.is_capture}${obj.is_refunded}${obj.is_standalone_payment}${obj.is_voided}${obj.order.id}${obj.owner}${obj.pending}${obj.source_data.pan}${obj.source_data.sub_type}${obj.source_data.type}${obj.success}`;",
+            "pm.collectionVariables.set('webhookHmac', CryptoJS.HmacSHA512(data, secret).toString(CryptoJS.enc.Hex));",
+            "pm.collectionVariables.set('webhookPayload', JSON.stringify({ obj, type: 'TRANSACTION' }));"
+          ] } }, { "listen": "test", "script": { "exec": [
+            "pm.test('accepts the verified webhook', () => pm.response.to.have.status(200));",
+            "pm.test('returns OK', () => pm.expect(pm.response.text()).to.eql('OK'));"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "hmac", "value": "{{webhookHmac}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{{webhookPayload}}" },
+            "url": "{{baseUrl}}/api/v1/payments/webhook/paymob"
+          }
         }
       ]
     }

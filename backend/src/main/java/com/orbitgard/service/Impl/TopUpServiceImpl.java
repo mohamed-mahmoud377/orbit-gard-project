@@ -1,0 +1,124 @@
+package com.orbitgard.service.Impl;
+
+import com.orbitgard.dto.request.TopUpRequest;
+import com.orbitgard.dto.response.TopUpResponse;
+import com.orbitgard.entity.Payment;
+import com.orbitgard.entity.User;
+import com.orbitgard.enums.AccountType;
+import com.orbitgard.enums.PaymentStatus;
+import com.orbitgard.exceptions.ApiException;
+import com.orbitgard.exceptions.ErrorCode;
+import com.orbitgard.paymob.PaymobClient;
+import com.orbitgard.dto.request.PaymobIntentionRequest;
+import com.orbitgard.dto.response.PaymobIntentionResponse;
+import com.orbitgard.paymob.PaymobProperties;
+import com.orbitgard.repository.PaymentRepository;
+import com.orbitgard.repository.UserRepository;
+import com.orbitgard.service.TopUpService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpClientErrorException;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.NoSuchElementException;
+import java.util.UUID;
+
+@Service
+@Slf4j
+public class TopUpServiceImpl implements TopUpService {
+
+    private static final BigDecimal MIN_AMOUNT = new BigDecimal("50.00");
+    private static final BigDecimal MAX_AMOUNT = new BigDecimal("20000.00");
+
+    private final UserRepository userRepository;
+    private final PaymentRepository paymentRepository;
+    private final PaymobClient paymobClient;
+    private final PaymobProperties paymobProperties;
+
+    public TopUpServiceImpl(UserRepository userRepository, PaymentRepository paymentRepository,
+                            PaymobClient paymobClient, PaymobProperties paymobProperties) {
+        this.userRepository = userRepository;
+        this.paymentRepository = paymentRepository;
+        this.paymobClient = paymobClient;
+        this.paymobProperties = paymobProperties;
+    }
+
+    @Override
+    @Transactional
+    public TopUpResponse initiate(UUID userId, TopUpRequest request) {
+        if (request.amount() == null || request.amount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new ApiException(ErrorCode.AMOUNT_INVALID, "amount");
+        }
+        if (request.amount().compareTo(MIN_AMOUNT) < 0) {
+            throw new ApiException(ErrorCode.AMOUNT_BELOW_MINIMUM, "amount");
+        }
+        if (request.amount().compareTo(MAX_AMOUNT) > 0) {
+            throw new ApiException(ErrorCode.AMOUNT_ABOVE_MAXIMUM, "amount");
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NoSuchElementException("User not found: " + userId));
+
+        if (user.getAccountType() == AccountType.CHILD) {
+            throw new ApiException(ErrorCode.CHILD_CANNOT_TOP_UP);
+        }
+
+        int amountCents = toMinorUnits(request.amount());
+        UUID paymentId = UUID.randomUUID();
+
+        PaymobIntentionRequest intentionRequest = PaymobIntentionRequest.builder()
+                .amount(amountCents)
+                .currency("EGP")
+                .redirectionUrl(paymobProperties.getCallbackUrl())
+                .notificationUrl(paymobProperties.getNotificationUrl())
+                .paymentMethods(paymobProperties.getPaymentMethodIds())
+                .billingData(PaymobIntentionRequest.BillingData.builder()
+                        .firstName(user.getFirstName())
+                        .lastName(user.getLastName())
+                        .phoneNumber(user.getPhoneNumber())
+                        .email(user.getEmail())
+                        .build())
+                .customer(PaymobIntentionRequest.Customer.builder()
+                        .firstName(user.getFirstName())
+                        .lastName(user.getLastName())
+                        .email(user.getEmail())
+                        .build())
+                .specialReference(paymentId.toString())
+                .build();
+
+        PaymobIntentionResponse intentionResponse;
+        try {
+            intentionResponse = paymobClient.createIntention(intentionRequest);
+        } catch (HttpClientErrorException ex) {
+            log.error("Paymob rejected intention request: {} - body: {}",
+                    ex.getStatusCode(), ex.getResponseBodyAsString());
+            throw new ApiException(ErrorCode.PAYMOB_UNREACHABLE);
+        } catch (Exception ex) {
+            log.error("Paymob unreachable", ex);
+            throw new ApiException(ErrorCode.PAYMOB_UNREACHABLE);
+        }
+
+        Payment payment = Payment.builder()
+                .id(paymentId)
+                .user(user)
+                .amountCents(amountCents)
+                .currency("EGP")
+                .status(PaymentStatus.AWAITING_CONFIRMATION)
+                .paymobIntentionId(intentionResponse.getId())
+                .build();
+        paymentRepository.save(payment);
+
+        String redirectUrl = paymobClient.buildCheckoutRedirectUrl(intentionResponse.getClientSecret());
+        return new TopUpResponse(paymentId, redirectUrl);
+    }
+
+    private int toMinorUnits(BigDecimal amount) {
+        try {
+            return amount.setScale(2, RoundingMode.UNNECESSARY).movePointRight(2).intValueExact();
+        } catch (ArithmeticException e) {
+            throw new IllegalArgumentException("Amount not representable in minor units: " + amount);
+        }
+    }
+}
