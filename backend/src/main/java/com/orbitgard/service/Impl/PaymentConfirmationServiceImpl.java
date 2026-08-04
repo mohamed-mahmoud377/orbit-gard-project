@@ -1,24 +1,18 @@
 package com.orbitgard.service.Impl;
 
 import com.orbitgard.entity.Payment;
-import com.orbitgard.entity.Wallet;
-import com.orbitgard.entity.WalletTransaction;
 import com.orbitgard.enums.PaymentStatus;
-import com.orbitgard.enums.WalletTransactionType;
 import com.orbitgard.exceptions.ApiException;
 import com.orbitgard.exceptions.ErrorCode;
 import com.orbitgard.paymob.PaymobClient;
-import com.orbitgard.dto.response.PaymobTransactionInquiryResponse;
+import com.orbitgard.dto.response.PaymobIntentionStatusResponse;
 import com.orbitgard.repository.PaymentRepository;
-import com.orbitgard.repository.WalletRepository;
-import com.orbitgard.repository.WalletTransactionRepository;
 import com.orbitgard.service.PaymentConfirmationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -28,18 +22,20 @@ public class PaymentConfirmationServiceImpl implements PaymentConfirmationServic
     private static final List<PaymentStatus> PENDING_STATUSES =
             List.of(PaymentStatus.STARTED, PaymentStatus.AWAITING_CONFIRMATION);
 
-    private final PaymentRepository paymentRepository;
-    private final WalletRepository walletRepository;
-    private final WalletTransactionRepository walletTransactionRepository;
-    private final PaymobClient paymobClient;
+    // TODO verify these against a real completed test payment in Postman —
+    // this endpoint's status vocabulary hasn't been confirmed yet.
+    private static final Set<String> SUCCESS_STATUSES = Set.of("paid", "successful", "success");
+    private static final Set<String> FAILURE_STATUSES = Set.of("failed", "declined", "expired", "voided");
 
-    public PaymentConfirmationServiceImpl(PaymentRepository paymentRepository, WalletRepository walletRepository,
-                                          WalletTransactionRepository walletTransactionRepository,
-                                          PaymobClient paymobClient) {
+    private final PaymentRepository paymentRepository;
+    private final PaymobClient paymobClient;
+    private final PaymentTransitionService transitionService;
+
+    public PaymentConfirmationServiceImpl(PaymentRepository paymentRepository, PaymobClient paymobClient,
+                                          PaymentTransitionService transitionService) {
         this.paymentRepository = paymentRepository;
-        this.walletRepository = walletRepository;
-        this.walletTransactionRepository = walletTransactionRepository;
         this.paymobClient = paymobClient;
+        this.transitionService = transitionService;
     }
 
     @Override
@@ -50,79 +46,37 @@ public class PaymentConfirmationServiceImpl implements PaymentConfirmationServic
         if (!PENDING_STATUSES.contains(payment.getStatus())) {
             return;
         }
+        if (payment.getPaymobClientSecret() == null) {
+            log.warn("Payment {} has no Paymob client_secret yet, skipping reconcile", paymentId);
+            return;
+        }
 
-        String bearerToken;
-        PaymobTransactionInquiryResponse inquiry;
+        PaymobIntentionStatusResponse status;
         try {
-            bearerToken = paymobClient.getAuthToken().getToken();
-            inquiry = paymobClient.inquireTransaction(paymentId.toString(), bearerToken);
+            status = paymobClient.getIntentionStatus(payment.getPaymobClientSecret());
         } catch (Exception ex) {
             log.warn("Paymob unreachable while reconciling payment {}", paymentId, ex);
             return;
         }
 
-        if (inquiry.isPending()) {
-            return;
-        }
+        String s = status.getStatus() == null ? "" : status.getStatus().toLowerCase();
 
-        if (inquiry.isRefunded() || !inquiry.isSuccess() || inquiry.isVoided() || inquiry.isErrorOccured()) {
-            markFailed(payment, "Paymob reported the transaction did not succeed");
-            return;
+        if (SUCCESS_STATUSES.contains(s)) {
+            if (!settledAmountMatches(payment, status)) {
+                log.error("Settled amount mismatch for payment {}: expected {} cents, got {}",
+                        paymentId, payment.getAmountCents(), status.getAmount());
+                transitionService.markFailed(payment, "Settled amount did not match the requested amount");
+                return;
+            }
+            transitionService.complete(payment);
+        } else if (FAILURE_STATUSES.contains(s)) {
+            transitionService.markFailed(payment, "Paymob reported status: " + s);
         }
-
-        if (!settledAmountMatches(payment, inquiry)) {
-            log.error("Settled amount/currency mismatch for payment {}: expected {} {}, got {} cents {}",
-                    paymentId, payment.getAmountCents(), payment.getCurrency(),
-                    inquiry.getAmountCents(), inquiry.getCurrency());
-            markFailed(payment, "Settled amount or currency did not match the requested amount");
-            return;
-        }
-
-        complete(payment);
+        // anything else (e.g. "intended", "pending") — leave as-is, check again later
     }
 
-    @Transactional
-    protected void complete(Payment payment) {
-        int updated = paymentRepository.updateStatusIfCurrentlyIn(
-                payment.getId(), PENDING_STATUSES, PaymentStatus.COMPLETED);
-        if (updated == 0) {
-            return;
-        }
-
-        UUID userId = payment.getUser().getId();
-        ensureWalletExists(userId);
-        walletRepository.credit(userId, payment.getAmountCents());
-
-        Wallet wallet = walletRepository.findByUserId(userId).orElseThrow();
-        walletTransactionRepository.save(WalletTransaction.builder()
-                .walletId(wallet.getId())
-                .paymentId(payment.getId())
-                .type(WalletTransactionType.TOP_UP)
-                .amountCents(payment.getAmountCents())
-                .build());
-    }
-
-    @Transactional
-    protected void markFailed(Payment payment, String reason) {
-        int updated = paymentRepository.updateStatusIfCurrentlyIn(
-                payment.getId(), PENDING_STATUSES, PaymentStatus.FAILED);
-        if (updated > 0) {
-            payment.setFailureReason(reason);
-            paymentRepository.save(payment);
-        }
-    }
-
-    private void ensureWalletExists(UUID userId) {
-        if (walletRepository.findByUserId(userId).isEmpty()) {
-            walletRepository.save(Wallet.builder().userId(userId).balanceCents(0).build());
-        }
-    }
-
-    private boolean settledAmountMatches(Payment payment, PaymobTransactionInquiryResponse inquiry) {
-        if (inquiry.getAmountCents() == null || inquiry.getCurrency() == null) {
-            return false;
-        }
-        return payment.getAmountCents() == inquiry.getAmountCents()
-                && payment.getCurrency().equalsIgnoreCase(inquiry.getCurrency());
+    private boolean settledAmountMatches(Payment payment, PaymobIntentionStatusResponse status) {
+        if (status.getAmount() == null) return false;
+        return payment.getAmountCents() == status.getAmount();
     }
 }

@@ -3,6 +3,7 @@ package com.orbitgard.scheduler;
 import com.orbitgard.entity.Payment;
 import com.orbitgard.enums.PaymentStatus;
 import com.orbitgard.repository.PaymentRepository;
+import com.orbitgard.service.Impl.PaymentTransitionService;
 import com.orbitgard.service.PaymentConfirmationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -21,11 +22,14 @@ public class PaymentReconciliationJob {
 
     private final PaymentRepository paymentRepository;
     private final PaymentConfirmationService paymentConfirmationService;
+    private final PaymentTransitionService transitionService;
 
     public PaymentReconciliationJob(PaymentRepository paymentRepository,
-                                    PaymentConfirmationService paymentConfirmationService) {
+                                    PaymentConfirmationService paymentConfirmationService,
+                                    PaymentTransitionService transitionService) {
         this.paymentRepository = paymentRepository;
         this.paymentConfirmationService = paymentConfirmationService;
+        this.transitionService = transitionService;
     }
 
     @Scheduled(fixedRate = 3, timeUnit = java.util.concurrent.TimeUnit.HOURS)
@@ -38,6 +42,7 @@ public class PaymentReconciliationJob {
         for (Payment payment : stuck) {
             try {
                 paymentConfirmationService.reconcile(payment.getId());
+                transitionService.cancelIfStillPending(payment.getId());
             } catch (Exception ex) {
                 log.error("Reconciliation failed for payment {}", payment.getId(), ex);
             }

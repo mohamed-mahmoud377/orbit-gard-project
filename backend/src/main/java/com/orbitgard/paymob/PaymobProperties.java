@@ -10,13 +10,11 @@ import java.util.List;
 
 @Data
 @Configuration
-@ConfigurationProperties(prefix = "paymob")
+@ConfigurationProperties(prefix = "orbitgard.paymob")
 public class PaymobProperties {
     private String baseUrl = "https://accept.paymob.com";
-    private String apiKey;
     private String secretKey;
     private String publicKey;
-    private String hmacSecret;
     private String callbackUrl;
     private String notificationUrl;
     private List<Integer> paymentMethodIds = new ArrayList<>();

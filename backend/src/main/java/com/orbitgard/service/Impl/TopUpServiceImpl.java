@@ -68,6 +68,18 @@ public class TopUpServiceImpl implements TopUpService {
         int amountCents = toMinorUnits(request.amount());
         UUID paymentId = UUID.randomUUID();
 
+        // 1) Create the row first, as STARTED — before Paymob even knows this
+        //    payment exists. Gives you an audit trail even if the Paymob call
+        //    never completes (network failure, timeout, etc).
+        Payment payment = Payment.builder()
+                .id(paymentId)
+                .user(user)
+                .amountCents(amountCents)
+                .currency("EGP")
+                .status(PaymentStatus.STARTED)
+                .build();
+        paymentRepository.save(payment);
+
         PaymobIntentionRequest intentionRequest = PaymobIntentionRequest.builder()
                 .amount(amountCents)
                 .currency("EGP")
@@ -94,20 +106,24 @@ public class TopUpServiceImpl implements TopUpService {
         } catch (HttpClientErrorException ex) {
             log.error("Paymob rejected intention request: {} - body: {}",
                     ex.getStatusCode(), ex.getResponseBodyAsString());
+            payment.setStatus(PaymentStatus.FAILED);
+            payment.setFailureReason("Paymob rejected the intention request");
+            paymentRepository.save(payment);
             throw new ApiException(ErrorCode.PAYMOB_UNREACHABLE);
         } catch (Exception ex) {
             log.error("Paymob unreachable", ex);
+            payment.setStatus(PaymentStatus.FAILED);
+            payment.setFailureReason("Paymob was unreachable");
+            paymentRepository.save(payment);
             throw new ApiException(ErrorCode.PAYMOB_UNREACHABLE);
         }
 
-        Payment payment = Payment.builder()
-                .id(paymentId)
-                .user(user)
-                .amountCents(amountCents)
-                .currency("EGP")
-                .status(PaymentStatus.AWAITING_CONFIRMATION)
-                .paymobIntentionId(intentionResponse.getId())
-                .build();
+        // 2) Paymob accepted the intention — flip to processing and store
+        //    the intention id, which is what getIntentionStatus() will use
+        //    later to actively re-check the outcome.
+        payment.setStatus(PaymentStatus.AWAITING_CONFIRMATION);
+        payment.setPaymobIntentionId(intentionResponse.getId());
+        payment.setPaymobClientSecret(intentionResponse.getClientSecret()); // NEW
         paymentRepository.save(payment);
 
         String redirectUrl = paymobClient.buildCheckoutRedirectUrl(intentionResponse.getClientSecret());

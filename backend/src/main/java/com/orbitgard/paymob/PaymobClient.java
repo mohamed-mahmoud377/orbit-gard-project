@@ -1,8 +1,8 @@
 package com.orbitgard.paymob;
 
-import com.orbitgard.dto.request.PaymobTransactionInquiryRequest;
-import com.orbitgard.dto.response.PaymobAuthTokenResponse;
-import com.orbitgard.dto.response.PaymobTransactionInquiryResponse;
+import com.orbitgard.dto.request.PaymobIntentionRequest;
+import com.orbitgard.dto.response.PaymobIntentionResponse;
+import com.orbitgard.dto.response.PaymobIntentionStatusResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpHeaders;
@@ -10,12 +10,9 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
-import com.orbitgard.dto.request.PaymobIntentionRequest;
-import com.orbitgard.dto.response.PaymobIntentionResponse;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
 
 @Component
 @Slf4j
@@ -29,6 +26,9 @@ public class PaymobClient {
         this.props = props;
     }
 
+    /**
+     * Creates the payment intention. Modern API, secretKey only.
+     */
     public PaymobIntentionResponse createIntention(PaymobIntentionRequest request) {
         return rest.post()
                 .uri("/v1/intention/")
@@ -40,27 +40,22 @@ public class PaymobClient {
                 .body(PaymobIntentionResponse.class);
     }
 
-    public PaymobAuthTokenResponse getAuthToken() {
-        return rest.post()
-                .uri("/api/auth/tokens")
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(Map.of("api_key", props.getApiKey()))
+    /**
+     * Actively asks Paymob for the current status of a transaction/intention.
+     * Modern API, same secretKey as createIntention — replaces the legacy
+     * apiKey/Bearer-token auth-then-inquire flow entirely.
+     *
+     * IMPORTANT: verify the exact response field names in Postman before
+     * trusting this DTO — hit this endpoint manually with a real
+     * intentionId first (see testing steps below).
+     */
+    public PaymobIntentionStatusResponse getIntentionStatus(String clientSecret) {
+        log.info("Checking Paymob intention status via client_secret");
+        return rest.get()
+                .uri("/v1/intention/element/{publicKey}/{clientSecret}/", props.getPublicKey(), clientSecret)
                 .retrieve()
-                .onStatus(HttpStatusCode::isError, errorHandler("authenticate"))
-                .body(PaymobAuthTokenResponse.class);
-    }
-
-    public PaymobTransactionInquiryResponse inquireTransaction(String merchantOrderId, String token) {
-        log.info("Inquiring Paymob transaction: merchantOrderId={}", merchantOrderId);
-        return rest.post()
-                .uri("/api/ecommerce/orders/transaction_inquiry")
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(PaymobTransactionInquiryRequest.builder()
-                        .merchantOrderId(merchantOrderId).build())
-                .retrieve()
-                .onStatus(HttpStatusCode::isError, errorHandler("inquire transaction"))
-                .body(PaymobTransactionInquiryResponse.class);
+                .onStatus(HttpStatusCode::isError, errorHandler("check intention status"))
+                .body(PaymobIntentionStatusResponse.class);
     }
 
     public String buildCheckoutRedirectUrl(String clientSecret) {

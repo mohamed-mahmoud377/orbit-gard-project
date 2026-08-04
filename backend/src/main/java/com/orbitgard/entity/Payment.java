@@ -58,4 +58,6 @@ public class Payment {
 
     @Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
     private OffsetDateTime updatedAt;
+    @Column(name = "paymob_client_secret")
+    private String paymobClientSecret;
 }
