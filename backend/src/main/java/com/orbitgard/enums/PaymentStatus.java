@@ -5,5 +5,5 @@ public enum PaymentStatus {
     AWAITING_CONFIRMATION,
     COMPLETED,
     FAILED,
-    CANCELLED
+    EXPIRED
 }

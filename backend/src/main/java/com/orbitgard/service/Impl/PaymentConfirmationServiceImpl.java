@@ -39,40 +39,27 @@ public class PaymentConfirmationServiceImpl implements PaymentConfirmationServic
     }
 
     @Override
-    public void reconcile(UUID paymentId) {
+    public void reconcileFromWebhook(UUID paymentId, boolean success, boolean pending, Integer amountCents) {
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new ApiException(ErrorCode.PAYMENT_NOT_FOUND));
 
         if (!PENDING_STATUSES.contains(payment.getStatus())) {
-            return;
-        }
-        if (payment.getPaymobClientSecret() == null) {
-            log.warn("Payment {} has no Paymob client_secret yet, skipping reconcile", paymentId);
+            log.info("Payment {} already in status {}, ignoring webhook", paymentId, payment.getStatus());
             return;
         }
 
-        PaymobIntentionStatusResponse status;
-        try {
-            status = paymobClient.getIntentionStatus(payment.getPaymobClientSecret());
-        } catch (Exception ex) {
-            log.warn("Paymob unreachable while reconciling payment {}", paymentId, ex);
-            return;
-        }
-
-        String s = status.getStatus() == null ? "" : status.getStatus().toLowerCase();
-
-        if (SUCCESS_STATUSES.contains(s)) {
-            if (!settledAmountMatches(payment, status)) {
-                log.error("Settled amount mismatch for payment {}: expected {} cents, got {}",
-                        paymentId, payment.getAmountCents(), status.getAmount());
+        if (success) {
+            if (amountCents == null || payment.getAmountCents() != amountCents) {
+                log.error("Amount mismatch for payment {}: expected {} cents, webhook said {}",
+                        paymentId, payment.getAmountCents(), amountCents);
                 transitionService.markFailed(payment, "Settled amount did not match the requested amount");
                 return;
             }
             transitionService.complete(payment);
-        } else if (FAILURE_STATUSES.contains(s)) {
-            transitionService.markFailed(payment, "Paymob reported status: " + s);
+        } else if (!pending) {
+            transitionService.markFailed(payment, "Paymob webhook reported an unsuccessful transaction");
         }
-        // anything else (e.g. "intended", "pending") — leave as-is, check again later
+        // pending == true -> leave as-is, nothing to do yet
     }
 
     private boolean settledAmountMatches(Payment payment, PaymobIntentionStatusResponse status) {

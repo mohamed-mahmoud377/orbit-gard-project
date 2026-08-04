@@ -47,9 +47,8 @@ public class PaymobWebhookController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("missing obj");
         }
 
-        String merchantOrderId = payload.getObj().getOrder() == null
-                ? null
-                : payload.getObj().getOrder().getMerchantOrderId();
+        var obj = payload.getObj();
+        String merchantOrderId = obj.getOrder() == null ? null : obj.getOrder().getMerchantOrderId();
 
         if (merchantOrderId == null) {
             log.warn("Paymob webhook missing merchant_order_id");
@@ -57,7 +56,9 @@ public class PaymobWebhookController {
         }
 
         try {
-            paymentConfirmationService.reconcile(UUID.fromString(merchantOrderId));
+            UUID paymentId = UUID.fromString(merchantOrderId);
+            paymentConfirmationService.reconcileFromWebhook(
+                    paymentId, obj.isSuccess(), obj.isPending(), obj.getAmountCents());
         } catch (Exception ex) {
             log.error("Error reconciling payment from webhook, merchantOrderId={}", merchantOrderId, ex);
         }
@@ -68,22 +69,16 @@ public class PaymobWebhookController {
     @GetMapping("/paymob")
     public RedirectView browserReturn(@RequestParam(value = "merchant_order_id", required = false) String merchantOrderId,
                                       @RequestParam(value = "id", required = false) String transactionId) {
-        // TODO: confirm in Postman which of these two params Paymob actually sends
-        // on the redirect for your integration — log both once and check.
+        // This is a browser redirect, not the webhook -- there's no JSON body here,
+        // only whatever query params Paymob appends to the redirection_url.
+        // It can't reliably tell us success/pending/amount, so its only job is
+        // getting the user to the right page. The POST webhook above is what
+        // actually flips the payment's status.
         log.info("Browser return: merchant_order_id={}, id={}", merchantOrderId, transactionId);
 
         if (merchantOrderId != null) {
-            try {
-                paymentConfirmationService.reconcile(UUID.fromString(merchantOrderId));
-            } catch (Exception ex) {
-                log.error("Error reconciling payment from browser return, merchantOrderId={}", merchantOrderId, ex);
-            }
             return new RedirectView("/wallet/topup/confirming?paymentId=" + merchantOrderId);
         }
-
-        // Fallback: no merchant_order_id in the query string — send the user to
-        // confirming with whatever id we did get, and let the frontend/backend
-        // reconcile purely by polling status (see PaymentStatusController below).
         return new RedirectView("/wallet/topup/confirming?transactionId=" + transactionId);
     }
 }

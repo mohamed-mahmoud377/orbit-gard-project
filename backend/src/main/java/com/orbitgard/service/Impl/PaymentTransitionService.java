@@ -65,7 +65,7 @@ public class PaymentTransitionService {
     @Transactional
     public void cancelIfStillPending(UUID paymentId) {
         int canceled = paymentRepository.updateStatusIfCurrentlyIn(
-                paymentId, PENDING_STATUSES, PaymentStatus.CANCELLED);
+                paymentId, PENDING_STATUSES, PaymentStatus.EXPIRED);
         if (canceled > 0) {
             log.info("Payment {} canceled after being stuck for over 1 hour", paymentId);
         }
