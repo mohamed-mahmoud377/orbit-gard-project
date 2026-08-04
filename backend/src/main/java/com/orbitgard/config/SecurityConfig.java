@@ -53,6 +53,10 @@ public class SecurityConfig {
                         // the Paymob integration guide defines. Both the browser
                         // GET return and the server POST notification land here.
                         .requestMatchers("/payments/webhook/paymob").permitAll()
+                        // Container/deploy healthcheck hits /api/v1/ping (context-path
+                        // /api/v1 + HealthController's /ping). Must stay anonymous or the
+                        // healthcheck gets 403 and the container is marked unhealthy.
+                        .requestMatchers(HttpMethod.GET, "/ping").permitAll()
                         // Everything else -- including /auth/logout and
                         // /auth/sessions/** once they exist -- requires a valid
                         // access token by default, with no change needed here
