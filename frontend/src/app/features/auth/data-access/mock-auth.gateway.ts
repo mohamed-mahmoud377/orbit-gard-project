@@ -18,6 +18,7 @@ import {
   LoginResponse,
   ProblemDetails,
   ProblemFieldError,
+  RefreshTokenRequest,
   RegisterRequest,
   RegisterResponse,
   ResendVerifyRequest,
@@ -524,6 +525,31 @@ export class MockAuthGateway implements AuthGateway {
     // rememberMe is accepted and stored by the facade; mock returns the same token TTLs.
     void rememberMe;
     return of(response).pipe(delay(150));
+  }
+
+  refresh(request: RefreshTokenRequest): Observable<LoginResponse> {
+    const token = request.refreshToken?.trim();
+    if (!token?.startsWith('mock-refresh.')) {
+      return this.fail(problem(401, 'INVALID_REFRESH_TOKEN'));
+    }
+    const accountId = Number.parseInt(token.split('.')[1] ?? '', 10);
+    const account = this.state.accounts.find((item) => item.id === accountId);
+    if (!account || account.status !== 'ACTIVE') {
+      return this.fail(problem(401, 'INVALID_REFRESH_TOKEN'));
+    }
+    return of({
+      accessToken: `mock-access.${account.id}.${Date.now()}`,
+      refreshToken: `mock-refresh.${account.id}.${randomToken()}`,
+      tokenType: 'Bearer' as const,
+      expiresIn: 900,
+      user: {
+        id: String(account.id),
+        username: account.username,
+        firstName: account.firstName,
+        lastName: account.lastName,
+        accountType: account.accountType,
+      },
+    }).pipe(delay(150));
   }
 
   private fail(error: AuthApiError): Observable<never> {
