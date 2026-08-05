@@ -1,6 +1,8 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+
+import { sanitizeReturnUrl } from '../../../core/navigation/return-url';
 
 import { AuthFacade } from '../data-access/auth.facade';
 import { AuthApiError } from '../data-access/auth.models';
@@ -101,6 +103,7 @@ import { environment } from '../../../../environments/environment';
 export default class LoginPage {
   private readonly auth = inject(AuthFacade);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly fb = inject(FormBuilder);
 
   protected readonly banner = signal('');
@@ -133,6 +136,11 @@ export default class LoginPage {
     this.auth.login(value).subscribe({
       next: (response) => {
         this.submitting.set(false);
+        const returnUrl = sanitizeReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl'));
+        if (returnUrl) {
+          void this.router.navigateByUrl(returnUrl);
+          return;
+        }
         void this.router.navigateByUrl(
           response.user.accountType === 'CHILD' ? '/my-wallet' : '/dashboard',
         );

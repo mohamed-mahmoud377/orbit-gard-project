@@ -9,6 +9,12 @@ import { PageHeader } from '../../shared/ui/page-header';
 import { StatusView } from '../../shared/ui/status-view';
 import { TransactionList, TransactionListItem } from '../../shared/ui/transaction-list';
 import { formatMoney, parseMoney } from '../../shared/utils/money';
+import {
+  PaymentApiError,
+  PaymentFacade,
+  PAYMENT_MESSAGES,
+  bannerMessageFromPaymentError,
+} from './data-access';
 
 function signedAmount(transaction: Transaction): number {
   return transaction.type === 'top-up' || transaction.type === 'transfer-in'
@@ -100,7 +106,7 @@ export default class DashboardPage {
   }
 }
 
-type TopUpStage = 'form' | 'pending' | 'success' | 'failure';
+type TopUpStage = 'form' | 'redirecting';
 
 @Component({
   selector: 'app-top-up-page',
@@ -113,42 +119,12 @@ type TopUpStage = 'form' | 'pending' | 'success' | 'failure';
       />
 
       @switch (stage()) {
-        @case ('pending') {
-          <div class="stack" style="justify-items: center" data-node-id="14:2">
+        @case ('redirecting') {
+          <div style="display:grid;place-items:center" data-node-id="14:2">
             <app-status-view
-              title="Waiting for Paymob"
-              [message]="'Your ' + money(amountMinor()) + ' top-up is waiting for a callback.'"
+              title="Redirecting to Paymob"
+              [message]="PAYMENT_MESSAGES.redirecting"
               tone="pending"
-            />
-            <div class="quick-actions">
-              <button class="btn btn-primary" type="button" (click)="complete(false)">
-                Complete demo payment
-              </button>
-              <button class="btn btn-secondary" type="button" (click)="complete(true)">
-                Simulate failure
-              </button>
-            </div>
-          </div>
-        }
-        @case ('success') {
-          <div style="display:grid;place-items:center" data-node-id="14:18">
-            <app-status-view
-              title="Top-up succeeded"
-              [message]="money(amountMinor()) + ' is now available in your wallet.'"
-              tone="success"
-              actionLabel="Top up again"
-              (action)="stage.set('form')"
-            />
-          </div>
-        }
-        @case ('failure') {
-          <div style="display:grid;place-items:center" data-node-id="14:41">
-            <app-status-view
-              title="Top-up failed"
-              message="TOPUP_FAILED · Your card was not charged. Try again or use another method."
-              tone="danger"
-              actionLabel="Try again"
-              (action)="stage.set('form')"
             />
           </div>
         }
@@ -167,6 +143,7 @@ type TopUpStage = 'form' | 'pending' | 'success' | 'failure';
                   (ngModelChange)="amount.set($event)"
                   inputmode="decimal"
                   aria-label="Top-up amount"
+                  [disabled]="submitting()"
                 />
               </div>
               <div class="amount-chips" aria-label="Quick amounts">
@@ -175,6 +152,7 @@ type TopUpStage = 'form' | 'pending' | 'success' | 'failure';
                     class="chip"
                     [class.active]="amountMinor() === quick * 100"
                     type="button"
+                    [disabled]="submitting()"
                     (click)="amount.set(quick.toString())"
                   >
                     {{ quick | number }}
@@ -191,18 +169,22 @@ type TopUpStage = 'form' | 'pending' | 'success' | 'failure';
               @if (error()) {
                 <div class="notice notice-danger" role="alert">{{ error() }}</div>
               }
-              <button class="btn btn-primary" type="button" (click)="continueToPaymob()">
-                Continue to Paymob
+              <button
+                class="btn btn-primary"
+                type="button"
+                [disabled]="submitting()"
+                (click)="continueToPaymob()"
+              >
+                {{ submitting() ? 'Starting…' : 'Continue to Paymob' }}
               </button>
             </article>
             <aside class="card panel stack">
               <h2>How it works</h2>
               <ol class="how-list">
-                <li><span class="step">1</span><div><strong>You are sent to Paymob</strong><p class="muted">A secure test checkout opens.</p></div></li>
-                <li><span class="step">2</span><div><strong>You pay by card or wallet</strong><p class="muted">No real funds move in this demo.</p></div></li>
-                <li><span class="step">3</span><div><strong>Paymob tells Orbit</strong><p class="muted">Your balance and history update.</p></div></li>
+                <li><span class="step">1</span><div><strong>You are sent to Paymob</strong><p class="muted">A secure checkout opens in your browser.</p></div></li>
+                <li><span class="step">2</span><div><strong>You pay by card or wallet</strong><p class="muted">Complete payment on Paymob's page.</p></div></li>
+                <li><span class="step">3</span><div><strong>Orbit confirms your payment</strong><p class="muted">You return here while we verify the result.</p></div></li>
               </ol>
-              <div class="notice notice-held">Test mode · This project uses a local payment simulator.</div>
             </aside>
           </div>
         }
@@ -212,31 +194,42 @@ type TopUpStage = 'form' | 'pending' | 'success' | 'failure';
   styleUrl: './wallet-pages.scss',
 })
 export class TopUpPage {
-  protected readonly store = inject(DemoStore);
+  private readonly payments = inject(PaymentFacade);
   protected readonly stage = signal<TopUpStage>('form');
+  protected readonly submitting = signal(false);
   protected readonly error = signal('');
   protected readonly quickAmounts = [100, 250, 500, 1000, 2000] as const;
   protected readonly money = formatMoney;
   protected readonly amount = signal('500');
   protected readonly amountMinor = computed(() => parseMoney(this.amount()));
+  protected readonly PAYMENT_MESSAGES = PAYMENT_MESSAGES;
 
   protected continueToPaymob(): void {
-    const amount = this.amountMinor();
-    if (amount < 5000 || amount > 2_000_000) {
-      this.error.set('Enter an amount between EGP 50.00 and EGP 20,000.00.');
+    const amountMinor = this.amountMinor();
+    if (amountMinor < 5000 || amountMinor > 2_000_000) {
+      this.error.set(PAYMENT_MESSAGES.amountBelowMinimum);
       return;
     }
-    this.error.set('');
-    this.stage.set('pending');
-  }
 
-  protected complete(simulateFailure: boolean): void {
-    const result = this.store.topUp({
-      amountMinor: this.amountMinor(),
-      sourceLabel: 'Paymob · Visa •••• 4242',
-      simulateFailure,
+    this.error.set('');
+    this.submitting.set(true);
+
+    const amountMajor = Math.round(amountMinor) / 100;
+    this.payments.initiateTopUp({ amount: amountMajor }, amountMinor).subscribe({
+      next: (response) => {
+        this.submitting.set(false);
+        this.stage.set('redirecting');
+        window.location.assign(response.redirectUrl);
+      },
+      error: (err: unknown) => {
+        this.submitting.set(false);
+        this.error.set(
+          err instanceof PaymentApiError
+            ? bannerMessageFromPaymentError(err)
+            : PAYMENT_MESSAGES.networkError,
+        );
+      },
     });
-    this.stage.set(result.ok ? 'success' : 'failure');
   }
 }
 
