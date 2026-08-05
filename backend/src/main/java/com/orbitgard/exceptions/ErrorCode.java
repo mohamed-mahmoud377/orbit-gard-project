@@ -34,7 +34,8 @@ public enum ErrorCode {
     CHILD_CANNOT_TOP_UP(HttpStatus.FORBIDDEN, "child-cannot-top-up", "Child accounts cannot add money"),
     PAYMOB_UNREACHABLE(HttpStatus.SERVICE_UNAVAILABLE, "paymob-unreachable", "Payment provider unavailable"),
     PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "payment-not-found", "Payment not found"),
-    ALREADY_VERIFIED(HttpStatus.OK, "already-verified", "Account already verified");
+    ALREADY_VERIFIED(HttpStatus.OK, "already-verified", "Account already verified"),
+    CANNOT_SIGN_OUT_CURRENT_DEVICE(HttpStatus.CONFLICT, "cannot-sign-out-current-device", "Cannot sign out the device you're using");
 
     private final HttpStatus httpStatus;
     private final String typeSlug;

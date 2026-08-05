@@ -22,8 +22,8 @@ import java.time.ZoneOffset;
 public class RefreshTokenServiceImpl implements RefreshTokenService {
 
     // Temporary Postman-test values. Original: 12 hours without Remember me; 7 days with it.
-    private static final long STANDARD_IDLE_TIMEOUT_MINUTES = 6;
-    private static final long REMEMBER_ME_IDLE_TIMEOUT_MINUTES = 8;
+    private static final long STANDARD_IDLE_TIMEOUT_HOURS = 12;
+    private static final long REMEMBER_ME_IDLE_TIMEOUT_DAYS = 7;
 
     private final SessionRepository sessionRepository;
     private final RefreshTokenGenerator refreshTokenGenerator;
@@ -58,8 +58,8 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         session.setRefreshTokenHash(refreshTokenGenerator.hash(replacementToken));
         session.setLastUsedAt(now);
         OffsetDateTime renewedIdleExpiry = session.isRememberMe()
-                ? now.plusMinutes(REMEMBER_ME_IDLE_TIMEOUT_MINUTES) // Original: 7 days
-                : now.plusMinutes(STANDARD_IDLE_TIMEOUT_MINUTES); // Original: 12 hours
+                ? now.plusMinutes(REMEMBER_ME_IDLE_TIMEOUT_DAYS) // Original: 7 days
+                : now.plusMinutes(STANDARD_IDLE_TIMEOUT_HOURS); // Original: 12 hours
         session.setIdleExpiresAt(renewedIdleExpiry.isBefore(session.getAbsoluteExpiresAt())
                 ? renewedIdleExpiry
                 : session.getAbsoluteExpiresAt());

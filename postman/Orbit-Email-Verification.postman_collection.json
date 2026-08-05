@@ -5,19 +5,106 @@
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "baseUrl", "value": "http://localhost:8080" },
-    { "key": "inboxEmail", "value": "" },
-    { "key": "password", "value": "Password123" },
-    { "key": "email", "value": "" },
-    { "key": "username", "value": "" },
-    { "key": "verificationToken", "value": "" },
-    { "key": "previousToken", "value": "" },
-    { "key": "accessToken", "value": "" },
-    { "key": "paymentId", "value": "" },
-    { "key": "checkoutUrl", "value": "" },
-    { "key": "paymobHmacSecret", "value": "" },
-    { "key": "webhookHmac", "value": "" },
-    { "key": "webhookPayload", "value": "" }
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "inboxEmail",
+      "value": ""
+    },
+    {
+      "key": "password",
+      "value": "Password123"
+    },
+    {
+      "key": "email",
+      "value": ""
+    },
+    {
+      "key": "username",
+      "value": ""
+    },
+    {
+      "key": "verificationToken",
+      "value": ""
+    },
+    {
+      "key": "previousToken",
+      "value": ""
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "paymentId",
+      "value": ""
+    },
+    {
+      "key": "checkoutUrl",
+      "value": ""
+    },
+    {
+      "key": "paymobHmacSecret",
+      "value": ""
+    },
+    {
+      "key": "webhookHmac",
+      "value": ""
+    },
+    {
+      "key": "webhookPayload",
+      "value": ""
+    },
+    {
+      "key": "sessionAccessTokenA",
+      "value": ""
+    },
+    {
+      "key": "sessionRefreshTokenA",
+      "value": ""
+    },
+    {
+      "key": "sessionAccessTokenB",
+      "value": ""
+    },
+    {
+      "key": "sessionRefreshTokenB",
+      "value": ""
+    },
+    {
+      "key": "sessionIdCurrentA",
+      "value": ""
+    },
+    {
+      "key": "sessionIdOtherB",
+      "value": ""
+    },
+    {
+      "key": "sessionAccessTokenE",
+      "value": ""
+    },
+    {
+      "key": "sessionIdToExpire",
+      "value": ""
+    },
+    {
+      "key": "sessionAccessTokenH",
+      "value": ""
+    },
+    {
+      "key": "sessionRefreshTokenH",
+      "value": ""
+    },
+    {
+      "key": "sessionAccessTokenUnrecognised",
+      "value": ""
+    },
+    {
+      "key": "newPassword",
+      "value": "NewPassword456"
+    }
   ],
   "item": [
     {
@@ -25,97 +112,177 @@
       "item": [
         {
           "name": "01 Register pending account (email must arrive)",
-          "event": [{ "listen": "prerequest", "script": { "exec": [
-            "const inbox = pm.collectionVariables.get('inboxEmail');",
-            "if (!inbox || !inbox.includes('@')) throw new Error('Set collection variable inboxEmail first.');",
-            "const [local, domain] = inbox.split('@');",
-            "const suffix = Date.now().toString();",
-            "pm.collectionVariables.set('email', `${local}+orbit${suffix}@${domain}`);",
-            "pm.collectionVariables.set('username', `orbit${suffix}`.slice(0, 30));",
-            "pm.collectionVariables.set('verificationToken', '');",
-            "pm.collectionVariables.set('previousToken', '');"
-          ] } }],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('account is pending verification', () => pm.expect(body.status).to.eql('PENDING_VERIFICATION'));",
+                  "console.log('Copy the token from the confirmation email for:', pm.collectionVariables.get('email'));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"firstName\": \"Orbit\",\n  \"lastName\": \"Tester\",\n  \"username\": \"{{username}}\",\n  \"email\": \"{{email}}\",\n  \"phoneNumber\": \"+201012345678\",\n  \"password\": \"{{password}}\",\n  \"confirmPassword\": \"{{password}}\"\n}" },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Orbit\",\n  \"lastName\": \"Tester\",\n  \"username\": \"{{username}}\",\n  \"email\": \"{{email}}\",\n  \"phoneNumber\": \"+201012345678\",\n  \"password\": \"{{password}}\",\n  \"confirmPassword\": \"{{password}}\"\n}"
+            },
             "url": "{{baseUrl}}/api/auth/register"
-          },
-          "event": [{ "listen": "test", "script": { "exec": [
-            "pm.test('returns 201 Created', () => pm.response.to.have.status(201));",
-            "const body = pm.response.json();",
-            "pm.test('account is pending verification', () => pm.expect(body.status).to.eql('PENDING_VERIFICATION'));",
-            "console.log('Copy the token from the confirmation email for:', pm.collectionVariables.get('email'));"
-          ] } }]
+          }
         },
         {
           "name": "02 Login before verification is blocked",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"username\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"rememberMe\": false\n}" },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"rememberMe\": false\n}"
+            },
             "url": "{{baseUrl}}/api/v1/auth/login"
           },
-          "event": [{ "listen": "test", "script": { "exec": [
-            "pm.test('returns 403', () => pm.response.to.have.status(403));",
-            "pm.test('reports unverified account', () => pm.expect(pm.response.json().code).to.eql('ACCOUNT_NOT_VERIFIED'));"
-          ] } }]
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 403', () => pm.response.to.have.status(403));",
+                  "pm.test('reports unverified account', () => pm.expect(pm.response.json().code).to.eql('ACCOUNT_NOT_VERIFIED'));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "03 MANUAL: Verify current email token",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"token\": \"{{verificationToken}}\"\n}" },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{verificationToken}}\"\n}"
+            },
             "url": "{{baseUrl}}/api/v1/auth/verify",
             "description": "Before sending, paste the token query parameter from the received email URL into collection variable verificationToken."
           },
-          "event": [{ "listen": "test", "script": { "exec": [
-            "pm.test('returns 200', () => pm.response.to.have.status(200));",
-            "const body = pm.response.json();",
-            "pm.test('account is active', () => pm.expect(body.status).to.eql('ACTIVE'));",
-            "pm.test('does not log the user in', () => pm.expect(body.accessToken).to.be.undefined);"
-          ] } }]
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('account is active', () => pm.expect(body.status).to.eql('ACTIVE'));",
+                  "pm.test('does not log the user in', () => pm.expect(body.accessToken).to.be.undefined);"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "04 Login after verification succeeds",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"username\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"rememberMe\": false\n}" },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"rememberMe\": false\n}"
+            },
             "url": "{{baseUrl}}/api/v1/auth/login"
           },
-          "event": [{ "listen": "test", "script": { "exec": [
-            "pm.test('returns 200', () => pm.response.to.have.status(200));",
-            "const body = pm.response.json();",
-            "pm.test('returns authentication tokens', () => { pm.expect(body.accessToken).to.be.a('string').and.not.empty; pm.expect(body.refreshToken).to.be.a('string').and.not.empty; });"
-          ] } }]
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('returns authentication tokens', () => { pm.expect(body.accessToken).to.be.a('string').and.not.empty; pm.expect(body.refreshToken).to.be.a('string').and.not.empty; });"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "05 Same link after activation remains successful",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"token\": \"{{verificationToken}}\"\n}" },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{verificationToken}}\"\n}"
+            },
             "url": "{{baseUrl}}/api/v1/auth/verify"
           },
-          "event": [{ "listen": "test", "script": { "exec": [
-            "pm.test('returns 200 rather than an error', () => pm.response.to.have.status(200));",
-            "pm.test('still reports ACTIVE', () => pm.expect(pm.response.json().status).to.eql('ACTIVE'));"
-          ] } }]
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 200 rather than an error', () => pm.response.to.have.status(200));",
+                  "pm.test('still reports ACTIVE', () => pm.expect(pm.response.json().status).to.eql('ACTIVE'));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "06 Active account resend sends no email",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{email}}\"\n}" },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\"\n}"
+            },
             "url": "{{baseUrl}}/api/v1/auth/verify/resend",
             "description": "Confirm manually that no email arrives. Current API intentionally returns a generic success response."
           },
-          "event": [{ "listen": "test", "script": { "exec": [
-            "pm.test('returns 202', () => pm.response.to.have.status(202));"
-          ] } }]
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 202', () => pm.response.to.have.status(202));"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
@@ -124,96 +291,171 @@
       "item": [
         {
           "name": "01 Register a second pending account",
-          "event": [{ "listen": "prerequest", "script": { "exec": [
-            "const inbox = pm.collectionVariables.get('inboxEmail');",
-            "if (!inbox || !inbox.includes('@')) throw new Error('Set collection variable inboxEmail first.');",
-            "const [local, domain] = inbox.split('@');",
-            "const suffix = Date.now().toString();",
-            "pm.collectionVariables.set('email', `${local}+resend${suffix}@${domain}`);",
-            "pm.collectionVariables.set('username', `resend${suffix}`.slice(0, 30));",
-            "pm.collectionVariables.set('verificationToken', '');",
-            "pm.collectionVariables.set('previousToken', '');"
-          ] } }],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 201', () => pm.response.to.have.status(201));",
+                  "console.log('Paste first email token into verificationToken, then run the next request.');"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"firstName\": \"Orbit\",\n  \"lastName\": \"Resend\",\n  \"username\": \"{{username}}\",\n  \"email\": \"{{email}}\",\n  \"phoneNumber\": \"+201112345678\",\n  \"password\": \"{{password}}\",\n  \"confirmPassword\": \"{{password}}\"\n}" },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Orbit\",\n  \"lastName\": \"Resend\",\n  \"username\": \"{{username}}\",\n  \"email\": \"{{email}}\",\n  \"phoneNumber\": \"+201112345678\",\n  \"password\": \"{{password}}\",\n  \"confirmPassword\": \"{{password}}\"\n}"
+            },
             "url": "{{baseUrl}}/api/auth/register"
-          },
-          "event": [{ "listen": "test", "script": { "exec": [
-            "pm.test('returns 201', () => pm.response.to.have.status(201));",
-            "console.log('Paste first email token into verificationToken, then run the next request.');"
-          ] } }]
+          }
         },
         {
           "name": "02 Resend invalidates the first token",
-          "event": [{ "listen": "prerequest", "script": { "exec": [
-            "const token = pm.collectionVariables.get('verificationToken');",
-            "if (!token) throw new Error('Paste the first email token into verificationToken before running.');",
-            "pm.collectionVariables.set('previousToken', token);"
-          ] } }],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 202', () => pm.response.to.have.status(202));",
+                  "console.log('Paste the NEW email token into verificationToken before running request 05.');"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{email}}\"\n}" },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\"\n}"
+            },
             "url": "{{baseUrl}}/api/v1/auth/verify/resend"
-          },
-          "event": [{ "listen": "test", "script": { "exec": [
-            "pm.test('returns 202', () => pm.response.to.have.status(202));",
-            "console.log('Paste the NEW email token into verificationToken before running request 05.');"
-          ] } }]
+          }
         },
         {
           "name": "03 Immediate resend is rate limited",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{email}}\"\n}" },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\"\n}"
+            },
             "url": "{{baseUrl}}/api/v1/auth/verify/resend"
           },
-          "event": [{ "listen": "test", "script": { "exec": [
-            "pm.test('returns 429', () => pm.response.to.have.status(429));",
-            "pm.test('reports rate limit', () => pm.expect(pm.response.json().code).to.eql('RATE_LIMITED'));"
-          ] } }]
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 429', () => pm.response.to.have.status(429));",
+                  "pm.test('reports rate limit', () => pm.expect(pm.response.json().code).to.eql('RATE_LIMITED'));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "04 MANUAL: Wait 120 seconds, then resend",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{email}}\"\n}" },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\"\n}"
+            },
             "url": "{{baseUrl}}/api/v1/auth/verify/resend",
             "description": "Wait the full 120 seconds after request 02. This returns another email; paste that latest token into verificationToken."
           },
-          "event": [{ "listen": "test", "script": { "exec": [
-            "pm.test('returns 202 after the cooldown', () => pm.response.to.have.status(202));"
-          ] } }]
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 202 after the cooldown', () => pm.response.to.have.status(202));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "05 Earlier token is dead",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"token\": \"{{previousToken}}\"\n}" },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{previousToken}}\"\n}"
+            },
             "url": "{{baseUrl}}/api/v1/auth/verify"
           },
-          "event": [{ "listen": "test", "script": { "exec": [
-            "pm.test('returns 410', () => pm.response.to.have.status(410));",
-            "pm.test('reports consumed token', () => pm.expect(pm.response.json().code).to.eql('TOKEN_ALREADY_USED'));"
-          ] } }]
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 410', () => pm.response.to.have.status(410));",
+                  "pm.test('reports consumed token', () => pm.expect(pm.response.json().code).to.eql('TOKEN_ALREADY_USED'));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "06 MANUAL: Verify newest token",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"token\": \"{{verificationToken}}\"\n}" },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{verificationToken}}\"\n}"
+            },
             "url": "{{baseUrl}}/api/v1/auth/verify"
           },
-          "event": [{ "listen": "test", "script": { "exec": [
-            "pm.test('returns 200', () => pm.response.to.have.status(200));",
-            "pm.test('activates account', () => pm.expect(pm.response.json().status).to.eql('ACTIVE'));"
-          ] } }]
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 200', () => pm.response.to.have.status(200));",
+                  "pm.test('activates account', () => pm.expect(pm.response.json().status).to.eql('ACTIVE'));"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
@@ -224,47 +466,85 @@
           "name": "01 Invented token is invalid",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"token\": \"abc.def.ghi\"\n}" },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"abc.def.ghi\"\n}"
+            },
             "url": "{{baseUrl}}/api/v1/auth/verify"
           },
-          "event": [{ "listen": "test", "script": { "exec": [
-            "pm.test('returns 400', () => pm.response.to.have.status(400));",
-            "pm.test('reports invalid token', () => pm.expect(pm.response.json().code).to.eql('TOKEN_INVALID'));"
-          ] } }]
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 400', () => pm.response.to.have.status(400));",
+                  "pm.test('reports invalid token', () => pm.expect(pm.response.json().code).to.eql('TOKEN_INVALID'));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "02 Register account for expiry test",
-          "event": [{ "listen": "prerequest", "script": { "exec": [
-            "const inbox = pm.collectionVariables.get('inboxEmail');",
-            "if (!inbox || !inbox.includes('@')) throw new Error('Set collection variable inboxEmail first.');",
-            "const [local, domain] = inbox.split('@');",
-            "const suffix = Date.now().toString();",
-            "pm.collectionVariables.set('email', `${local}+expiry${suffix}@${domain}`);",
-            "pm.collectionVariables.set('username', `expiry${suffix}`.slice(0, 30));",
-            "pm.collectionVariables.set('verificationToken', '');"
-          ] } }],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"firstName\": \"Orbit\",\n  \"lastName\": \"Expiry\",\n  \"username\": \"{{username}}\",\n  \"email\": \"{{email}}\",\n  \"phoneNumber\": \"+201212345678\",\n  \"password\": \"{{password}}\",\n  \"confirmPassword\": \"{{password}}\"\n}" },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Orbit\",\n  \"lastName\": \"Expiry\",\n  \"username\": \"{{username}}\",\n  \"email\": \"{{email}}\",\n  \"phoneNumber\": \"+201212345678\",\n  \"password\": \"{{password}}\",\n  \"confirmPassword\": \"{{password}}\"\n}"
+            },
             "url": "{{baseUrl}}/api/auth/register"
-          },
-          "event": [{ "listen": "test", "script": { "exec": ["pm.test('returns 201', () => pm.response.to.have.status(201));"] } }]
+          }
         },
         {
           "name": "03 MANUAL: Verify an expired token",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"token\": \"{{verificationToken}}\"\n}" },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{verificationToken}}\"\n}"
+            },
             "url": "{{baseUrl}}/api/v1/auth/verify",
             "description": "Copy the email token, then run: UPDATE verification_token vt SET expires_at = NOW() - INTERVAL '1 minute' FROM users u WHERE vt.user_id = u.id AND u.email = '{{email}}' AND vt.consumed_at IS NULL;"
           },
-          "event": [{ "listen": "test", "script": { "exec": [
-            "pm.test('returns 410', () => pm.response.to.have.status(410));",
-            "pm.test('reports expired token', () => pm.expect(pm.response.json().code).to.eql('TOKEN_EXPIRED'));"
-          ] } }]
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 410', () => pm.response.to.have.status(410));",
+                  "pm.test('reports expired token', () => pm.expect(pm.response.json().code).to.eql('TOKEN_EXPIRED'));"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
@@ -275,43 +555,88 @@
           "name": "01 Missing required fields",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{}" },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
             "url": "{{baseUrl}}/api/auth/register"
           },
-          "event": [{ "listen": "test", "script": { "exec": [
-            "pm.test('returns 400', () => pm.response.to.have.status(400));",
-            "pm.test('reports required fields', () => pm.expect(pm.response.json().code).to.eql('FIELD_REQUIRED'));"
-          ] } }]
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 400', () => pm.response.to.have.status(400));",
+                  "pm.test('reports required fields', () => pm.expect(pm.response.json().code).to.eql('FIELD_REQUIRED'));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "02 Invalid username, phone, password, and confirmation",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"firstName\": \"Orbit\",\n  \"lastName\": \"Tester\",\n  \"username\": \"!\",\n  \"email\": \"bad-email\",\n  \"phoneNumber\": \"123\",\n  \"password\": \"short\",\n  \"confirmPassword\": \"different\"\n}" },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Orbit\",\n  \"lastName\": \"Tester\",\n  \"username\": \"!\",\n  \"email\": \"bad-email\",\n  \"phoneNumber\": \"123\",\n  \"password\": \"short\",\n  \"confirmPassword\": \"different\"\n}"
+            },
             "url": "{{baseUrl}}/api/auth/register"
           },
-          "event": [{ "listen": "test", "script": { "exec": [
-            "pm.test('returns 400', () => pm.response.to.have.status(400));",
-            "pm.test('returns validation error envelope', () => pm.expect(pm.response.json().code).to.eql('VALIDATION_ERROR'));",
-            "pm.test('includes field-level errors', () => pm.expect(pm.response.json().fieldErrors.length).to.be.above(0));"
-          ] } }]
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 400', () => pm.response.to.have.status(400));",
+                  "pm.test('returns validation error envelope', () => pm.expect(pm.response.json().code).to.eql('VALIDATION_ERROR'));",
+                  "pm.test('includes field-level errors', () => pm.expect(pm.response.json().fieldErrors.length).to.be.above(0));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "03 Duplicate email is rejected",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"firstName\": \"Orbit\",\n  \"lastName\": \"Duplicate\",\n  \"username\": \"duplicate{{username}}\",\n  \"email\": \"{{email}}\",\n  \"phoneNumber\": \"+201512345678\",\n  \"password\": \"{{password}}\",\n  \"confirmPassword\": \"{{password}}\"\n}" },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Orbit\",\n  \"lastName\": \"Duplicate\",\n  \"username\": \"duplicate{{username}}\",\n  \"email\": \"{{email}}\",\n  \"phoneNumber\": \"+201512345678\",\n  \"password\": \"{{password}}\",\n  \"confirmPassword\": \"{{password}}\"\n}"
+            },
             "url": "{{baseUrl}}/api/auth/register",
             "description": "Run after any successful registration."
           },
-          "event": [{ "listen": "test", "script": { "exec": [
-            "pm.test('returns 400 or 409', () => pm.expect([400, 409]).to.include(pm.response.code));",
-            "const body = pm.response.json();",
-            "pm.test('identifies the email conflict', () => pm.expect(body.fieldErrors.some(error => error.field === 'email' && error.code === 'EMAIL_TAKEN')).to.be.true);"
-          ] } }]
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 400 or 409', () => pm.expect([400, 409]).to.include(pm.response.code));",
+                  "const body = pm.response.json();",
+                  "pm.test('identifies the email conflict', () => pm.expect(body.fieldErrors.some(error => error.field === 'email' && error.code === 'EMAIL_TAKEN')).to.be.true);"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
@@ -321,23 +646,45 @@
       "item": [
         {
           "name": "01 Initiate top-up and save payment ID",
-          "event": [{ "listen": "prerequest", "script": { "exec": [
-            "if (!pm.collectionVariables.get('accessToken')) throw new Error('Set accessToken to a verified adult user access token first.');"
-          ] } }, { "listen": "test", "script": { "exec": [
-            "pm.test('returns 200 OK', () => pm.response.to.have.status(200));",
-            "const body = pm.response.json();",
-            "pm.test('returns a payment ID and checkout URL', () => { pm.expect(body.paymentId).to.be.a('string').and.not.empty; pm.expect(body.redirectUrl).to.be.a('string').and.not.empty; });",
-            "pm.collectionVariables.set('paymentId', body.paymentId);",
-            "pm.collectionVariables.set('checkoutUrl', body.redirectUrl);",
-            "console.log('Open checkoutUrl, complete the payment, then run request 03.');"
-          ] } }],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (!pm.collectionVariables.get('accessToken')) throw new Error('Set accessToken to a verified adult user access token first.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('returns a payment ID and checkout URL', () => { pm.expect(body.paymentId).to.be.a('string').and.not.empty; pm.expect(body.redirectUrl).to.be.a('string').and.not.empty; });",
+                  "pm.collectionVariables.set('paymentId', body.paymentId);",
+                  "pm.collectionVariables.set('checkoutUrl', body.redirectUrl);",
+                  "console.log('Open checkoutUrl, complete the payment, then run request 03.');"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
             ],
-            "body": { "mode": "raw", "raw": "{\n  \"amount\": 50.00\n}" },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 50.00\n}"
+            },
             "url": "{{baseUrl}}/api/v1/payments/topup"
           }
         },
@@ -346,41 +693,738 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "hmac", "value": "not-a-valid-signature" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "hmac",
+                "value": "not-a-valid-signature"
+              }
             ],
-            "body": { "mode": "raw", "raw": "{\n  \"obj\": {\n    \"id\": 100000001,\n    \"amount_cents\": 5000,\n    \"created_at\": \"2026-08-03T10:00:00.000000\",\n    \"currency\": \"EGP\",\n    \"order\": { \"id\": 1, \"merchant_order_id\": \"{{paymentId}}\" }\n  },\n  \"type\": \"TRANSACTION\"\n}" },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"obj\": {\n    \"id\": 100000001,\n    \"amount_cents\": 5000,\n    \"created_at\": \"2026-08-03T10:00:00.000000\",\n    \"currency\": \"EGP\",\n    \"order\": { \"id\": 1, \"merchant_order_id\": \"{{paymentId}}\" }\n  },\n  \"type\": \"TRANSACTION\"\n}"
+            },
             "url": "{{baseUrl}}/api/v1/payments/webhook/paymob"
           },
-          "event": [{ "listen": "test", "script": { "exec": [
-            "pm.test('returns 401 Unauthorized', () => pm.response.to.have.status(401));",
-            "pm.test('rejects the signature', () => pm.expect(pm.response.text()).to.eql('invalid signature'));"
-          ] } }]
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 401 Unauthorized', () => pm.response.to.have.status(401));",
+                  "pm.test('rejects the signature', () => pm.expect(pm.response.text()).to.eql('invalid signature'));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "03 Send a valid signed Paymob webhook",
-          "event": [{ "listen": "prerequest", "script": { "exec": [
-            "const secret = pm.collectionVariables.get('paymobHmacSecret');",
-            "const paymentId = pm.collectionVariables.get('paymentId');",
-            "if (!secret) throw new Error('Set paymobHmacSecret from PAYMOB_HMAC_SECRET first.');",
-            "if (!paymentId) throw new Error('Run request 01 first so paymentId is set.');",
-            "const obj = { id: 100000001, pending: false, success: true, currency: 'EGP', amount_cents: 5000, is_auth: false, is_capture: false, is_standalone_payment: true, is_voided: false, is_refunded: false, is_3d_secure: false, error_occured: false, integration_id: 1, has_parent_transaction: false, created_at: '2026-08-03T10:00:00.000000', owner: '1', order: { id: 1, merchant_order_id: paymentId }, source_data: { pan: '2346', sub_type: 'MasterCard', type: 'card' } };",
-            "const data = `${obj.amount_cents}${obj.created_at}${obj.currency}${obj.error_occured}${obj.has_parent_transaction}${obj.id}${obj.integration_id}${obj.is_3d_secure}${obj.is_auth}${obj.is_capture}${obj.is_refunded}${obj.is_standalone_payment}${obj.is_voided}${obj.order.id}${obj.owner}${obj.pending}${obj.source_data.pan}${obj.source_data.sub_type}${obj.source_data.type}${obj.success}`;",
-            "pm.collectionVariables.set('webhookHmac', CryptoJS.HmacSHA512(data, secret).toString(CryptoJS.enc.Hex));",
-            "pm.collectionVariables.set('webhookPayload', JSON.stringify({ obj, type: 'TRANSACTION' }));"
-          ] } }, { "listen": "test", "script": { "exec": [
-            "pm.test('accepts the verified webhook', () => pm.response.to.have.status(200));",
-            "pm.test('returns OK', () => pm.expect(pm.response.text()).to.eql('OK'));"
-          ] } }],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const secret = pm.collectionVariables.get('paymobHmacSecret');",
+                  "const paymentId = pm.collectionVariables.get('paymentId');",
+                  "if (!secret) throw new Error('Set paymobHmacSecret from PAYMOB_HMAC_SECRET first.');",
+                  "if (!paymentId) throw new Error('Run request 01 first so paymentId is set.');",
+                  "const obj = { id: 100000001, pending: false, success: true, currency: 'EGP', amount_cents: 5000, is_auth: false, is_capture: false, is_standalone_payment: true, is_voided: false, is_refunded: false, is_3d_secure: false, error_occured: false, integration_id: 1, has_parent_transaction: false, created_at: '2026-08-03T10:00:00.000000', owner: '1', order: { id: 1, merchant_order_id: paymentId }, source_data: { pan: '2346', sub_type: 'MasterCard', type: 'card' } };",
+                  "const data = `${obj.amount_cents}${obj.created_at}${obj.currency}${obj.error_occured}${obj.has_parent_transaction}${obj.id}${obj.integration_id}${obj.is_3d_secure}${obj.is_auth}${obj.is_capture}${obj.is_refunded}${obj.is_standalone_payment}${obj.is_voided}${obj.order.id}${obj.owner}${obj.pending}${obj.source_data.pan}${obj.source_data.sub_type}${obj.source_data.type}${obj.success}`;",
+                  "pm.collectionVariables.set('webhookHmac', CryptoJS.HmacSHA512(data, secret).toString(CryptoJS.enc.Hex));",
+                  "pm.collectionVariables.set('webhookPayload', JSON.stringify({ obj, type: 'TRANSACTION' }));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('accepts the verified webhook', () => pm.response.to.have.status(200));",
+                  "pm.test('returns OK', () => pm.expect(pm.response.text()).to.eql('OK'));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "hmac", "value": "{{webhookHmac}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "hmac",
+                "value": "{{webhookHmac}}"
+              }
             ],
-            "body": { "mode": "raw", "raw": "{{webhookPayload}}" },
+            "body": {
+              "mode": "raw",
+              "raw": "{{webhookPayload}}"
+            },
             "url": "{{baseUrl}}/api/v1/payments/webhook/paymob"
           }
+        }
+      ]
+    },
+    {
+      "name": "06 - Devices and sessions (ORB-004)",
+      "description": "Depends on ORB-003 (sign-in). Registers and verifies its own user, then signs in as several simulated devices (via distinct User-Agent headers) to exercise GET /sessions, DELETE /sessions/{id}, and POST /sessions/sign-out-others.\n\nAssumptions flagged here rather than silently baked in -- confirm each before trusting the corresponding test:\n1. Field names on the list response (deviceLabel, lastUsedAt, location, currentDevice, id) are inferred, since SessionSummaryResponse itself wasn't available to check against.\n2. AC3 asks for both 'location and address' as separate things; only a single 'location' field is asserted here pending confirmation of the real DTO shape.\n3. Request '06 Cannot sign out the device you're using' encodes a guard that is NOT stated in any of the 12 acceptance criteria and wasn't confirmed against SessionService. Delete it if that guard doesn't actually exist.\n4. Access-token revocation is tested as immediate (request 09), not just refresh-token revocation, because the API contract states the sid claim's purpose is explicitly 'so a specific session can be revoked.' If JwtAuthenticationFilter turns out not to check session status per request, this expectation and that filter need to be reconciled together.\n5. 'Unknown device' (not 'Unrecognised device') is the exact string DeviceLabelResolver returns -- verified against that file directly.\n6. Request 22 (AC11, password change revokes other sessions) is a placeholder: no change-password endpoint has been documented in any contract seen so far. Fill in the real method/URL before relying on it.",
+      "item": [
+        {
+          "name": "01 Register account for session tests",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Orbit\",\n  \"lastName\": \"Sessions\",\n  \"username\": \"{{username}}\",\n  \"email\": \"{{email}}\",\n  \"phoneNumber\": \"+201612345678\",\n  \"password\": \"{{password}}\",\n  \"confirmPassword\": \"{{password}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const inbox = pm.collectionVariables.get('inboxEmail');",
+                  "if (!inbox || !inbox.includes('@')) throw new Error('Set collection variable inboxEmail first.');",
+                  "const [local, domain] = inbox.split('@');",
+                  "const suffix = Date.now().toString();",
+                  "pm.collectionVariables.set('email', `${local}+sessions${suffix}@${domain}`);",
+                  "pm.collectionVariables.set('username', `sessions${suffix}`.slice(0, 30));",
+                  "pm.collectionVariables.set('verificationToken', '');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 201 Created', () => pm.response.to.have.status(201));",
+                  "console.log('Copy the token from the confirmation email for:', pm.collectionVariables.get('email'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02 MANUAL: Verify the account",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/verify",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{verificationToken}}\"\n}"
+            },
+            "description": "Paste the token from the confirmation email into verificationToken before running."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 200', () => pm.response.to.have.status(200));",
+                  "pm.test('account is active', () => pm.expect(pm.response.json().status).to.eql('ACTIVE'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03 Sign in as Device A",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "User-Agent",
+                "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"rememberMe\": false\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('sessionAccessTokenA', body.accessToken);",
+                  "pm.collectionVariables.set('sessionRefreshTokenA', body.refreshToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "04 Only one session exists yet (AC: being the only session)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sessionAccessTokenA}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/sessions"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('exactly one session exists', () => pm.expect(body.length).to.eql(1));",
+                  "pm.test('it is marked as the current device', () => pm.expect(body[0].currentDevice).to.be.true);",
+                  "pm.collectionVariables.set('sessionIdCurrentA', body[0].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "05 Sign in as Device B (different User-Agent)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "User-Agent",
+                "value": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"rememberMe\": false\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('sessionAccessTokenB', body.accessToken);",
+                  "pm.collectionVariables.set('sessionRefreshTokenB', body.refreshToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "06 List shows one entry per device, current marked, fields present (AC: one entry each, this device marked, device/location/last-used visible, new device appears)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sessionAccessTokenA}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/sessions"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('exactly two active sessions', () => pm.expect(body.length).to.eql(2));",
+                  "const current = body.filter(s => s.currentDevice === true);",
+                  "pm.test('exactly one entry is marked as the current device', () => pm.expect(current.length).to.eql(1));",
+                  "const other = body.find(s => s.currentDevice === false);",
+                  "pm.test('every entry has device, last-used, and location fields present', () => body.forEach(s => { pm.expect(s).to.have.property('deviceLabel'); pm.expect(s).to.have.property('lastUsedAt'); pm.expect(s).to.have.property('location'); }));",
+                  "pm.collectionVariables.set('sessionIdCurrentA', current[0].id);",
+                  "pm.collectionVariables.set('sessionIdOtherB', other.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "06b UNCONFIRMED: Cannot sign out the device you're using (not in the acceptance criteria -- delete if SessionService doesn't guard this)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sessionAccessTokenA}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/sessions/{{sessionIdCurrentA}}",
+            "description": "Speculative test. No acceptance criterion states this guard exists; SessionService wasn't available to confirm it. Verify before trusting this assertion."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 409 (UNCONFIRMED expectation)', () => pm.response.to.have.status(409));",
+                  "pm.test('reports the guard (UNCONFIRMED expectation)', () => pm.expect(pm.response.json().code).to.eql('CANNOT_SIGN_OUT_CURRENT_DEVICE'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07 Sign out Device B from Device A",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sessionAccessTokenA}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/sessions/{{sessionIdOtherB}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "08 List reflects the sign-out, Device A still present and still current (AC: entry gone, others remain, current device still signed in)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sessionAccessTokenA}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/sessions"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 200 - Device A is still signed in', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Device B entry is gone', () => pm.expect(body.some(s => s.id === pm.collectionVariables.get('sessionIdOtherB'))).to.be.false);",
+                  "pm.test('Device A entry remains, marked current', () => pm.expect(body.some(s => s.id === pm.collectionVariables.get('sessionIdCurrentA') && s.currentDevice === true)).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "09 Device B's access token is rejected immediately after sign-out (AC: signed-out device is returned to sign-in)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sessionAccessTokenB}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/sessions",
+            "description": "The contract states the sid claim exists specifically so a session can be revoked -- tested here as an immediate rejection, not a delayed one."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('a revoked session's access token is now rejected', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10 Device B's refresh token is also dead",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/refresh",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{sessionRefreshTokenB}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 401', () => pm.response.to.have.status(401));",
+                  "pm.test('reports invalid refresh token', () => pm.expect(pm.response.json().code).to.eql('INVALID_REFRESH_TOKEN'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "11 Signing out an already-gone session is a no-op",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sessionAccessTokenA}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/sessions/{{sessionIdOtherB}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('still returns 204, not 404', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "12 Sign in as Device E (for the expiry test)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "User-Agent",
+                "value": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"rememberMe\": false\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 200', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('sessionAccessTokenE', pm.response.json().accessToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "13 Capture Device E's session ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sessionAccessTokenE}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/sessions"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const current = pm.response.json().find(s => s.currentDevice === true);",
+                  "pm.collectionVariables.set('sessionIdToExpire', current.id);",
+                  "console.log('Now run the MANUAL SQL step, then request 14.');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "14 MANUAL: Expire Device E's session, then confirm it drops off the list (AC: an already-expired session is not listed)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sessionAccessTokenA}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/sessions",
+            "description": "Run this SQL first: UPDATE session SET idle_expires_at = NOW() - INTERVAL '1 minute' WHERE id = '{{sessionIdToExpire}}';"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('expired session is not listed', () => pm.expect(body.some(s => s.id === pm.collectionVariables.get('sessionIdToExpire'))).to.be.false);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "15 Sign in as Device H, then sign out all others",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "User-Agent",
+                "value": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"rememberMe\": false\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('sessionAccessTokenH', body.accessToken);",
+                  "pm.collectionVariables.set('sessionRefreshTokenH', body.refreshToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "16 Sign out all others from Device A (AC: sign out all others)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sessionAccessTokenA}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/sessions/sign-out-others"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "17 Only Device A remains (AC: only current session left)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sessionAccessTokenA}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/sessions"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('exactly one active session remains', () => pm.expect(body.length).to.eql(1));",
+                  "pm.test('the remaining session is the current device', () => pm.expect(body[0].currentDevice).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "18 Device H's refresh token is dead too",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/refresh",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{sessionRefreshTokenH}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 401', () => pm.response.to.have.status(401));",
+                  "pm.test('reports invalid refresh token', () => pm.expect(pm.response.json().code).to.eql('INVALID_REFRESH_TOKEN'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "19 Device H's access token is rejected too",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sessionAccessTokenH}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/sessions"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('a bulk-revoked session's access token is now rejected', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "20 Unrecognised device signs in",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "User-Agent",
+                "value": "X"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"rememberMe\": false\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 200', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('sessionAccessTokenUnrecognised', pm.response.json().accessToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "21 Confirm the unrecognised entry's label (AC: unidentifiable device says so plainly)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sessionAccessTokenA}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/sessions",
+            "description": "'Unknown device' is the exact string DeviceLabelResolver.resolve() returns when neither browser nor OS is recognised -- checked directly against that class, not assumed."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const unrecognised = body.find(s => s.deviceLabel === 'Unknown device');",
+                  "pm.test('an unidentifiable device is labelled plainly, not guessed', () => pm.expect(unrecognised).to.not.be.undefined);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "22 TODO: Change password, then only the new session is listed (AC: password change revokes other sessions)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sessionAccessTokenA}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/PLACEHOLDER-change-password-endpoint",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"{{password}}\",\n  \"newPassword\": \"{{newPassword}}\"\n}"
+            },
+            "description": "No change-password endpoint has appeared in any contract reviewed so far. Replace the URL (and method/body if different) with the real one once that story exists, then re-run: sign in twice more first to create extra sessions, change the password here, sign in again, and confirm GET /sessions returns exactly that one new session."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('PLACEHOLDER -- fill in the real endpoint before trusting this', () => { throw new Error('Not yet wired to a real change-password endpoint.'); });"
+                ]
+              }
+            }
+          ]
         }
       ]
     }
