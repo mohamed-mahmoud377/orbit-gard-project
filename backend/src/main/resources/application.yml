@@ -42,6 +42,8 @@ server:
     context-path: /api/v1
 
 logging:
+  pattern:
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %-5level [%X{traceId:-}] %logger{36} - %msg%n"
   level:
     org.hibernate.SQL: ${SQL_LOG_LEVEL:info}
 

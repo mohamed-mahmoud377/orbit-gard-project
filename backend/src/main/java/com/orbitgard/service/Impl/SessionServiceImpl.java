@@ -56,6 +56,7 @@ public class SessionServiceImpl implements SessionService {
         String location = null;
         if (session.getIpAddress() != null) {
             String ipAddress = session.getIpAddress().getHostAddress();
+            // Try to resolve geolocation if available
             String geoLocation = geoLocationResolver.resolveLocation(session.getIpAddress()).orElse(null);
             if (geoLocation != null) {
                 location = geoLocation + " · " + ipAddress;

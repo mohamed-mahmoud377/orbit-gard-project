@@ -1,6 +1,5 @@
 package com.orbitgard.controller;
 
-import com.orbitgard.dto.response.MessageResponse;
 import com.orbitgard.dto.response.SessionSummaryResponse;
 import com.orbitgard.security.JwtPrincipal;
 import com.orbitgard.service.SessionService;
@@ -33,16 +32,16 @@ public class SessionController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<MessageResponse> signOutOne(
+    public ResponseEntity<Void> signOutOne(
             @AuthenticationPrincipal JwtPrincipal principal,
             @PathVariable UUID id) {
         sessionService.signOutOne(principal.userId(), principal.sessionId(), id);
-        return ResponseEntity.ok(new MessageResponse("Session deleted successfully"));
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/sign-out-others")
-    public ResponseEntity<MessageResponse> signOutAllOthers(@AuthenticationPrincipal JwtPrincipal principal) {
+    public ResponseEntity<Void> signOutAllOthers(@AuthenticationPrincipal JwtPrincipal principal) {
         sessionService.signOutAllOthers(principal.userId(), principal.sessionId());
-        return ResponseEntity.ok(new MessageResponse("All other sessions have been signed out successfully"));
+        return ResponseEntity.noContent().build();
     }
 }

@@ -1,6 +1,8 @@
 package com.orbitgard.config;
 
 import com.orbitgard.security.JwtAuthenticationFilter;
+import com.orbitgard.exceptions.ApiProblemResponseWriter;
+import com.orbitgard.exceptions.ErrorCode;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -15,9 +17,11 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final ApiProblemResponseWriter problemResponseWriter;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, ApiProblemResponseWriter problemResponseWriter) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.problemResponseWriter = problemResponseWriter;
     }
 
     @Bean
@@ -30,6 +34,13 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint((request, response, ex) ->
+                                problemResponseWriter.write(request, response, ErrorCode.UNAUTHENTICATED,
+                                        "A valid access token is required to access this resource."))
+                        .accessDeniedHandler((request, response, ex) ->
+                                problemResponseWriter.write(request, response, ErrorCode.ACCESS_DENIED,
+                                        "You do not have permission to access this resource.")))
                 .authorizeHttpRequests(auth -> auth
                         // Paths here are relative to server.servlet.context-path
                         // (/api/v1) -- Spring Security matches against the

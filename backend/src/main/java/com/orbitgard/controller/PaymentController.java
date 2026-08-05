@@ -6,6 +6,7 @@ import com.orbitgard.security.JwtPrincipal;
 import com.orbitgard.service.TopUpService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -26,6 +27,6 @@ public class PaymentController {
     public ResponseEntity<TopUpResponse> topUp(
             @AuthenticationPrincipal JwtPrincipal principal,
             @Valid @RequestBody TopUpRequest request) {
-        return ResponseEntity.ok(topUpService.initiate(principal.userId(), request));
+        return ResponseEntity.status(HttpStatus.CREATED).body(topUpService.initiate(principal.userId(), request));
     }
 }

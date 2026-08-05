@@ -61,6 +61,7 @@ public class AuthController {
         return authService.checkUsernameAvailable(username);
     }
 
+
     private InetAddress resolveRemoteAddress(HttpServletRequest request) {
         try {
             return InetAddress.getByName(request.getRemoteAddr());

@@ -1,6 +1,8 @@
 package com.orbitgard.controller;
 
 import com.orbitgard.paymob.PaymobWebhookPayload;
+import com.orbitgard.exceptions.ApiException;
+import com.orbitgard.exceptions.ErrorCode;
 import com.orbitgard.service.PaymentConfirmationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -27,7 +29,7 @@ public class PaymobWebhookController {
     public ResponseEntity<String> notification(@RequestBody PaymobWebhookPayload payload) {
         if (payload == null || payload.getObj() == null) {
             log.warn("Rejected Paymob webhook: missing payload object");
-            return ResponseEntity.badRequest().body("missing obj");
+            throw new ApiException(ErrorCode.MALFORMED_REQUEST);
         }
 
         try {
