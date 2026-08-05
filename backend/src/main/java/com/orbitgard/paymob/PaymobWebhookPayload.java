@@ -23,7 +23,7 @@ public class PaymobWebhookPayload {
         private String currency;
 
         @JsonProperty("amount_cents")
-        private int amountCents;
+        private Integer amountCents;
 
         @JsonProperty("is_auth")
         private boolean isAuth;
