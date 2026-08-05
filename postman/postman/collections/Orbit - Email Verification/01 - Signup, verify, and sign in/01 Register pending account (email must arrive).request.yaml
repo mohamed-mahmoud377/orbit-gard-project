@@ -1,0 +1,26 @@
+$kind: http-request
+url: "{{baseUrl}}/api/auth/register"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "firstName": "Orbit",
+      "lastName": "Tester",
+      "username": "{{username}}",
+      "email": "{{email}}",
+      "phoneNumber": "+201012345678",
+      "password": "{{password}}",
+      "confirmPassword": "{{password}}"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('returns 201 Created', () => pm.response.to.have.status(201));
+      const body = pm.response.json();
+      pm.test('account is pending verification', () => pm.expect(body.status).to.eql('PENDING_VERIFICATION'));
+      console.log('Copy the token from the confirmation email for:', pm.collectionVariables.get('email'));
+    language: text/javascript
+order: 1000

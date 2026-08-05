@@ -36,13 +36,14 @@ app:
   frontend:
     base-url: ${FRONTEND_BASE_URL:http://localhost:4200}
 
-
 server:
   port: ${SERVER_PORT:8080}
   servlet:
     context-path: /api/v1
 
 logging:
+  pattern:
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %-5level [%X{traceId:-}] %logger{36} - %msg%n"
   level:
     org.hibernate.SQL: ${SQL_LOG_LEVEL:info}
 
@@ -50,5 +51,12 @@ orbitgard:
   jwt:
     secret: ${JWT_SECRET}
     access-token-ttl-seconds: 300
-
-
+  paymob:
+    base-url: ${PAYMOB_BASE_URL:https://accept.paymob.com}
+    secret-key: ${PAYMOB_SECRET_KEY}
+    public-key: ${PAYMOB_PUBLIC_KEY}
+    callback-url: ${PAYMOB_CALLBACK_URL:http://localhost:4200/payment/callback}
+    notification-url: ${PAYMOB_NOTIFICATION_URL:https://webhook.site/511bbe62-3640-401f-bab9-b413d7642041}
+    payment-method-ids: ${PAYMOB_PAYMENT_METHOD_IDS:}
+    connect-timeout: PT5S
+    read-timeout: PT20S
