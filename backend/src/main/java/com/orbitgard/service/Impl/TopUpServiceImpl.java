@@ -8,8 +8,8 @@ import com.orbitgard.enums.AccountType;
 import com.orbitgard.enums.PaymentStatus;
 import com.orbitgard.exceptions.ApiException;
 import com.orbitgard.exceptions.ErrorCode;
+import com.orbitgard.mapper.PaymobMapper;
 import com.orbitgard.paymob.PaymobClient;
-import com.orbitgard.dto.request.PaymobIntentionRequest;
 import com.orbitgard.dto.response.PaymobIntentionResponse;
 import com.orbitgard.paymob.PaymobProperties;
 import com.orbitgard.repository.PaymentRepository;
@@ -71,34 +71,10 @@ public class TopUpServiceImpl implements TopUpService {
         // 1) Create the row first, as STARTED — before Paymob even knows this
         //    payment exists. Gives you an audit trail even if the Paymob call
         //    never completes (network failure, timeout, etc).
-        Payment payment = Payment.builder()
-                .id(paymentId)
-                .user(user)
-                .amountCents(amountCents)
-                .currency("EGP")
-                .status(PaymentStatus.STARTED)
-                .build();
+        Payment payment = PaymobMapper.toStartedPayment(paymentId, user, amountCents);
         paymentRepository.save(payment);
 
-        PaymobIntentionRequest intentionRequest = PaymobIntentionRequest.builder()
-                .amount(amountCents)
-                .currency("EGP")
-                .redirectionUrl(paymobProperties.getCallbackUrl())
-                .notificationUrl(paymobProperties.getNotificationUrl())
-                .paymentMethods(paymobProperties.getPaymentMethodIds())
-                .billingData(PaymobIntentionRequest.BillingData.builder()
-                        .firstName(user.getFirstName())
-                        .lastName(user.getLastName())
-                        .phoneNumber(user.getPhoneNumber())
-                        .email(user.getEmail())
-                        .build())
-                .customer(PaymobIntentionRequest.Customer.builder()
-                        .firstName(user.getFirstName())
-                        .lastName(user.getLastName())
-                        .email(user.getEmail())
-                        .build())
-                .specialReference(paymentId.toString())
-                .build();
+        var intentionRequest = PaymobMapper.toIntentionRequest(user, paymobProperties, amountCents, paymentId);
 
         PaymobIntentionResponse intentionResponse;
         try {
@@ -121,9 +97,7 @@ public class TopUpServiceImpl implements TopUpService {
         // 2) Paymob accepted the intention — flip to processing and store
         //    the intention id, which is what getIntentionStatus() will use
         //    later to actively re-check the outcome.
-        payment.setStatus(PaymentStatus.AWAITING_CONFIRMATION);
-        payment.setPaymobIntentionId(intentionResponse.getId());
-        payment.setPaymobClientSecret(intentionResponse.getClientSecret()); // NEW
+        PaymobMapper.applyIntentionResponse(payment, intentionResponse.getId(), intentionResponse.getClientSecret());
         paymentRepository.save(payment);
 
         String redirectUrl = paymobClient.buildCheckoutRedirectUrl(intentionResponse.getClientSecret());

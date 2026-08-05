@@ -1,8 +1,8 @@
 package com.orbitgard.service;
 
-import java.util.UUID;
+import com.orbitgard.paymob.PaymobWebhookPayload;
 
 public interface PaymentConfirmationService {
 
-    void reconcileFromWebhook(UUID paymentId, boolean success, boolean pending, Integer amountCents);
+    void reconcileFromWebhook(PaymobWebhookPayload payload);
 }

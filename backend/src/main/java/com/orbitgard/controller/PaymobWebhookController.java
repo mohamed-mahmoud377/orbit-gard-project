@@ -1,11 +1,8 @@
 package com.orbitgard.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import com.orbitgard.paymob.PaymobWebhookPayload;
 import com.orbitgard.service.PaymentConfirmationService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,52 +12,28 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.view.RedirectView;
 
-import java.util.UUID;
-
 @RestController
 @RequestMapping("/payments/webhook")
 @Slf4j
 public class PaymobWebhookController {
 
     private final PaymentConfirmationService paymentConfirmationService;
-    private final ObjectMapper objectMapper;
 
-    public PaymobWebhookController(PaymentConfirmationService paymentConfirmationService,
-                                   ObjectMapper objectMapper) {
+    public PaymobWebhookController(PaymentConfirmationService paymentConfirmationService) {
         this.paymentConfirmationService = paymentConfirmationService;
-        this.objectMapper = objectMapper;
     }
 
     @PostMapping("/paymob")
-    public ResponseEntity<String> notification(@RequestBody String rawBody) {
-
-        PaymobWebhookPayload payload;
-        try {
-            payload = objectMapper.readValue(rawBody, PaymobWebhookPayload.class);
-        } catch (Exception ex) {
-            log.warn("Rejected Paymob webhook: unparseable body");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("unparseable body");
-        }
-
-        if (payload.getObj() == null) {
-            log.warn("Rejected Paymob webhook: missing obj in payload");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("missing obj");
-        }
-
-        var obj = payload.getObj();
-        String merchantOrderId = obj.getOrder() == null ? null : obj.getOrder().getMerchantOrderId();
-
-        if (merchantOrderId == null) {
-            log.warn("Paymob webhook missing merchant_order_id");
-            return ResponseEntity.ok("OK");
+    public ResponseEntity<String> notification(@RequestBody PaymobWebhookPayload payload) {
+        if (payload == null || payload.getObj() == null) {
+            log.warn("Rejected Paymob webhook: missing payload object");
+            return ResponseEntity.badRequest().body("missing obj");
         }
 
         try {
-            UUID paymentId = UUID.fromString(merchantOrderId);
-            paymentConfirmationService.reconcileFromWebhook(
-                    paymentId, obj.isSuccess(), obj.isPending(), obj.getAmountCents());
+            paymentConfirmationService.reconcileFromWebhook(payload);
         } catch (Exception ex) {
-            log.error("Error reconciling payment from webhook, merchantOrderId={}", merchantOrderId, ex);
+            log.error("Error reconciling payment from webhook", ex);
         }
 
         return ResponseEntity.ok("OK");
