@@ -4,10 +4,12 @@ import com.orbitgard.dto.request.LoginRequest;
 import com.orbitgard.dto.request.RefreshTokenRequest;
 import com.orbitgard.dto.request.RegisterRequest;
 import com.orbitgard.dto.response.LoginResponse;
+import com.orbitgard.dto.response.MessageResponse;
 import com.orbitgard.dto.response.RegisterResponse;
 import com.orbitgard.dto.response.UsernameAvailabilityResponse;
 import com.orbitgard.service.AuthService;
 import com.orbitgard.service.RefreshTokenService;
+import com.orbitgard.service.SessionService;
 import com.orbitgard.validation.annotation.ValidUsername;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -25,10 +27,12 @@ public class AuthController {
 
     private final AuthService authService;
     private final RefreshTokenService refreshTokenService;
+    private final SessionService sessionService;
 
-    public AuthController(AuthService authService, RefreshTokenService refreshTokenService) {
+    public AuthController(AuthService authService, RefreshTokenService refreshTokenService, SessionService sessionService) {
         this.authService = authService;
         this.refreshTokenService = refreshTokenService;
+        this.sessionService = sessionService;
     }
 
     @PostMapping("/login")
@@ -61,6 +65,11 @@ public class AuthController {
         return authService.checkUsernameAvailable(username);
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<MessageResponse> logout() {
+        sessionService.signOutCurrent();
+        return ResponseEntity.ok(new MessageResponse("Logged out successfully"));
+    }
 
     private InetAddress resolveRemoteAddress(HttpServletRequest request) {
         try {

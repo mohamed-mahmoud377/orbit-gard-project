@@ -1,10 +1,8 @@
 package com.orbitgard.controller;
 
 import com.orbitgard.dto.response.SessionSummaryResponse;
-import com.orbitgard.security.JwtPrincipal;
 import com.orbitgard.service.SessionService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,22 +24,20 @@ public class SessionController {
     }
 
     @GetMapping
-    public ResponseEntity<List<SessionSummaryResponse>> list(@AuthenticationPrincipal JwtPrincipal principal) {
+    public ResponseEntity<List<SessionSummaryResponse>> list() {
         return ResponseEntity.ok(
-                sessionService.listActiveSessions(principal.userId(), principal.sessionId()));
+                sessionService.listActiveSessions());
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> signOutOne(
-            @AuthenticationPrincipal JwtPrincipal principal,
-            @PathVariable UUID id) {
-        sessionService.signOutOne(principal.userId(), principal.sessionId(), id);
+    public ResponseEntity<Void> signOutOne(@PathVariable UUID id) {
+        sessionService.signOutOne(id);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/sign-out-others")
-    public ResponseEntity<Void> signOutAllOthers(@AuthenticationPrincipal JwtPrincipal principal) {
-        sessionService.signOutAllOthers(principal.userId(), principal.sessionId());
+    public ResponseEntity<Void> signOutAllOthers() {
+        sessionService.signOutAllOthers();
         return ResponseEntity.noContent().build();
     }
 }

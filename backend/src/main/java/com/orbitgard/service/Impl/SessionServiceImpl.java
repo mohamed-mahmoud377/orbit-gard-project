@@ -8,6 +8,7 @@ import com.orbitgard.exceptions.ErrorCode;
 import com.orbitgard.geo.GeoLocationResolver;
 import com.orbitgard.repository.SessionRepository;
 import com.orbitgard.service.SessionService;
+import com.orbitgard.service.AuthenticatedUserService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,35 +22,49 @@ public class SessionServiceImpl implements SessionService {
 
     private final SessionRepository sessionRepository;
     private final GeoLocationResolver geoLocationResolver;
+    private final AuthenticatedUserService authenticatedUserService;
 
-    public SessionServiceImpl(SessionRepository sessionRepository, GeoLocationResolver geoLocationResolver) {
+    public SessionServiceImpl(SessionRepository sessionRepository, GeoLocationResolver geoLocationResolver,
+                              AuthenticatedUserService authenticatedUserService) {
         this.sessionRepository = sessionRepository;
         this.geoLocationResolver = geoLocationResolver;
+        this.authenticatedUserService = authenticatedUserService;
     }
 
     @Override
-    public List<SessionSummaryResponse> listActiveSessions(UUID userId, UUID currentSessionId) {
+    public List<SessionSummaryResponse> listActiveSessions() {
+        var principal = authenticatedUserService.currentPrincipal();
         OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
-        return sessionRepository.findActiveByUserId(userId, now).stream()
-                .map(session -> toSummary(session, currentSessionId))
+        return sessionRepository.findActiveByUserId(principal.userId(), now).stream()
+                .map(session -> toSummary(session, principal.sessionId()))
                 .toList();
     }
 
     @Override
     @Transactional
-    public void signOutOne(UUID userId, UUID currentSessionId, UUID targetSessionId) {
-        if (targetSessionId.equals(currentSessionId)) {
+    public void signOutOne(UUID targetSessionId) {
+        var principal = authenticatedUserService.currentPrincipal();
+        if (targetSessionId.equals(principal.sessionId())) {
             throw new ApiException(ErrorCode.CANNOT_SIGN_OUT_CURRENT_DEVICE);
         }
         sessionRepository.revokeIfActive(
-                targetSessionId, userId, SessionRevokedReason.REMOTE_LOGOUT, OffsetDateTime.now(ZoneOffset.UTC));
+                targetSessionId, principal.userId(), SessionRevokedReason.REMOTE_LOGOUT, OffsetDateTime.now(ZoneOffset.UTC));
     }
 
     @Override
     @Transactional
-    public void signOutAllOthers(UUID userId, UUID currentSessionId) {
+    public void signOutAllOthers() {
+        var principal = authenticatedUserService.currentPrincipal();
         sessionRepository.revokeAllExcept(
-                userId, currentSessionId, SessionRevokedReason.REMOTE_LOGOUT, OffsetDateTime.now(ZoneOffset.UTC));
+                principal.userId(), principal.sessionId(), SessionRevokedReason.REMOTE_LOGOUT, OffsetDateTime.now(ZoneOffset.UTC));
+    }
+
+    @Override
+    @Transactional
+    public void signOutCurrent() {
+        var principal = authenticatedUserService.currentPrincipal();
+        sessionRepository.revokeIfActive(
+                principal.sessionId(), principal.userId(), SessionRevokedReason.LOGOUT, OffsetDateTime.now(ZoneOffset.UTC));
     }
 
     private SessionSummaryResponse toSummary(Session session, UUID currentSessionId) {

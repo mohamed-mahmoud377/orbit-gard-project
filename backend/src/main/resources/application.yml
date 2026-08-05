@@ -37,7 +37,7 @@ app:
     base-url: ${FRONTEND_BASE_URL:http://localhost:4200}
 
 server:
-  port: ${SERVER_PORT:8081}
+  port: ${SERVER_PORT:8080}
   servlet:
     context-path: /api/v1
 

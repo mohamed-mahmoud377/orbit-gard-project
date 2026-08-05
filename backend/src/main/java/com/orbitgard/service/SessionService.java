@@ -7,9 +7,11 @@ import java.util.UUID;
 
 public interface SessionService {
 
-    List<SessionSummaryResponse> listActiveSessions(UUID userId, UUID currentSessionId);
+    List<SessionSummaryResponse> listActiveSessions();
 
-    void signOutOne(UUID userId, UUID currentSessionId, UUID targetSessionId);
+    void signOutOne(UUID targetSessionId);
 
-    void signOutAllOthers(UUID userId, UUID currentSessionId);
+    void signOutAllOthers();
+
+    void signOutCurrent();
 }

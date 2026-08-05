@@ -15,6 +15,7 @@ import com.orbitgard.paymob.PaymobProperties;
 import com.orbitgard.repository.PaymentRepository;
 import com.orbitgard.repository.UserRepository;
 import com.orbitgard.service.TopUpService;
+import com.orbitgard.service.AuthenticatedUserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,18 +37,22 @@ public class TopUpServiceImpl implements TopUpService {
     private final PaymentRepository paymentRepository;
     private final PaymobClient paymobClient;
     private final PaymobProperties paymobProperties;
+    private final AuthenticatedUserService authenticatedUserService;
 
     public TopUpServiceImpl(UserRepository userRepository, PaymentRepository paymentRepository,
-                            PaymobClient paymobClient, PaymobProperties paymobProperties) {
+                            PaymobClient paymobClient, PaymobProperties paymobProperties,
+                            AuthenticatedUserService authenticatedUserService) {
         this.userRepository = userRepository;
         this.paymentRepository = paymentRepository;
         this.paymobClient = paymobClient;
         this.paymobProperties = paymobProperties;
+        this.authenticatedUserService = authenticatedUserService;
     }
 
     @Override
     @Transactional
-    public TopUpResponse initiate(UUID userId, TopUpRequest request) {
+    public TopUpResponse initiate(TopUpRequest request) {
+        UUID userId = authenticatedUserService.currentPrincipal().userId();
         if (request.amount() == null || request.amount().compareTo(BigDecimal.ZERO) <= 0) {
             throw new ApiException(ErrorCode.AMOUNT_INVALID, "amount");
         }
