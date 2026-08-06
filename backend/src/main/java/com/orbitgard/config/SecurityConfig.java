@@ -46,7 +46,7 @@ public class SecurityConfig {
                         // (/api/v1) -- Spring Security matches against the
                         // post-context-path path, so no /api/v1 prefix belongs here.
                         // Only these five are documented as requiring no auth.//
-                        .requestMatchers(HttpMethod.GET, "/auth/username-available").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/auth/username-available", "/auth/promo-code").permitAll()
                         .requestMatchers(HttpMethod.POST,
                                 "/auth/register",
                                 "/auth/verify",

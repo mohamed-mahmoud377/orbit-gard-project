@@ -5,6 +5,7 @@ import com.orbitgard.dto.response.RegisterResponse;
 import com.orbitgard.entity.User;
 import com.orbitgard.enums.AccountType;
 import com.orbitgard.enums.UserStatus;
+import com.orbitgard.validation.PromoCodeNormalizer;
 import org.springframework.stereotype.Component;
 
 import java.time.OffsetDateTime;
@@ -44,7 +45,7 @@ public final class UserMapper {
                 .email(normalizedEmail)
                 .phoneNumber(canonicalPhoneNumber)
                 .passwordHash(passwordHash)
-                .promoCodeEntered(request.promoCode())
+                .promoCodeEntered(PromoCodeNormalizer.normalizeOrNull(request.promoCode()))
                 .createdAt(OffsetDateTime.now(java.time.ZoneOffset.UTC))
                 .updatedAt(OffsetDateTime.now(java.time.ZoneOffset.UTC))
                 .build();

@@ -29,7 +29,7 @@ INSERT INTO session (
 -- hours ago -- ordinary, comfortably active session.
 (
     gen_random_uuid(),
-    '5dbf81fc-4fe9-49ca-a82a-1125c83e9bff',
+    '11111111-1111-1111-1111-111111111111',
     '2b0cf9ea23865353c8ccdcc10bcb515ddc6bbcf7be875d0c25451833510073bd',
     NULL,
     false,
@@ -46,7 +46,7 @@ INSERT INTO session (
 -- exercises the 7-day idle / 30-day absolute pair from the sign-in story.
 (
     gen_random_uuid(),
-    '5dbf81fc-4fe9-49ca-a82a-1125c83e9bff',
+    '22222222-2222-2222-2222-222222222222',
     '29bb7d45989d2212c7fc9c62ba0e4ddc6702c0fce3a1347924227542728cad42',
     NULL,
     true,
@@ -64,7 +64,7 @@ INSERT INTO session (
 -- expired" behaviour without waiting 12 real hours.
 (
     gen_random_uuid(),
-    '5dbf81fc-4fe9-49ca-a82a-1125c83e9bff',
+    '33333333-3333-3333-3333-333333333333',
     '75d799ff9e57413146022860c2e5d4eabf4045afbe2e2432318b149e6a6837d7',
     NULL,
     false,
