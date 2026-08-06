@@ -1,5 +1,7 @@
 package com.orbitgard.service;
 
+import com.orbitgard.exceptions.ApiException;
+import com.orbitgard.exceptions.ErrorCode;
 import com.orbitgard.security.JwtPrincipal;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.Authentication;
@@ -17,7 +19,13 @@ public class AuthenticatedUserService {
         }
         return principal;
     }
-
+    public JwtPrincipal require() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !(authentication.getPrincipal() instanceof JwtPrincipal principal)) {
+            throw new ApiException(ErrorCode.UNAUTHENTICATED);
+        }
+        return principal;
+    }
     public String currentUsername() {
         return currentPrincipal().username();
     }
