@@ -6,6 +6,7 @@ public enum ErrorCode {
 
     FIELD_REQUIRED(HttpStatus.BAD_REQUEST, "field-required", "Field required"),
     NAME_INVALID(HttpStatus.BAD_REQUEST, "name-invalid", "Invalid name"),
+    NAME_TOO_LONG(HttpStatus.BAD_REQUEST, "name-too-long", "Name is too long"),
     USERNAME_INVALID(HttpStatus.BAD_REQUEST, "username-invalid", "Invalid username"),
     USERNAME_TAKEN(HttpStatus.CONFLICT, "username-taken", "Username taken"),
     EMAIL_INVALID(HttpStatus.BAD_REQUEST, "email-invalid", "Invalid email address"),
