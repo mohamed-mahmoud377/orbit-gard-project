@@ -371,11 +371,6 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findById(token.getUserId())
                 .orElseThrow(() -> new ApiException(ErrorCode.TOKEN_INVALID));
 
-        // Already active -> this is a repeat click. Return success, not an error.
-        if (user.getStatus() == UserStatus.ACTIVE) {
-            return new VerifyEmailResponse(user.getUsername(), user.getStatus(), token.getConsumedAt());
-        }
-
         if (token.getConsumedAt() != null) {
             throw new ApiException(ErrorCode.TOKEN_ALREADY_USED);
         }
@@ -383,6 +378,11 @@ public class AuthServiceImpl implements AuthService {
         if (token.getExpiresAt().isBefore(OffsetDateTime.now())) {
             throw new ApiException(ErrorCode.TOKEN_EXPIRED);
         }
+        if (user.getStatus() == UserStatus.ACTIVE) {
+            return new VerifyEmailResponse(user.getUsername(), user.getStatus(), token.getConsumedAt());
+        }
+
+
 
         OffsetDateTime now = OffsetDateTime.now();
         user.setStatus(UserStatus.ACTIVE);
