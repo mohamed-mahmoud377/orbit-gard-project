@@ -20,6 +20,7 @@ import {
   LoginResponse,
   ProblemDetails,
   RegisterRequest,
+  RefreshTokenRequest,
   RegisterResponse,
   ResendVerifyRequest,
   ResendVerifyResponse,
@@ -67,6 +68,13 @@ export class HttpAuthGateway implements AuthGateway {
 
   login(request: LoginRequest): Observable<LoginResponse> {
     return this.http.post<BackendLoginResponse>(`${this.baseUrl}/auth/login`, request).pipe(
+      map((body: BackendLoginResponse) => normalizeLoginResponse(body)),
+      catchError((error) => this.mapError(error)),
+    );
+  }
+
+  refresh(request: RefreshTokenRequest): Observable<LoginResponse> {
+    return this.http.post<BackendLoginResponse>(`${this.baseUrl}/auth/refresh`, request).pipe(
       map((body: BackendLoginResponse) => normalizeLoginResponse(body)),
       catchError((error) => this.mapError(error)),
     );

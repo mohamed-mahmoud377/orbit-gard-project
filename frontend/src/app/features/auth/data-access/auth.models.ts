@@ -57,6 +57,10 @@ export interface LoginRequest {
   readonly rememberMe?: boolean;
 }
 
+export interface RefreshTokenRequest {
+  readonly refreshToken: string;
+}
+
 export interface AuthUserSummary {
   readonly id: string;
   readonly username: string;
@@ -109,6 +113,7 @@ export type AuthErrorCode =
   | 'TOKEN_ALREADY_USED'
   | 'ALREADY_VERIFIED'
   | 'INVALID_CREDENTIALS'
+  | 'INVALID_REFRESH_TOKEN'
   | 'ACCOUNT_NOT_VERIFIED'
   | 'ACCOUNT_SUSPENDED'
   | 'TOO_MANY_ATTEMPTS'
