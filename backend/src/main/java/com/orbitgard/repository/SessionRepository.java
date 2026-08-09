@@ -42,4 +42,17 @@ public interface SessionRepository extends JpaRepository<Session, UUID> {
             @Param("reason") SessionRevokedReason reason,
             @Param("now") OffsetDateTime now
     );
+    int countByUserIdAndRevokedAtIsNull(UUID userId);
+
+    @Modifying
+    @Query("""
+    UPDATE Session s
+    SET s.revokedAt = :now, s.revokedReason = :reason
+    WHERE s.user.id = :userId AND s.revokedAt IS NULL
+    """)
+    void revokeAllActiveByUserId(
+            @Param("userId") UUID userId,
+            @Param("reason") SessionRevokedReason reason,
+            @Param("now") OffsetDateTime now
+    );
 }
