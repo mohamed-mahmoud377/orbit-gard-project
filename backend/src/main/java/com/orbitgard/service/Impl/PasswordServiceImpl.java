@@ -25,7 +25,7 @@ import io.jsonwebtoken.JwtException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import io.jsonwebtoken.ExpiredJwtException;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
@@ -178,6 +178,10 @@ public class PasswordServiceImpl implements PasswordService {
             throw new ApiException(ErrorCode.TOKEN_INVALID);
         }
 
+        if (token.getExpiresAt().isBefore(OffsetDateTime.now())) {
+            throw new ApiException(ErrorCode.TOKEN_EXPIRED);
+        }
+
         User user = userRepository.findById(token.getUserId())
                 .orElseThrow(() -> new ApiException(ErrorCode.TOKEN_INVALID));
 
@@ -185,9 +189,7 @@ public class PasswordServiceImpl implements PasswordService {
             throw new ApiException(ErrorCode.TOKEN_ALREADY_USED);
         }
 
-        if (token.getExpiresAt().isBefore(OffsetDateTime.now())) {
-            throw new ApiException(ErrorCode.TOKEN_EXPIRED);
-        }
+
 
         if (passwordEncoder.matches(request.newPassword(), user.getPasswordHash())) {
             throw new ApiException(ErrorCode.PASSWORD_REUSE);
@@ -208,15 +210,21 @@ public class PasswordServiceImpl implements PasswordService {
     }
 
     private Claims parseResetClaims(String rawToken) {
-        Claims claims;
         try {
-            claims = jwtService.parse(rawToken).getPayload();
+            Claims claims = jwtService.parse(rawToken).getPayload();
+
+            if (!TokenPurpose.PASSWORD_RESET.name()
+                    .equals(claims.get("purpose", String.class))) {
+                throw new ApiException(ErrorCode.TOKEN_INVALID);
+            }
+
+            return claims;
+
+        } catch (ExpiredJwtException ex) {
+            throw new ApiException(ErrorCode.TOKEN_EXPIRED);
+
         } catch (JwtException | IllegalArgumentException ex) {
             throw new ApiException(ErrorCode.TOKEN_INVALID);
         }
-        if (!TokenPurpose.PASSWORD_RESET.name().equals(claims.get("purpose", String.class))) {
-            throw new ApiException(ErrorCode.TOKEN_INVALID);
-        }
-        return claims;
     }
 }
