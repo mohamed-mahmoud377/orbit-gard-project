@@ -46,7 +46,7 @@ public class SecurityConfig {
                         // (/api/v1) -- Spring Security matches against the
                         // post-context-path path, so no /api/v1 prefix belongs here.
                         // Only these five are documented as requiring no auth.//
-                        .requestMatchers(HttpMethod.GET, "/auth/username-available").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/auth/username-available", "/auth/promo-code").permitAll()
                         .requestMatchers(HttpMethod.POST,
                                 "/auth/register",
                                 "/auth/verify",
@@ -68,6 +68,10 @@ public class SecurityConfig {
                         // /api/v1 + HealthController's /ping). Must stay anonymous or the
                         // healthcheck gets 403 and the container is marked unhealthy.
                         .requestMatchers(HttpMethod.GET, "/ping").permitAll()
+                        // API documentation is public so consumers can inspect
+                        // the contract and use Swagger UI's Authorize button to
+                        // supply a bearer token for protected operations.
+                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                         // Everything else -- including /auth/logout and
                         // /auth/sessions/** once they exist -- requires a valid
                         // access token by default, with no change needed here

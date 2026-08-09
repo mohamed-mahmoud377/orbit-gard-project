@@ -6,6 +6,7 @@ import com.orbitgard.dto.response.*;
 import com.orbitgard.entity.Session;
 import com.orbitgard.entity.User;
 import com.orbitgard.entity.VerificationToken;
+import com.orbitgard.entity.Wallet;
 import com.orbitgard.enums.AccountType;
 import com.orbitgard.enums.TokenPurpose;
 import com.orbitgard.enums.UserStatus;
@@ -17,6 +18,7 @@ import com.orbitgard.mapper.UserMapper;
 import com.orbitgard.repository.SessionRepository;
 import com.orbitgard.repository.UserRepository;
 import com.orbitgard.repository.VerificationTokenRepository;
+import com.orbitgard.repository.WalletRepository;
 import com.orbitgard.security.DeviceLabelResolver;
 import com.orbitgard.security.JwtService;
 import com.orbitgard.security.RefreshTokenGenerator;
@@ -172,6 +174,11 @@ public class AuthServiceImpl implements AuthService {
                 .available(!exists)
                 .message(exists ? ErrorCode.USERNAME_TAKEN.name() : null)
                 .build();
+    }
+
+    @Override
+    public PromoCodeValidationResponse validatePromoCode(String code) {
+        return promoCodeService.validateCode(code);
     }
 
     private void checkUniqueness(NormalizedInput normalized, List<FieldErrorResponse> errors) {
@@ -381,11 +388,6 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findById(token.getUserId())
                 .orElseThrow(() -> new ApiException(ErrorCode.TOKEN_INVALID));
 
-        // Already active -> this is a repeat click. Return success, not an error.
-        if (user.getStatus() == UserStatus.ACTIVE) {
-            return new VerifyEmailResponse(user.getUsername(), user.getStatus(), token.getConsumedAt());
-        }
-
         if (token.getConsumedAt() != null) {
             throw new ApiException(ErrorCode.TOKEN_ALREADY_USED);
         }
@@ -393,6 +395,11 @@ public class AuthServiceImpl implements AuthService {
         if (token.getExpiresAt().isBefore(OffsetDateTime.now())) {
             throw new ApiException(ErrorCode.TOKEN_EXPIRED);
         }
+        if (user.getStatus() == UserStatus.ACTIVE) {
+            return new VerifyEmailResponse(user.getUsername(), user.getStatus(), token.getConsumedAt());
+        }
+
+
 
         OffsetDateTime now = OffsetDateTime.now();
         user.setStatus(UserStatus.ACTIVE);

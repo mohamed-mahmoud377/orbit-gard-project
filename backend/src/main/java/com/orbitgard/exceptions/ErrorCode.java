@@ -6,6 +6,7 @@ public enum ErrorCode {
 
     FIELD_REQUIRED(HttpStatus.BAD_REQUEST, "field-required", "Field required"),
     NAME_INVALID(HttpStatus.BAD_REQUEST, "name-invalid", "Invalid name"),
+    NAME_TOO_LONG(HttpStatus.BAD_REQUEST, "name-too-long", "Name is too long"),
     USERNAME_INVALID(HttpStatus.BAD_REQUEST, "username-invalid", "Invalid username"),
     USERNAME_TAKEN(HttpStatus.CONFLICT, "username-taken", "Username taken"),
     EMAIL_INVALID(HttpStatus.BAD_REQUEST, "email-invalid", "Invalid email address"),
@@ -43,8 +44,9 @@ public enum ErrorCode {
     PAYMOB_UNREACHABLE(HttpStatus.SERVICE_UNAVAILABLE, "paymob-unreachable", "Payment provider unavailable"),
     PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "payment-not-found", "Payment not found"),
     ALREADY_VERIFIED(HttpStatus.OK, "already-verified", "Account already verified"),
-    CANNOT_SIGN_OUT_CURRENT_DEVICE(HttpStatus.CONFLICT, "cannot-sign-out-current-device", "Cannot sign out the device you're using");
-
+    CANNOT_SIGN_OUT_CURRENT_DEVICE(HttpStatus.CONFLICT, "cannot-sign-out-current-device", "Cannot sign out the device you're using"),
+    INVALID_CURRENT_PASSWORD(HttpStatus.BAD_REQUEST, "invalid-current-password", "That is not your current password"),
+    PASSWORD_REUSE(HttpStatus.CONFLICT, "password-reuse", "Choose a password you have not used before");
     private final HttpStatus httpStatus;
     private final String typeSlug;
     private final String title;

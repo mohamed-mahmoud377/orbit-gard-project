@@ -1,12 +1,16 @@
 package com.orbitgard.service;
 
+import com.orbitgard.dto.response.PromoCodeValidationResponse;
+import com.orbitgard.entity.PromoCode;
+
 import java.util.Optional;
 import java.util.UUID;
 
 public interface PromoCodeService {
 
-    /** Returns the credit amount in cents when the code is valid, otherwise empty. */
-    Optional<Long> resolveAmountCents(String promoCode);
+    PromoCodeValidationResponse validateCode(String code);
 
-    void applyAtSignup(UUID walletId, String promoCodeEntered);
+    Optional<PromoCode> findValidPromo(String code);
+
+    void applyPromoToWallet(PromoCode promo, UUID userId);
 }
