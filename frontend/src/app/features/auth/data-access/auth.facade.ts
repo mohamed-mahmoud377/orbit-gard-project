@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, throwError } from 'rxjs';
 
 import { DemoStore } from '../../../data-access';
 import { AUTH_GATEWAY } from './auth.gateway';
@@ -7,6 +7,7 @@ import { AuthTokenStore } from './auth-token.store';
 import {
   LoginRequest,
   LoginResponse,
+  RefreshTokenRequest,
   RegisterRequest,
   RegisterResponse,
   ResendVerifyRequest,
@@ -24,12 +25,13 @@ export class AuthFacade {
 
   readonly currentUser = this.tokens.currentUser;
   readonly isAuthenticated = this.tokens.isAuthenticated;
+  readonly canRefresh = this.tokens.canRefresh;
   readonly accountType = this.tokens.accountType;
   readonly accessToken = this.tokens.accessToken;
 
   constructor() {
     const user = this.tokens.currentUser();
-    if (user && this.tokens.isAuthenticated()) {
+    if (user && (this.tokens.isAuthenticated() || this.tokens.canRefresh())) {
       this.demoStore.adoptAuthenticatedUser({
         username: user.username,
         firstName: user.firstName,
@@ -65,6 +67,22 @@ export class AuthFacade {
           lastName: response.user.lastName,
           accountType: response.user.accountType,
         });
+      }),
+    );
+  }
+
+  refreshSession(): Observable<LoginResponse> {
+    const refreshToken = this.tokens.refreshToken();
+    if (!refreshToken) {
+      return throwError(() => new Error('No refresh token available'));
+    }
+    return this.refreshWithToken({ refreshToken });
+  }
+
+  refreshWithToken(request: RefreshTokenRequest): Observable<LoginResponse> {
+    return this.gateway.refresh(request).pipe(
+      tap((response) => {
+        this.tokens.hydrateFromLogin(response);
       }),
     );
   }
