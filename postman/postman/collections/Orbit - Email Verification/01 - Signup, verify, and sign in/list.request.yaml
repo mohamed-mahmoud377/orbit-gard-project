@@ -1,9 +1,0 @@
-$kind: http-request
-name: list
-url: "{{baseUrl}}/api/v1/sessions"
-method: GET
-auth:
-  type: bearer
-  credentials:
-    token: "{{accessToken}}"
-order: 3447068540536191
