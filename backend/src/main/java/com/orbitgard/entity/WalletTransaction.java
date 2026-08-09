@@ -72,6 +72,15 @@ public class WalletTransaction {
     @Column(name = "reference", nullable = false, unique = true, length = 32)
     private String reference;
 
+    @NotBlank
+    @Size(max = 32)
+    @Column(name = "transaction_public_id", nullable = false, unique = true, length = 32)
+    private String transactionPublicId;
+
+    @Size(max = 500)
+    @Column(name = "description", length = 500)
+    private String description;
+
     @Column(name = "counterparty", length = 255)
     private String counterparty;
 

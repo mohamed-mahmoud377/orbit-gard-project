@@ -1,0 +1,21 @@
+$kind: http-request
+url: "{{baseUrl}}/auth/register"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "firstName": "Wallet",
+      "lastName": "Tester",
+      "username": "{{username}}",
+      "email": "{{email}}",
+      "phoneNumber": "01012345678",
+      "password": "{{password}}"
+    }
+scripts:
+  - type: afterResponse
+    code: pm.test('Account was created', function () { pm.response.to.have.status(201); });
+    language: text/javascript
+order: 1000

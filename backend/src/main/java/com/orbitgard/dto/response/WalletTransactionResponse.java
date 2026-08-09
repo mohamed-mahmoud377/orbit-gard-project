@@ -19,6 +19,8 @@ public record WalletTransactionResponse(
         BigDecimal balanceBefore,
         BigDecimal balanceAfter,
         @Schema(description = "Stable support reference.", example = "e19d0a48fe8a4ce5a4f23e4e46a0bd31") String reference,
+        @Schema(description = "Public transaction ID: UTC timestamp followed by random digits.", example = "TXN-20260809120130123-482917") String transactionPublicId,
+        @Schema(description = "Human-readable reason for the transaction.", example = "Promotional signup bonus") String description,
         String counterparty,
         OffsetDateTime createdAt,
         OffsetDateTime resolvedAt

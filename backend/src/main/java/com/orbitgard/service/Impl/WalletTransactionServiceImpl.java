@@ -11,7 +11,6 @@ import com.orbitgard.repository.WalletTransactionRepository;
 import com.orbitgard.service.WalletTransactionService;
 import com.orbitgard.wallet.TransactionReferenceGenerator;
 import com.orbitgard.wallet.TransactionRules;
-import jakarta.validation.Valid;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -38,7 +37,7 @@ public class WalletTransactionServiceImpl implements WalletTransactionService {
 
     @Override
     @Transactional
-    public WalletTransaction record(@Valid RecordTransactionRequest request) {
+    public WalletTransaction record(RecordTransactionRequest request) {
         TransactionRules.validateAmount(request.amountCents());
         TransactionRules.validateTypeDirection(request.type(), request.direction());
 
@@ -62,6 +61,8 @@ public class WalletTransactionServiceImpl implements WalletTransactionService {
                 .balanceBeforeCents(balanceBefore)
                 .balanceAfterCents(balanceAfter)
                 .reference(referenceGenerator.generate())
+                .transactionPublicId(referenceGenerator.generatePublicId())
+                .description(request.description())
                 .counterparty(request.counterparty())
                 .counterpartyWalletId(request.counterpartyWalletId())
                 .relatedTransactionId(request.relatedTransactionId())
@@ -80,6 +81,7 @@ public class WalletTransactionServiceImpl implements WalletTransactionService {
                 .type(TransactionType.PROMO)
                 .direction(TransactionDirection.CREDIT)
                 .amountCents(amountCents)
+                .description("Promotional signup bonus")
                 .build());
     }
 
@@ -91,6 +93,7 @@ public class WalletTransactionServiceImpl implements WalletTransactionService {
                 .type(TransactionType.TOPUP)
                 .direction(TransactionDirection.CREDIT)
                 .amountCents(amountCents)
+                .description("Wallet top-up")
                 .paymentId(paymentId)
                 .build());
     }

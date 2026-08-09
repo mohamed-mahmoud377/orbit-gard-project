@@ -1,0 +1,23 @@
+$kind: http-request
+url: "{{baseUrl}}/wallet/transactions"
+method: GET
+headers:
+  Authorization: Bearer {{accessToken}}
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Transaction records satisfy ledger invariants', function () {
+        pm.response.to.have.status(200);
+        const transactions = pm.response.json();
+        const publicId = /^TXN-\d{17}-\d{6}$/;
+        transactions.forEach((transaction, index) => {
+          pm.expect(Number(transaction.amount)).to.be.above(0);
+          pm.expect(Number(transaction.balanceBefore)).to.be.at.least(0);
+          pm.expect(Number(transaction.balanceAfter)).to.be.at.least(0);
+          pm.expect(transaction.reference).to.not.be.empty;
+          pm.expect(transaction.transactionPublicId).to.match(publicId);
+          if (index > 0) pm.expect(Number(transaction.balanceBefore)).to.eql(Number(transactions[index - 1].balanceAfter));
+        });
+      });
+    language: text/javascript
+order: 2000

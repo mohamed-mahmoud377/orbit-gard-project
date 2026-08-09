@@ -35,6 +35,8 @@ BEGIN
        OR OLD.balance_before_cents IS DISTINCT FROM NEW.balance_before_cents
        OR OLD.balance_after_cents IS DISTINCT FROM NEW.balance_after_cents
        OR OLD.reference IS DISTINCT FROM NEW.reference
+       OR OLD.transaction_public_id IS DISTINCT FROM NEW.transaction_public_id
+       OR OLD.description IS DISTINCT FROM NEW.description
        OR OLD.counterparty IS DISTINCT FROM NEW.counterparty
        OR OLD.counterparty_wallet_id IS DISTINCT FROM NEW.counterparty_wallet_id
        OR OLD.related_transaction_id IS DISTINCT FROM NEW.related_transaction_id

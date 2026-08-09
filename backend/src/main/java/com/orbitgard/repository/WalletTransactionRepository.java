@@ -7,13 +7,15 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.UUID;
 
 public interface WalletTransactionRepository extends JpaRepository<WalletTransaction, UUID> {
 
-    List<WalletTransaction> findByWalletIdOrderByCreatedAtAsc(UUID walletId);
+    Page<WalletTransaction> findByWalletIdOrderByCreatedAtAsc(UUID walletId, Pageable pageable);
 
     List<WalletTransaction> findByStatus(TransactionStatus status);
 
@@ -22,4 +24,6 @@ public interface WalletTransactionRepository extends JpaRepository<WalletTransac
     java.util.Optional<WalletTransaction> findByIdForUpdate(@Param("id") UUID id);
 
     boolean existsByReference(String reference);
+
+    boolean existsByTransactionPublicId(String transactionPublicId);
 }

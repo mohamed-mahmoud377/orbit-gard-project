@@ -13,4 +13,6 @@ public interface PromoCodeService {
     Optional<PromoCode> findValidPromo(String code);
 
     void applyPromoToWallet(PromoCode promo, UUID userId);
+
+    void applyAtSignup(UUID walletId, String code);
 }

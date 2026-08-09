@@ -1,10 +1,9 @@
 package com.orbitgard.service;
 
 import com.orbitgard.dto.response.WalletBalanceResponse;
-import com.orbitgard.dto.response.WalletTransactionResponse;
+import com.orbitgard.dto.response.WalletTransactionPageResponse;
 import com.orbitgard.entity.Wallet;
 
-import java.util.List;
 import java.util.UUID;
 
 public interface WalletService {
@@ -15,5 +14,5 @@ public interface WalletService {
 
     WalletBalanceResponse getBalanceForUser(UUID userId);
 
-    List<WalletTransactionResponse> listTransactionsForUser(UUID userId);
+    WalletTransactionPageResponse listTransactionsForUser(UUID userId, int page);
 }

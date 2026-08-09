@@ -18,6 +18,7 @@ public record RecordTransactionRequest(
         @NotNull TransactionType type,
         @NotNull TransactionDirection direction,
         @Positive long amountCents,
+        @Size(max = 500) String description,
         @Size(max = 255) String counterparty,
         UUID counterpartyWalletId,
         UUID relatedTransactionId,

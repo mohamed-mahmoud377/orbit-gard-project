@@ -1,7 +1,7 @@
 package com.orbitgard.controller;
 
 import com.orbitgard.dto.response.WalletBalanceResponse;
-import com.orbitgard.dto.response.WalletTransactionResponse;
+import com.orbitgard.dto.response.WalletTransactionPageResponse;
 import com.orbitgard.service.AuthenticatedUserService;
 import com.orbitgard.service.WalletService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -10,15 +10,18 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
 import java.util.UUID;
+import jakarta.validation.constraints.Min;
 
 @RestController
 @RequestMapping("/wallet")
+@Validated
 @Tag(name = "Wallet", description = "Wallet balance and transaction history (ORB-011)")
 @SecurityRequirement(name = "bearerAuth")
 public class WalletController {
@@ -43,13 +46,14 @@ public class WalletController {
     }
 
     @GetMapping("/transactions")
-    @Operation(summary = "List wallet transactions", description = "Returns immutable transaction history in chronological order. Each entry includes the running balance before and after the movement.")
+    @Operation(summary = "List wallet transactions", description = "Returns immutable transaction history in chronological order, 10 transactions per page. Page numbering is zero-based.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Transaction history returned"),
             @ApiResponse(responseCode = "401", description = "Authentication required")
     })
-    public ResponseEntity<List<WalletTransactionResponse>> listTransactions() {
+    public ResponseEntity<WalletTransactionPageResponse> listTransactions(
+            @RequestParam(defaultValue = "0") @Min(0) int page) {
         UUID userId = authenticatedUserService.currentPrincipal().userId();
-        return ResponseEntity.ok(walletService.listTransactionsForUser(userId));
+        return ResponseEntity.ok(walletService.listTransactionsForUser(userId, page));
     }
 }

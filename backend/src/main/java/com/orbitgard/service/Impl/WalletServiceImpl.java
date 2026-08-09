@@ -2,7 +2,7 @@ package com.orbitgard.service.Impl;
 
 import com.orbitgard.dto.request.RecordTransactionRequest;
 import com.orbitgard.dto.response.WalletBalanceResponse;
-import com.orbitgard.dto.response.WalletTransactionResponse;
+import com.orbitgard.dto.response.WalletTransactionPageResponse;
 import com.orbitgard.entity.Wallet;
 import com.orbitgard.entity.WalletTransaction;
 import com.orbitgard.mapper.WalletMapper;
@@ -12,12 +12,14 @@ import com.orbitgard.service.WalletService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
+import org.springframework.data.domain.PageRequest;
 
 @Service
 public class WalletServiceImpl implements WalletService {
+
+    private static final int TRANSACTION_PAGE_SIZE = 10;
 
     private final WalletRepository walletRepository;
     private final WalletTransactionRepository walletTransactionRepository;
@@ -56,10 +58,19 @@ public class WalletServiceImpl implements WalletService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<WalletTransactionResponse> listTransactionsForUser(UUID userId) {
+    public WalletTransactionPageResponse listTransactionsForUser(UUID userId, int page) {
         Wallet wallet = requireByUserId(userId);
-        return walletTransactionRepository.findByWalletIdOrderByCreatedAtAsc(wallet.getId()).stream()
-                .map(walletMapper::toTransactionResponse)
-                .toList();
+        var transactionPage = walletTransactionRepository.findByWalletIdOrderByCreatedAtAsc(
+                wallet.getId(), PageRequest.of(page, TRANSACTION_PAGE_SIZE));
+
+        return new WalletTransactionPageResponse(
+                transactionPage.getContent().stream().map(walletMapper::toTransactionResponse).toList(),
+                transactionPage.getNumber(),
+                transactionPage.getSize(),
+                transactionPage.getTotalElements(),
+                transactionPage.getTotalPages(),
+                transactionPage.isFirst(),
+                transactionPage.isLast()
+        );
     }
 }

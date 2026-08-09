@@ -6,6 +6,7 @@ import com.orbitgard.enums.PromoCodeValidationStatus;
 import com.orbitgard.repository.PromoCodeRepository;
 import com.orbitgard.repository.WalletRepository;
 import com.orbitgard.service.PromoCodeService;
+import com.orbitgard.service.WalletTransactionService;
 import com.orbitgard.validation.PromoCodeNormalizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,10 +25,14 @@ public class PromoCodeServiceImpl implements PromoCodeService {
 
     private final PromoCodeRepository promoCodeRepository;
     private final WalletRepository walletRepository;
+    private final WalletTransactionService walletTransactionService;
 
-    public PromoCodeServiceImpl(PromoCodeRepository promoCodeRepository, WalletRepository walletRepository) {
+    public PromoCodeServiceImpl(PromoCodeRepository promoCodeRepository,
+                                WalletRepository walletRepository,
+                                WalletTransactionService walletTransactionService) {
         this.promoCodeRepository = promoCodeRepository;
         this.walletRepository = walletRepository;
+        this.walletTransactionService = walletTransactionService;
     }
 
     @Override
@@ -49,22 +54,26 @@ public class PromoCodeServiceImpl implements PromoCodeService {
     @Override
     @Transactional
     public void applyPromoToWallet(PromoCode promo, UUID userId) {
-        int updated = walletRepository.credit(userId, promo.getRewardAmountCents());
-        if (updated == 0) {
+        var wallet = walletRepository.findByUserId(userId);
+        if (wallet.isEmpty()) {
             log.warn("Promo credit skipped because wallet was not found. userId={}, code={}", userId, promo.getCode());
             return;
         }
 
-        // TODO (ORB-XXX):
-        // Persist a Transaction record representing this promotional bonus.
-        // This should become the first transaction visible in the user's
-        // transaction history once the Transaction module is implemented.
+        walletTransactionService.recordPromoCredit(wallet.get().getId(), promo.getRewardAmountCents());
 
         log.info(
                 "Promotional bonus credited. userId={}, code={}, amountCents={}",
                 userId,
                 promo.getCode(),
                 promo.getRewardAmountCents());
+    }
+
+    @Override
+    @Transactional
+    public void applyAtSignup(UUID walletId, String code) {
+        findValidPromo(code).ifPresent(promo ->
+                walletTransactionService.recordPromoCredit(walletId, promo.getRewardAmountCents()));
     }
 
     private PromoLookupResult lookupPromo(String rawCode) {

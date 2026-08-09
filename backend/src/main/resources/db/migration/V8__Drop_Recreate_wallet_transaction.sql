@@ -15,6 +15,8 @@ CREATE TABLE wallet_transaction (
                                     balance_after_cents BIGINT NOT NULL,
 
                                     reference VARCHAR(32) NOT NULL,
+                                    transaction_public_id VARCHAR(32) NOT NULL,
+                                    description VARCHAR(500),
 
                                     counterparty VARCHAR(255),
                                     counterparty_wallet_id UUID,
@@ -26,6 +28,7 @@ CREATE TABLE wallet_transaction (
                                     resolved_at TIMESTAMPTZ,
 
                                     CONSTRAINT uq_wallet_transaction_reference UNIQUE (reference),
+                                    CONSTRAINT uq_wallet_transaction_public_id UNIQUE (transaction_public_id),
 
                                     CONSTRAINT fk_wallet_transaction_wallet FOREIGN KEY (wallet_id) REFERENCES wallet(id),
                                     CONSTRAINT fk_wallet_transaction_counterparty_wallet FOREIGN KEY (counterparty_wallet_id) REFERENCES wallet(id),
