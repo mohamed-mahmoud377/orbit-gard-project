@@ -1,5 +1,5 @@
 package com.orbitgard.enums;
 
-public enum WalletTransactionType {
+public enum     WalletTransactionType {
     TOP_UP
 }
