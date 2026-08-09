@@ -91,8 +91,15 @@ type AvailabilityState = 'idle' | 'checking' | 'available' | 'taken' | 'invalid'
             </p>
           } @else if (availability() === 'taken') {
             <p class="field-error" id="username-availability">{{ AUTH_MESSAGES.usernameTaken }}</p>
+
           } @else if (availability() === 'invalid' && form.controls.username.value.trim()) {
-            <p class="field-error" id="username-availability">{{ AUTH_MESSAGES.usernameInvalid }}</p>
+            <p class="field-error" id="username-availability">
+            @if (usernameHasUppercase) {
+              <p class="field-error" id="username-lowercase-error">
+                Username must be written in lowercase letters.
+              </p>
+            }
+            {{ AUTH_MESSAGES.usernameInvalid }}</p>
           }
           @if (fieldErrors()['username'] && availability() === 'idle') {
             <p class="field-error" id="username-error">{{ fieldErrors()['username'] }}</p>
@@ -216,6 +223,8 @@ export class SignUpPage {
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
 
+  usernameHasUppercase = false;
+
   protected readonly AUTH_MESSAGES = AUTH_MESSAGES;
   protected readonly banner = signal('');
   protected readonly fieldErrors = signal<Record<string, string>>({});
@@ -250,6 +259,12 @@ export class SignUpPage {
             this.availability.set('invalid');
             return of(null);
           }
+          if (trimmed !== trimmed.toLowerCase()) {
+            this.availability.set('invalid');
+            this.usernameHasUppercase = true;
+            return of(null);
+          }
+          this.usernameHasUppercase = false;
           this.availability.set('checking');
           const requested = normalizeUsername(trimmed);
           return this.auth.checkUsername(trimmed).pipe(
