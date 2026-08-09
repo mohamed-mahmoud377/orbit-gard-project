@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import {
   LoginRequest,
   LoginResponse,
+  RefreshTokenRequest,
   RegisterRequest,
   RegisterResponse,
   ResendVerifyRequest,
@@ -19,6 +20,7 @@ export interface AuthGateway {
   verify(request: VerifyRequest): Observable<VerifyResponse>;
   resendVerification(request: ResendVerifyRequest): Observable<ResendVerifyResponse>;
   login(request: LoginRequest): Observable<LoginResponse>;
+  refresh(request: RefreshTokenRequest): Observable<LoginResponse>;
 }
 
 export const AUTH_GATEWAY = new InjectionToken<AuthGateway>('AUTH_GATEWAY');

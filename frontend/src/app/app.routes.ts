@@ -50,6 +50,14 @@ export const routes: Routes = [
       import('./features/auth/pages/activate.page').then((module) => module.ActivatePage),
   },
   {
+    path: 'payment/callback',
+    title: 'Top up · Orbit',
+    loadComponent: () =>
+      import('./features/wallet/pages/top-up-callback.page').then(
+        (module) => module.TopUpCallbackPage,
+      ),
+  },
+  {
     path: '',
     canActivateChild: [parentGuard],
     loadComponent: () =>
