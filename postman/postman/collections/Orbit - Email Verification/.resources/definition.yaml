@@ -2,16 +2,45 @@ $kind: collection
 name: Orbit - Email Verification
 description: Set the collection variable inboxEmail to a Gmail inbox you control. Requests marked MANUAL require you to copy the token from the latest received email into verificationToken before continuing.
 variables:
-  baseUrl: http://localhost:8080
-  inboxEmail: ""
-  password: Password123
-  email: ""
-  username: ""
-  verificationToken: ""
-  previousToken: ""
-  accessToken: ""
-  paymentId: ""
-  checkoutUrl: ""
-  paymobHmacSecret: ""
-  webhookHmac: ""
-  webhookPayload: ""
+  - key: baseUrl
+    value: http://localhost:8080
+    disabled: false
+  - key: inboxEmail
+    value: ""
+    disabled: false
+  - key: password
+    value: Password123
+    disabled: false
+  - key: email
+    value: ""
+    disabled: false
+  - key: username
+    value: ""
+    disabled: false
+  - key: verificationToken
+    value: ""
+    disabled: false
+  - key: previousToken
+    value: ""
+    disabled: false
+  - key: accessToken
+    value: ""
+    disabled: false
+  - key: paymentId
+    value: ""
+    disabled: false
+  - key: checkoutUrl
+    value: ""
+    disabled: false
+  - key: paymobHmacSecret
+    value: ""
+    disabled: false
+  - key: webhookHmac
+    value: ""
+    disabled: false
+  - key: webhookPayload
+    value: ""
+    disabled: false
+  - key: json_web_token_0xyx
+    secret: true
+    disabled: false
