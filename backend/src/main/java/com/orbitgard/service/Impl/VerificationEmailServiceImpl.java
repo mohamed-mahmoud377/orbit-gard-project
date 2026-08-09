@@ -129,4 +129,41 @@ public class VerificationEmailServiceImpl implements VerificationEmailService {
                 </div>
                 """.formatted(activationLink, activationLink, activationLink);
     }
+    @Override
+    public void sendPasswordResetEmail(String email, String rawToken) {
+        String resetLink = frontendBaseUrl + "/orbit/reset-password?token=" + rawToken;
+
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setTo(email);
+            helper.setSubject("Reset your Orbit password");
+            helper.setText(buildPasswordResetHtmlBody(resetLink), true);
+            mailSender.send(message);
+        } catch (MessagingException e) {
+            throw new IllegalStateException("Failed to send password reset email", e);
+        }
+    }
+
+    private String buildPasswordResetHtmlBody(String resetLink) {
+        return """
+            <div style="font-family: Arial, sans-serif; max-width: 480px; margin: auto;">
+                <p>Hi,</p>
+                <p>We received a request to reset your Orbit password.</p>
+                <p style="text-align: center; margin: 32px 0;">
+                    <a href="%s" style="background-color: #1a1a2e; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                        Choose a new password
+                    </a>
+                </p>
+                <p>This link expires in 30 minutes and can only be used once. If you ask us for a new link, this one stops working straight away.</p>
+                <p style="font-size: 12px; color: #666;">
+                    If the button above doesn't work, copy and paste this link into your browser:<br>
+                    <a href="%s">%s</a>
+                </p>
+                <p style="font-size: 12px; color: #666;">
+                    If you did not request this, you can safely ignore this email — your password will not be changed.
+                </p>
+            </div>
+            """.formatted(resetLink, resetLink, resetLink);
+    }
 }

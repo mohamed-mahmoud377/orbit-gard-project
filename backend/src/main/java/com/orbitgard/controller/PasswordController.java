@@ -1,7 +1,11 @@
 package com.orbitgard.controller;
 
 import com.orbitgard.dto.request.ChangePasswordRequest;
+import com.orbitgard.dto.request.PasswordResetConfirmRequest;
+import com.orbitgard.dto.request.PasswordResetRequest;
 import com.orbitgard.dto.response.ChangePasswordResponse;
+import com.orbitgard.dto.response.PasswordResetConfirmResponse;
+import com.orbitgard.dto.response.PasswordResetRequestResponse;
 import com.orbitgard.service.PasswordService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -26,5 +30,15 @@ public class PasswordController {
     @GetMapping("/active-sessions-count")
     public ResponseEntity<Integer> getActiveSessionCount() {
         return ResponseEntity.ok(passwordService.countActiveSessions());
+    }
+    @PostMapping("/reset/request")
+    public ResponseEntity<PasswordResetRequestResponse> requestReset(
+            @Valid @RequestBody PasswordResetRequest request) {
+        return ResponseEntity.ok(passwordService.requestPasswordReset(request));
+    }
+    @PostMapping("/reset/confirm")
+    public ResponseEntity<PasswordResetConfirmResponse> confirmReset(
+            @Valid @RequestBody PasswordResetConfirmRequest request) {
+        return ResponseEntity.ok(passwordService.confirmPasswordReset(request));
     }
 }
