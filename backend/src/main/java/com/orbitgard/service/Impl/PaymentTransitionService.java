@@ -52,6 +52,11 @@ public class PaymentTransitionService {
         int updated = paymentRepository.updateStatusIfCurrentlyIn(
                 payment.getId(), PENDING_STATUSES, PaymentStatus.FAILED);
         if (updated > 0) {
+            // The bulk update above bypasses the persistence context, so this
+            // instance still carries its old pending status. Saving it without
+            // realigning the status would merge that stale value straight back
+            // over the FAILED the update just wrote.
+            payment.setStatus(PaymentStatus.FAILED);
             payment.setFailureReason(reason);
             paymentRepository.save(payment);
         }
