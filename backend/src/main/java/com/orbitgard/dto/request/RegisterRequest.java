@@ -36,7 +36,7 @@ public record RegisterRequest(
         )
         String password,
 
-        // Optional — captured and stored, never evaluated here (ORB-005)
+        // Optional — validated and applied during registration (ORB-005)
         String promoCode
 
 ) {
