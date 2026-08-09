@@ -22,7 +22,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @NotBlank(message = "FIELD_REQUIRED")
 @Size(
         max = 30,
-        message = "NAME_INVALID"
+        message = "NAME_TOO_LONG"
 )
 @Pattern(
         regexp = "^[A-Za-z]+([ '\\-][A-Za-z]+)*$",

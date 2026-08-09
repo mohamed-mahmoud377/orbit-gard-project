@@ -41,6 +41,10 @@ server:
   servlet:
     context-path: /api/v1
 
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
 logging:
   pattern:
     console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %-5level [%X{traceId:-}] %logger{36} - %msg%n"
@@ -49,7 +53,7 @@ logging:
 
 orbitgard:
   jwt:
-    secret: ${JWT_SECRET}
+    secret: ${JWT_SECRET:super-doper-secret-key-123-that-is-long-enough-1234567890}
     access-token-ttl-seconds: 300
   paymob:
     base-url: ${PAYMOB_BASE_URL:https://accept.paymob.com}
