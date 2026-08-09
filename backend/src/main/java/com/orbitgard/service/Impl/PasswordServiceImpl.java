@@ -14,6 +14,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
@@ -59,7 +61,8 @@ public class PasswordServiceImpl implements PasswordService {
         userRepository.save(user);
 
         int deviceCount = sessionRepository.countByUserIdAndRevokedAtIsNull(userId);
-        sessionRepository.revokeAllActiveByUserId(userId, SessionRevokedReason.PASSWORD_CHANGE);
+        sessionRepository.revokeAllActiveByUserId(
+                userId, SessionRevokedReason.PASSWORD_CHANGE, OffsetDateTime.now(ZoneOffset.UTC));
 
         return new ChangePasswordResponse(
                 "Your password has been changed. Please sign in again.",
