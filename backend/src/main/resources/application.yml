@@ -53,7 +53,7 @@ logging:
 
 orbitgard:
   jwt:
-    secret: ${JWT_SECRET}
+    secret: ${JWT_SECRET:super-doper-secret-key-123-that-is-long-enough-1234567890}
     access-token-ttl-seconds: 300
   paymob:
     base-url: ${PAYMOB_BASE_URL:https://accept.paymob.com}
