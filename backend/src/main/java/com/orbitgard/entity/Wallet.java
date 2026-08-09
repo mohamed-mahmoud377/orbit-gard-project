@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Min;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -33,6 +34,7 @@ public class Wallet {
     @Column(name = "user_id", nullable = false, unique = true)
     private UUID userId;
 
+    @Min(0)
     @Column(name = "balance_cents", nullable = false)
     private long balanceCents;
 
@@ -41,4 +43,12 @@ public class Wallet {
 
     @Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
     private OffsetDateTime updatedAt;
+
+    @Min(0)
+    @Column(name="held_cents",nullable = false)
+    private long heldCents;
+
+    public long getAvailableCents() {
+        return balanceCents - heldCents;
+    }
 }

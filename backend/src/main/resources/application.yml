@@ -61,7 +61,7 @@ orbitgard:
     secret-key: ${PAYMOB_SECRET_KEY}
     public-key: ${PAYMOB_PUBLIC_KEY}
     callback-url: ${PAYMOB_CALLBACK_URL:http://localhost:4200/payment/callback}
-    notification-url: ${PAYMOB_NOTIFICATION_URL:https://webhook.site/511bbe62-3640-401f-bab9-b413d7642041}
+    notification-url: ${PAYMOB_NOTIFICATION_URL:https://webhook.site/a95ee1d0-21dd-4360-964e-bc7fdd4db5ce}
     payment-method-ids: ${PAYMOB_PAYMENT_METHOD_IDS:}
     connect-timeout: PT5S
     read-timeout: PT20S

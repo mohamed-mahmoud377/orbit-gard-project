@@ -3,11 +3,7 @@ package com.orbitgard.controller;
 import com.orbitgard.dto.request.LoginRequest;
 import com.orbitgard.dto.request.RefreshTokenRequest;
 import com.orbitgard.dto.request.RegisterRequest;
-import com.orbitgard.dto.response.LoginResponse;
-import com.orbitgard.dto.response.MessageResponse;
-import com.orbitgard.dto.response.PromoCodeValidationResponse;
-import com.orbitgard.dto.response.RegisterResponse;
-import com.orbitgard.dto.response.UsernameAvailabilityResponse;
+import com.orbitgard.dto.response.*;
 import com.orbitgard.service.AuthService;
 import com.orbitgard.service.RefreshTokenService;
 import com.orbitgard.service.SessionService;
@@ -70,6 +66,7 @@ public class AuthController {
     public PromoCodeValidationResponse validatePromoCode(@RequestParam String code) {
         return authService.validatePromoCode(code);
     }
+
 
     @PostMapping("/logout")
     public ResponseEntity<MessageResponse> logout() {

@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{baseUrl}}/payments/topup"
+method: POST
+headers:
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "amount": 10000.00
+    }
+scripts:
+  - type: afterResponse
+    code: pm.test('Payment intention was created', function () { pm.response.to.have.status(201); });
+    language: text/javascript
+order: 1000

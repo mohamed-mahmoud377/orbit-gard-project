@@ -1,9 +1,0 @@
-$kind: http-request
-name: get profile
-url: "{{baseUrl}}/api/v1/profile"
-method: GET
-auth:
-  type: bearer
-  credentials:
-    token: "{{json_web_token_0xyx}}"
-order: 4203286178758712

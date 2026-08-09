@@ -36,7 +36,8 @@ public record RegisterRequest(
         )
         String password,
 
-        // Optional — validated and applied during registration (ORB-005)
+        // Optional — captured and stored; evaluated when the wallet is created (ORB-005 / ORB-011)
+        @Size(max = 32, message = "PROMO_CODE_INVALID")
         String promoCode
 
 ) {

@@ -25,6 +25,7 @@ import com.orbitgard.security.RefreshTokenGenerator;
 import com.orbitgard.service.AuthService;
 import com.orbitgard.service.PromoCodeService;
 import com.orbitgard.service.VerificationEmailService;
+import com.orbitgard.service.WalletService;
 import com.orbitgard.util.TokenHasher;
 import com.orbitgard.validation.PhoneNumberNormalizer;
 import com.orbitgard.validation.UsernameNormalizer;
@@ -64,7 +65,7 @@ public class AuthServiceImpl implements AuthService {
     private final JwtService jwtService;
     private final VerificationTokenRepository verificationTokenRepository;
     private final VerificationEmailService verificationEmailService;
-    private final WalletRepository walletRepository;
+    private final WalletService walletService;
     private final PromoCodeService promoCodeService;
 
     // --- Login dependencies ---
@@ -79,7 +80,7 @@ public class AuthServiceImpl implements AuthService {
                            JwtService jwtService,
                            VerificationTokenRepository verificationTokenRepository,
                            VerificationEmailService verificationEmailService,
-                           WalletRepository walletRepository,
+                           WalletService walletService,
                            PromoCodeService promoCodeService,
                            SessionRepository sessionRepository,
                            RefreshTokenGenerator refreshTokenGenerator,
@@ -91,7 +92,7 @@ public class AuthServiceImpl implements AuthService {
         this.jwtService = jwtService;
         this.verificationTokenRepository = verificationTokenRepository;
         this.verificationEmailService = verificationEmailService;
-        this.walletRepository = walletRepository;
+        this.walletService = walletService;
         this.promoCodeService = promoCodeService;
         this.sessionRepository = sessionRepository;
         this.refreshTokenGenerator = refreshTokenGenerator;
@@ -116,8 +117,8 @@ public class AuthServiceImpl implements AuthService {
         throwIfErrors(errors);
 
         User saved = persistUser(request, normalized);
-        createWalletForUser(saved.getId());
-        applyPromoDuringRegistration(request.promoCode(), saved.getId());
+        var wallet = walletService.createForUser(saved.getId());
+        promoCodeService.applyAtSignup(wallet.getId(), saved.getPromoCodeEntered());
         String verificationToken = createVerificationToken(saved);
         try {
             verificationEmailService.sendVerificationEmail(saved.getEmail(), verificationToken);
@@ -178,19 +179,6 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public PromoCodeValidationResponse validatePromoCode(String code) {
         return promoCodeService.validateCode(code);
-    }
-
-    private void createWalletForUser(UUID userId) {
-        walletRepository.save(Wallet.builder()
-                .userId(userId)
-                .balanceCents(0)
-                .build());
-        log.info("Wallet created for new user. userId={}", userId);
-    }
-
-    private void applyPromoDuringRegistration(String promoCode, UUID userId) {
-        promoCodeService.findValidPromo(promoCode)
-                .ifPresent(promo -> promoCodeService.applyPromoToWallet(promo, userId));
     }
 
     private void checkUniqueness(NormalizedInput normalized, List<FieldErrorResponse> errors) {
