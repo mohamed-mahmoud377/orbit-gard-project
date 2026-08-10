@@ -1,0 +1,3047 @@
+{
+  "info": {
+    "_postman_id": "939b0763-7ea6-4bd4-9ed5-28076ead2ef5",
+    "name": "Orbit - Email Verification",
+    "description": "Set the collection variable inboxEmail to a Gmail inbox you control. Requests marked MANUAL require you to copy the token from the latest received email into verificationToken before continuing.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "56444813"
+  },
+  "item": [
+    {
+      "name": "01 - Signup, verify, and sign in",
+      "item": [
+        {
+          "name": "01 Register pending account (email must arrive)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('account is pending verification', () => pm.expect(body.status).to.eql('PENDING_VERIFICATION'));",
+                  "console.log('Copy the token from the confirmation email for:', pm.collectionVariables.get('email'));"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Shapinam\",\n  \"lastName\": \"Abdelfattah\",\n  \"username\": \"{{username}}\",\n  \"email\": \"{{email}}\",\n  \"phoneNumber\": \"+201063993179\",\n  \"password\": \"{{password}}\",\n  \"confirmPassword\": \"{{password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "02 Login before verification is blocked",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 403', () => pm.response.to.have.status(403));",
+                  "pm.test('reports unverified account', () => pm.expect(pm.response.json().code).to.eql('ACCOUNT_NOT_VERIFIED'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"rememberMe\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "03 MANUAL: Verify current email token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('account is active', () => pm.expect(body.status).to.eql('ACTIVE'));",
+                  "pm.test('does not log the user in', () => pm.expect(body.accessToken).to.be.undefined);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{verificationToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "verify"
+              ]
+            },
+            "description": "Before sending, paste the token query parameter from the received email URL into collection variable verificationToken."
+          },
+          "response": []
+        },
+        {
+          "name": "04 Login after verification succeeds",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('returns authentication tokens', () => {",
+                  "    pm.expect(body.accessToken).to.be.a('string').and.not.empty;",
+                  "    pm.expect(body.refreshToken).to.be.a('string').and.not.empty;",
+                  "});",
+                  "",
+                  "// Save as Collection Variables",
+                  "pm.collectionVariables.set(\"accessToken\", body.accessToken);",
+                  "pm.collectionVariables.set(\"refreshToken\", body.refreshToken);",
+                  "",
+                  "console.log(\"Access Token:\", pm.collectionVariables.get(\"accessToken\"));",
+                  "console.log(\"Refresh Token:\", pm.collectionVariables.get(\"refreshToken\"));"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "packages": {},
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"rememberMe\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "05 Same link after activation remains successful",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 200 rather than an error', () => pm.response.to.have.status(200));",
+                  "pm.test('still reports ACTIVE', () => pm.expect(pm.response.json().status).to.eql('ACTIVE'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{verificationToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "verify"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "06 Active account resend sends no email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 202', () => pm.response.to.have.status(202));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/verify/resend",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "verify",
+                "resend"
+              ]
+            },
+            "description": "Confirm manually that no email arrives. Current API intentionally returns a generic success response."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02 - Resend, invalidation, and cooldown",
+      "item": [
+        {
+          "name": "01 Register a second pending account",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 201', () => pm.response.to.have.status(201));",
+                  "console.log('Paste first email token into verificationToken, then run the next request.');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Orbit\",\n  \"lastName\": \"Resend\",\n  \"username\": \"{{username}}\",\n  \"email\": \"{{email}}\",\n  \"phoneNumber\": \"+201112345678\",\n  \"password\": \"{{password}}\",\n  \"confirmPassword\": \"{{password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "02 Resend invalidates the first token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 202', () => pm.response.to.have.status(202));",
+                  "console.log('Paste the NEW email token into verificationToken before running request 05.');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/verify/resend",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "verify",
+                "resend"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "03 Immediate resend is rate limited",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 429', () => pm.response.to.have.status(429));",
+                  "pm.test('reports rate limit', () => pm.expect(pm.response.json().code).to.eql('RATE_LIMITED'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/verify/resend",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "verify",
+                "resend"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "04 MANUAL: Wait 120 seconds, then resend",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 202 after the cooldown', () => pm.response.to.have.status(202));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/verify/resend",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "verify",
+                "resend"
+              ]
+            },
+            "description": "Wait the full 120 seconds after request 02. This returns another email; paste that latest token into verificationToken."
+          },
+          "response": []
+        },
+        {
+          "name": "05 Earlier token is dead",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 410', () => pm.response.to.have.status(410));",
+                  "pm.test('reports consumed token', () => pm.expect(pm.response.json().code).to.eql('TOKEN_ALREADY_USED'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{previousToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "verify"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "06 MANUAL: Verify newest token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 200', () => pm.response.to.have.status(200));",
+                  "pm.test('activates account', () => pm.expect(pm.response.json().status).to.eql('ACTIVE'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{verificationToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "verify"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03 - Invalid and expired tokens",
+      "item": [
+        {
+          "name": "01 Invented token is invalid",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 400', () => pm.response.to.have.status(400));",
+                  "pm.test('reports invalid token', () => pm.expect(pm.response.json().code).to.eql('TOKEN_INVALID'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"abc.def.ghi\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "verify"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "02 Register account for expiry test",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 201', () => pm.response.to.have.status(201));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Orbit\",\n  \"lastName\": \"Expiry\",\n  \"username\": \"{{username}}\",\n  \"email\": \"{{email}}\",\n  \"phoneNumber\": \"+201212345678\",\n  \"password\": \"{{password}}\",\n  \"confirmPassword\": \"{{password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "03 MANUAL: Verify an expired token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 410', () => pm.response.to.have.status(410));",
+                  "pm.test('reports expired token', () => pm.expect(pm.response.json().code).to.eql('TOKEN_EXPIRED'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{verificationToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "verify"
+              ]
+            },
+            "description": "Copy the email token, then run: UPDATE verification_token vt SET expires_at = NOW() - INTERVAL '1 minute' FROM users u WHERE vt.user_id = u.id AND u.email = '{{email}}' AND vt.consumed_at IS NULL;"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "04 - Registration validation",
+      "item": [
+        {
+          "name": "01 Missing required fields",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 400', () => pm.response.to.have.status(400));",
+                  "pm.test('reports required fields', () => pm.expect(pm.response.json().code).to.eql('FIELD_REQUIRED'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "02 Invalid username, phone, password, and confirmation",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 400', () => pm.response.to.have.status(400));",
+                  "pm.test('returns validation error envelope', () => pm.expect(pm.response.json().code).to.eql('VALIDATION_ERROR'));",
+                  "pm.test('includes field-level errors', () => pm.expect(pm.response.json().fieldErrors.length).to.be.above(0));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Orbit\",\n  \"lastName\": \"Tester\",\n  \"username\": \"!\",\n  \"email\": \"bad-email\",\n  \"phoneNumber\": \"123\",\n  \"password\": \"short\",\n  \"confirmPassword\": \"different\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "03 Duplicate email is rejected",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 400 or 409', () => pm.expect([400, 409]).to.include(pm.response.code));",
+                  "const body = pm.response.json();",
+                  "pm.test('identifies the email conflict', () => pm.expect(body.fieldErrors.some(error => error.field === 'email' && error.code === 'EMAIL_TAKEN')).to.be.true);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Orbit\",\n  \"lastName\": \"Duplicate\",\n  \"username\": \"duplicate{{username}}\",\n  \"email\": \"{{email}}\",\n  \"phoneNumber\": \"+201512345678\",\n  \"password\": \"{{password}}\",\n  \"confirmPassword\": \"{{password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Run after any successful registration."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "05 - Paymob top-up and webhook",
+      "item": [
+        {
+          "name": "01 Initiate top-up and save payment ID",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (!pm.collectionVariables.get('accessToken')) throw new Error('Set accessToken to a verified adult user access token first.');"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('returns a payment ID and checkout URL', () => { pm.expect(body.paymentId).to.be.a('string').and.not.empty; pm.expect(body.redirectUrl).to.be.a('string').and.not.empty; });",
+                  "pm.collectionVariables.set('paymentId', body.paymentId);",
+                  "pm.collectionVariables.set('checkoutUrl', body.redirectUrl);",
+                  "console.log('Open checkoutUrl, complete the payment, then run request 03.');"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 50.00\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/payments/topup",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "payments",
+                "topup"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "02 Webhook api",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('accepts webhook without HMAC check (dev mode)', () => {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('response body is OK', () => {",
+                  "    pm.expect(pm.response.text()).to.eql('OK');",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"type\": \"TRANSACTION\",\r\n    \"obj\": {\r\n        \"id\": 508720421,\r\n        \"pending\": false,\r\n        \"amount_cents\": 50000,\r\n        \"success\": true,\r\n        \"is_auth\": false,\r\n        \"is_capture\": false,\r\n        \"is_standalone_payment\": true,\r\n        \"is_voided\": false,\r\n        \"is_refunded\": false,\r\n        \"is_3d_secure\": true,\r\n        \"integration_id\": 5185166,\r\n        \"profile_id\": 1059524,\r\n        \"has_parent_transaction\": false,\r\n        \"order\": {\r\n            \"id\": 580045604,\r\n            \"created_at\": \"2026-08-04T12:54:04.304719\",\r\n            \"delivery_needed\": false,\r\n            \"merchant\": {\r\n                \"id\": 1059524,\r\n                \"created_at\": \"2025-07-11T19:23:12.053772\",\r\n                \"phones\": [\r\n                    \"+201508766687\"\r\n                ],\r\n                \"company_emails\": [\r\n                    \"pcissp4@gmail.com\"\r\n                ],\r\n                \"company_name\": \"Easy Orders\",\r\n                \"state\": \"\",\r\n                \"country\": \"EGY\",\r\n                \"city\": \"Cairo\",\r\n                \"postal_code\": \"\",\r\n                \"street\": \"\"\r\n            },\r\n            \"collector\": null,\r\n            \"amount_cents\": 50000,\r\n            \"shipping_data\": {\r\n                \"id\": 278760662,\r\n                \"first_name\": \"shapinam\",\r\n                \"last_name\": \"abdelfattah\",\r\n                \"street\": \"NA\",\r\n                \"building\": \"NA\",\r\n                \"floor\": \"NA\",\r\n                \"apartment\": \"NA\",\r\n                \"city\": \"NA\",\r\n                \"state\": \"NA\",\r\n                \"country\": \"NA\",\r\n                \"email\": \"shapy175@gmail.com\",\r\n                \"phone_number\": \"201063993179\",\r\n                \"postal_code\": \"NA\",\r\n                \"extra_description\": \"\",\r\n                \"shipping_method\": \"UNK\",\r\n                \"order_id\": 580045604,\r\n                \"order\": 580045604\r\n            },\r\n            \"currency\": \"EGP\",\r\n            \"is_payment_locked\": false,\r\n            \"is_return\": false,\r\n            \"is_cancel\": false,\r\n            \"is_returned\": false,\r\n            \"is_canceled\": false,\r\n            \"merchant_order_id\": \"ae3507a1-ee5b-4066-bfc1-4545fb053a03\",\r\n            \"wallet_notification\": null,\r\n            \"paid_amount_cents\": 50000,\r\n            \"notify_user_with_email\": false,\r\n            \"items\": [],\r\n            \"order_url\": \"NA\",\r\n            \"commission_fees\": 0,\r\n            \"delivery_fees_cents\": 0,\r\n            \"delivery_vat_cents\": 0,\r\n            \"payment_method\": \"tbc\",\r\n            \"merchant_staff_tag\": null,\r\n            \"api_source\": \"OTHER\",\r\n            \"data\": {\r\n                \"notification_url\": \"http://46.224.100.97/api/v1/payments/webhook/paymob\"\r\n            },\r\n            \"payment_status\": \"PAID\",\r\n            \"terminal_version\": null,\r\n            \"payme_details\": null\r\n        },\r\n        \"created_at\": \"2026-08-04T12:54:37.105055\",\r\n        \"transaction_processed_callback_responses\": [],\r\n        \"currency\": \"EGP\",\r\n        \"source_data\": {\r\n            \"pan\": \"0007\",\r\n            \"type\": \"card\",\r\n            \"tenure\": null,\r\n            \"sub_type\": \"MasterCard\"\r\n        },\r\n        \"api_source\": \"IFRAME\",\r\n        \"terminal_id\": null,\r\n        \"merchant_commission\": 0,\r\n        \"accept_fees\": 0,\r\n        \"installment\": null,\r\n        \"discount_details\": [],\r\n        \"amount_cents_int\": 50000,\r\n        \"is_void\": false,\r\n        \"is_refund\": false,\r\n        \"data\": {\r\n            \"gateway_integration_pk\": 5185166,\r\n            \"klass\": \"MigsPayment\",\r\n            \"created_at\": \"2026-08-04T09:55:59.325553\",\r\n            \"amount\": 50000.0,\r\n            \"currency\": \"EGP\",\r\n            \"migs_order\": {\r\n                \"acceptPartialAmount\": false,\r\n                \"amount\": 500.0,\r\n                \"authenticationStatus\": \"AUTHENTICATION_SUCCESSFUL\",\r\n                \"chargeback\": {\r\n                    \"amount\": 0,\r\n                    \"currency\": \"EGP\"\r\n                },\r\n                \"creationTime\": \"2026-08-04T09:55:20.276Z\",\r\n                \"currency\": \"EGP\",\r\n                \"description\": \"PAYMOB EasyOrders for Busin\",\r\n                \"id\": \"580045604\",\r\n                \"lastUpdatedTime\": \"2026-08-04T09:55:59.138Z\",\r\n                \"merchantAmount\": 500.0,\r\n                \"merchantCategoryCode\": \"7299\",\r\n                \"merchantCurrency\": \"EGP\",\r\n                \"reference\": \"_508720421_580\",\r\n                \"status\": \"CAPTURED\",\r\n                \"totalAuthorizedAmount\": 500.0,\r\n                \"totalCapturedAmount\": 500.0,\r\n                \"totalRefundedAmount\": 0.0\r\n            },\r\n            \"merchant\": \"TESTMERCH_C_25P\",\r\n            \"migs_result\": \"SUCCESS\",\r\n            \"migs_transaction\": {\r\n                \"acquirer\": {\r\n                    \"batch\": 20260804,\r\n                    \"date\": \"0804\",\r\n                    \"id\": \"BMNF_S2I\",\r\n                    \"merchantId\": \"MERCH_C_25P\",\r\n                    \"settlementDate\": \"2026-08-04\",\r\n                    \"timeZone\": \"+0300\",\r\n                    \"transactionId\": \"123456789\"\r\n                },\r\n                \"amount\": 500.0,\r\n                \"authenticationStatus\": \"AUTHENTICATION_SUCCESSFUL\",\r\n                \"authorizationCode\": \"078225\",\r\n                \"currency\": \"EGP\",\r\n                \"id\": \"508720421\",\r\n                \"receipt\": \"621609078225\",\r\n                \"reference\": \"_508720421\",\r\n                \"source\": \"INTERNET\",\r\n                \"stan\": \"78225\",\r\n                \"terminal\": \"BMNF0498\",\r\n                \"type\": \"PAYMENT\"\r\n            },\r\n            \"txn_response_code\": \"APPROVED\",\r\n            \"acq_response_code\": \"00\",\r\n            \"message\": \"Approved\",\r\n            \"merchant_txn_ref\": \"508720421\",\r\n            \"order_info\": \"580045604\",\r\n            \"receipt_no\": \"621609078225\",\r\n            \"transaction_no\": \"123456789\",\r\n            \"batch_no\": 20260804,\r\n            \"authorize_id\": \"078225\",\r\n            \"card_type\": \"MASTERCARD\",\r\n            \"card_num\": \"222300xxxxxx0007\",\r\n            \"secure_hash\": \"\",\r\n            \"avs_result_code\": \"\",\r\n            \"avs_acq_response_code\": \"00\",\r\n            \"captured_amount\": 500.0,\r\n            \"authorised_amount\": 500.0,\r\n            \"refunded_amount\": 0.0,\r\n            \"acs_eci\": \"02\"\r\n        },\r\n        \"is_hidden\": false,\r\n        \"payment_key_claims\": {\r\n            \"extra\": {\r\n                \"merchant_order_id\": \"5a26f46d-effe-4075-9c3a-7e8e48944833\"\r\n            },\r\n            \"user_id\": 2000002,\r\n            \"currency\": \"EGP\",\r\n            \"order_id\": 580045604,\r\n            \"created_by\": 2000002,\r\n            \"is_partner\": false,\r\n            \"amount_cents\": 50000,\r\n            \"billing_data\": {\r\n                \"city\": \"NA\",\r\n                \"email\": \"shapy175@gmail.com\",\r\n                \"floor\": \"NA\",\r\n                \"state\": \"NA\",\r\n                \"street\": \"NA\",\r\n                \"country\": \"NA\",\r\n                \"building\": \"NA\",\r\n                \"apartment\": \"NA\",\r\n                \"last_name\": \"abdelfattah\",\r\n                \"first_name\": \"shapinam\",\r\n                \"postal_code\": \"NA\",\r\n                \"phone_number\": \"+201063993179\",\r\n                \"extra_description\": \"NA\"\r\n            },\r\n            \"redirect_url\": \"https://accept.paymob.com/unifiedcheckout/payment-status?payment_token=ZXlKaGJHY2lPaUpJVXpVeE1pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SjFjMlZ5WDJsa0lqb3lNREF3TURBeUxDSmhiVzkxYm5SZlkyVnVkSE1pT2pVd01EQXdMQ0pqZFhKeVpXNWplU0k2SWtWSFVDSXNJbWx1ZEdWbmNtRjBhVzl1WDJsa0lqbzFNVGcxTVRZMkxDSnZjbVJsY2w5cFpDSTZOVGd3TURRMU5qQTBMQ0ppYVd4c2FXNW5YMlJoZEdFaU9uc2labWx5YzNSZmJtRnRaU0k2SW5Ob1lYQnBibUZ0SWl3aWJHRnpkRjl1WVcxbElqb2lZV0prWld4bVlYUjBZV2dpTENKemRISmxaWFFpT2lKT1FTSXNJbUoxYVd4a2FXNW5Jam9pVGtFaUxDSm1iRzl2Y2lJNklrNUJJaXdpWVhCaGNuUnRaVzUwSWpvaVRrRWlMQ0pqYVhSNUlqb2lUa0VpTENKemRHRjBaU0k2SWs1Qklpd2lZMjkxYm5SeWVTSTZJazVCSWl3aVpXMWhhV3dpT2lKemFHRndlVEUzTlVCbmJXRnBiQzVqYjIwaUxDSndhRzl1WlY5dWRXMWlaWElpT2lJck1qQXhNRFl6T1Rrek1UYzVJaXdpY0c5emRHRnNYMk52WkdVaU9pSk9RU0lzSW1WNGRISmhYMlJsYzJOeWFYQjBhVzl1SWpvaVRrRWlmU3dpYkc5amExOXZjbVJsY2w5M2FHVnVYM0JoYVdRaU9tWmhiSE5sTENKbGVIUnlZU0k2ZXlKdFpYSmphR0Z1ZEY5dmNtUmxjbDlwWkNJNklqVmhNalptTkRaa0xXVm1abVV0TkRBM05TMDVZek5oTFRkbE9HVTBPRGswTkRnek15SjlMQ0p1YjNScFptbGpZWFJwYjI1ZmRYSnNJam9pYUhSMGNITTZMeTkzWldKb2IyOXJMbk5wZEdVdk5URXhZbUpsTmpJdE16WTBNQzAwTURGbUxXSmhZamt0WWpReE0yUTNOalF5TURReElpd2ljbVZrYVhKbFkzUnBiMjVmZFhKc0lqb2lhSFIwY0RvdkwyeHZZMkZzYUc5emREbzBNakF3TDNCaGVXMWxiblF2WTJGc2JHSmhZMnNpTENKemFXNW5iR1ZmY0dGNWJXVnVkRjloZEhSbGJYQjBJanBtWVd4elpTd2lZM0psWVhSbFpGOWllU0k2TWpBd01EQXdNaXdpYVhOZmNHRnlkRzVsY2lJNlptRnNjMlVzSW01bGVIUmZjR0Y1YldWdWRGOXBiblJsYm5ScGIyNGlPaUp3YVY5MFpYTjBYekppT1dKaFlUbGhNakJtTWpSaE5XWmlaamN4T0dRME1UWTNZVEUwTm1VMEluMC5uS3RUUWF2T0NiN3YzYXg3aWZBNnNMakRzRTFtOWExVVBiajJzN3Jjam9BY0VBRFVkUU8wQkpjRXpjUlc1c0IyazNZWklIVEZfVlFVdEVyTXJGTncwdw==&trx_id=508720421\",\r\n            \"integration_id\": 5185166,\r\n            \"redirection_url\": \"http://localhost:4200/payment/callback\",\r\n            \"notification_url\": \"https://webhook.site/511bbe62-3640-401f-bab9-b413d7642041\",\r\n            \"lock_order_when_paid\": false,\r\n            \"next_payment_intention\": \"pi_test_2b9baa9a20f24a5fbf718d4167a146e4\",\r\n            \"single_payment_attempt\": false\r\n        },\r\n        \"error_occured\": false,\r\n        \"is_live\": false,\r\n        \"other_endpoint_reference\": null,\r\n        \"refunded_amount_cents\": 0,\r\n        \"refunded_amount_cents_int\": 0,\r\n        \"source_id\": -1,\r\n        \"is_captured\": false,\r\n        \"captured_amount\": 0,\r\n        \"captured_amount_int\": 0,\r\n        \"settlement_amount_cents_int\": 0,\r\n        \"merchant_staff_tag\": null,\r\n        \"accept_fees_cents_int\": 0,\r\n        \"vat_cents_int\": 0,\r\n        \"vat_cents_float\": null,\r\n        \"updated_at\": \"2026-08-04T12:55:59.339802\",\r\n        \"is_settled\": false,\r\n        \"bill_balanced\": false,\r\n        \"is_bill\": false,\r\n        \"owner\": 2000002,\r\n        \"parent_transaction\": null\r\n    },\r\n    \"accept_fees\": 0,\r\n    \"issuer_bank\": null,\r\n    \"transaction_processed_callback_responses\": \"\"\r\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/payments/webhook/paymob",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "payments",
+                "webhook",
+                "paymob"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "03 check status",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const secret = pm.collectionVariables.get('paymobHmacSecret');",
+                  "const paymentId = pm.collectionVariables.get('paymentId');",
+                  "if (!secret) throw new Error('Set paymobHmacSecret from PAYMOB_HMAC_SECRET first.');",
+                  "if (!paymentId) throw new Error('Run request 01 first so paymentId is set.');",
+                  "const obj = { id: 100000001, pending: false, success: true, currency: 'EGP', amount_cents: 5000, is_auth: false, is_capture: false, is_standalone_payment: true, is_voided: false, is_refunded: false, is_3d_secure: false, error_occured: false, integration_id: 1, has_parent_transaction: false, created_at: '2026-08-03T10:00:00.000000', owner: '1', order: { id: 1, merchant_order_id: paymentId }, source_data: { pan: '2346', sub_type: 'MasterCard', type: 'card' } };",
+                  "const data = `${obj.amount_cents}${obj.created_at}${obj.currency}${obj.error_occured}${obj.has_parent_transaction}${obj.id}${obj.integration_id}${obj.is_3d_secure}${obj.is_auth}${obj.is_capture}${obj.is_refunded}${obj.is_standalone_payment}${obj.is_voided}${obj.order.id}${obj.owner}${obj.pending}${obj.source_data.pan}${obj.source_data.sub_type}${obj.source_data.type}${obj.success}`;",
+                  "pm.collectionVariables.set('webhookHmac', CryptoJS.HmacSHA512(data, secret).toString(CryptoJS.enc.Hex));",
+                  "pm.collectionVariables.set('webhookPayload', JSON.stringify({ obj, type: 'TRANSACTION' }));"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('accepts the verified webhook', () => pm.response.to.have.status(200));",
+                  "pm.test('returns OK', () => pm.expect(pm.response.text()).to.eql('OK'));"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/payments/{{paymentId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "payments",
+                "{{paymentId}}",
+                "status"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Set accessToken from a verified adult user's login response and paymobHmacSecret from PAYMOB_HMAC_SECRET. Request 01 creates a payment and stores paymentId; complete payment at the returned redirectUrl before sending the signed webhook."
+    },
+    {
+      "name": "06 - dashboard",
+      "item": [
+        {
+          "name": "without access token UserInfo",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{verificationToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "with access token UserInfo",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "07 - change password",
+      "item": [
+        {
+          "name": "Missing current password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));\r",
+                  "pm.test(\"Validation error type\", () => {\r",
+                  "    const json = pm.response.json();\r",
+                  "    pm.expect(json.title || json.detail).to.include(\"required\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{ \r\n    \"currentPassword\": \"\", \r\n    \"newPassword\": \"NewPass123\", \r\n    \"confirmNewPassword\": \"NewPass123\" \r\n    }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/password/change",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "password",
+                "change"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "New password too short",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));\r",
+                  "pm.test(\"Length rule message\", () => {\r",
+                  "    pm.expect(pm.response.text()).to.include(\"8 characters\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{ \r\n    \"currentPassword\": \"{{testCurrentPassword}}\", \r\n    \"newPassword\": \"Ab1\", \r\n    \"confirmNewPassword\": \"Ab1\" \r\n    }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/password/change",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "password",
+                "change"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "onlyletters password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));\r",
+                  "pm.test(\"passwords must contain letter+number rule\", () => {\r",
+                  "    pm.expect(pm.response.text()).to.include(\"8 characters\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{ \r\n    \"currentPassword\": \"{{testCurrentPassword}}\", \r\n    \"newPassword\": \"OnlyLetters\", \r\n    \"confirmNewPassword\": \"OnlyLetters\" \r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/password/change",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "password",
+                "change"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Only numbers password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));\r",
+                  "pm.test(\"passwords must contain letter+number rule\", () => {\r",
+                  "    pm.expect(pm.response.text()).to.include(\"8 characters\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{ \r\n    \"currentPassword\": \"{{testCurrentPassword}}\", \r\n    \"newPassword\": \"12345678\", \r\n    \"confirmNewPassword\": \"12345678\" \r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/password/change",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "password",
+                "change"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "over 64 chars",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 400\", () => {\r",
+                  "    pm.response.to.have.status(400);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Error code is validation error\", () => {\r",
+                  "    pm.expect(json.code).to.eql(\"VALIDATION_ERROR\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"fieldErrors contains the max-length message\", () => {\r",
+                  "    pm.expect(json.fieldErrors).to.be.an(\"array\").that.is.not.empty;\r",
+                  "\r",
+                  "    const newPasswordError = json.fieldErrors.find(fe => fe.field === \"newPassword\");\r",
+                  "    pm.expect(newPasswordError, \"expected a fieldErrors entry for newPassword\").to.exist;\r",
+                  "    pm.expect(newPasswordError.message).to.eql(\"Maximum 64 characters\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const longPass = \"Aa1\" + \"x\".repeat(65);\r",
+                  "pm.collectionVariables.set(\"tooLongPassword\", longPass);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"currentPassword\": \"{{testCurrentPassword}}\",\r\n  \"newPassword\": \"{{tooLongPassword}}\",\r\n  \"confirmNewPassword\": \"{{tooLongPassword}}\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/password/change",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "password",
+                "change"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "passwords doesn't match",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));\r",
+                  "pm.test(\"Correct error code\", () => {\r",
+                  "    pm.expect(pm.response.json().type).to.include(\"password-confirmation-mismatch\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{ \r\n    \"currentPassword\": \"{{testCurrentPassword}}\", \r\n    \"newPassword\": \"ValidPass1\", \r\n    \"confirmNewPassword\": \"ValidPass2\" \r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/password/change",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "password",
+                "change"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "invalid current password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));\r",
+                  "pm.test(\"Correct error code\", () => {\r",
+                  "    pm.expect(pm.response.json().type).to.include(\"invalid-current-password\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{ \r\n    \"currentPassword\": \"DefinitelyWrong1\", \r\n    \"newPassword\": \"ValidPass1\", \r\n    \"confirmNewPassword\": \"ValidPass1\" \r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/password/change",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "password",
+                "change"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "new password=old",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 409\", () => pm.response.to.have.status(409));\r",
+                  "pm.test(\"Correct error code\", () => {\r",
+                  "    pm.expect(pm.response.json().type).to.include(\"password-reuse\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{ \n    \"currentPassword\": \"{{testCurrentPassword}}\", \n    \"newPassword\": \"{{testCurrentPassword}}\", \n    \"confirmNewPassword\": \"{{testCurrentPassword}}\" \n    \n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/password/change",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "password",
+                "change"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "no auth",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 401\", () => pm.response.to.have.status(401));\r",
+                  "pm.test(\"Unauthenticated error\", () => {\r",
+                  "    pm.expect(pm.response.json().type).to.include(\"unauthenticated\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/password/change",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "password",
+                "change"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "active-sessions-count",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"currentPassword\": \"{{testCurrentPassword}}\",\r\n  \"newPassword\": \"{{newPassword}}\",\r\n  \"confirmNewPassword\": \"{{newPassword}}\"\r\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/password/active-sessions-count",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "password",
+                "active-sessions-count"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Success",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "pm.test(\"Confirmation message correct\", () => {\r",
+                  "    pm.expect(json.message).to.eql(\"Your password has been changed. Please sign in again.\");\r",
+                  "});\r",
+                  "pm.test(\"Device count matches baseline\", () => {\r",
+                  "    pm.expect(json.devicesSignedOut).to.eql(pm.collectionVariables.get(\"initialDeviceCount\"));\r",
+                  "});\r",
+                  "\r",
+                  "// Roll the password forward so later requests in this run use the new one\r",
+                  "pm.collectionVariables.set(\"testCurrentPassword\", pm.collectionVariables.get(\"newPassword\"));"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"currentPassword\": \"{{testCurrentPassword}}\",\r\n  \"newPassword\": \"{{newPassword}}\",\r\n  \"confirmNewPassword\": \"{{newPassword}}\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/password/change",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "password",
+                "change"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "old password not working",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Old password rejected\", () => pm.response.to.have.status(401));\r",
+                  "pm.test(\"Invalid credentials error\", () => {\r",
+                  "    pm.expect(pm.response.json().type).to.include(\"invalid-credentials\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"rememberMe\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "newpassword working",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"New password accepted\", () => pm.response.to.have.status(200));\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "pm.collectionVariables.set(\"accessToken\", json.accessToken);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"username\": \"{{email}}\",\r\n    \"password\": \"FreshPass1\",\r\n    \"rememberMe\": false\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "08 - reset password",
+      "item": [
+        {
+          "name": "Missing email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Required field message\", () => {",
+                  "    pm.expect(pm.response.text()).to.include(\"required\");",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/password/reset/request",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "password",
+                "reset",
+                "request"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Malformed email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Email format message\", () => {",
+                  "    pm.expect(pm.response.text()).to.include(\"valid email\");",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"not-an-email\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/password/reset/request",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "password",
+                "reset",
+                "request"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login to establish a session (for revocation check)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set(\"resetRefreshTokenBeforeReset\", json.refreshToken);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"rememberMe\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "MANUAL: Request reset link (registered email)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Generic message returned\", () => {",
+                  "    pm.expect(json.message).to.eql(\"If an account exists for that address, a reset link is on its way.\");",
+                  "});",
+                  "pm.collectionVariables.set(\"registeredResetResponseTime\", pm.response.responseTime);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/password/reset/request",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "password",
+                "reset",
+                "request"
+              ]
+            },
+            "description": "After sending, copy the raw token from the reset link in the received email and paste it into the collection variable resetToken before continuing."
+          },
+          "response": []
+        },
+        {
+          "name": "Request reset link (unregistered email)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Identical generic message\", () => {",
+                  "    pm.expect(json.message).to.eql(\"If an account exists for that address, a reset link is on its way.\");",
+                  "});",
+                  "const registeredTime = pm.collectionVariables.get(\"registeredResetResponseTime\");",
+                  "const unregisteredTime = pm.response.responseTime;",
+                  "pm.test(\"Response times are in the same rough range (timing-safe smoke check)\", () => {",
+                  "    pm.expect(Math.abs(registeredTime - unregisteredTime)).to.be.below(150);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{unregisteredEmail}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/password/reset/request",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "password",
+                "reset",
+                "request"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Confirm: missing token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"\",\n  \"newPassword\": \"ValidPass1\",\n  \"confirmNewPassword\": \"ValidPass1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/password/reset/confirm",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "password",
+                "reset",
+                "confirm"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Confirm: missing new password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{resetToken}}\",\n  \"newPassword\": \"\",\n  \"confirmNewPassword\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/password/reset/confirm",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "password",
+                "reset",
+                "confirm"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Confirm: new password too short",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Length rule message\", () => {",
+                  "    pm.expect(pm.response.text()).to.include(\"8 characters\");",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{resetToken}}\",\n  \"newPassword\": \"Ab1\",\n  \"confirmNewPassword\": \"Ab1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/password/reset/confirm",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "password",
+                "reset",
+                "confirm"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Confirm: new password over 64 chars",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const longPass = \"Aa1\" + \"x\".repeat(65);",
+                  "pm.collectionVariables.set(\"tooLongPassword\", longPass);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"fieldErrors contains the max-length message\", () => {",
+                  "    const err = json.fieldErrors.find(fe => fe.field === \"newPassword\");",
+                  "    pm.expect(err, \"expected a fieldErrors entry for newPassword\").to.exist;",
+                  "    pm.expect(err.message).to.eql(\"Maximum 64 characters\");",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{resetToken}}\",\n  \"newPassword\": \"{{tooLongPassword}}\",\n  \"confirmNewPassword\": \"{{tooLongPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/password/reset/confirm",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "password",
+                "reset",
+                "confirm"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Confirm: passwords do not match",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Correct error code\", () => {",
+                  "    pm.expect(pm.response.json().code).to.eql(\"PASSWORD_CONFIRMATION_MISMATCH\");",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{resetToken}}\",\n  \"newPassword\": \"ValidPass1\",\n  \"confirmNewPassword\": \"Different1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/password/reset/confirm",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "password",
+                "reset",
+                "confirm"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Confirm: invalid token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Token invalid error\", () => {",
+                  "    pm.expect(pm.response.json().code).to.eql(\"TOKEN_INVALID\");",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"not-a-real-token\",\n  \"newPassword\": \"ValidPass1\",\n  \"confirmNewPassword\": \"ValidPass1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/password/reset/confirm",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "password",
+                "reset",
+                "confirm"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "MANUAL: Confirm with expired token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 410\", () => pm.response.to.have.status(410));",
+                  "pm.test(\"Token expired error\", () => {",
+                  "    pm.expect(pm.response.json().code).to.eql(\"TOKEN_EXPIRED\");",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{expiredResetToken}}\",\n  \"newPassword\": \"ValidPass1\",\n  \"confirmNewPassword\": \"ValidPass1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/password/reset/confirm",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "password",
+                "reset",
+                "confirm"
+              ]
+            },
+            "description": "Before sending: capture a real reset token, then in pgAdmin run UPDATE verification_token SET expires_at = now() - interval '1 minute' WHERE token_hash = <sha256 hex of that raw token>. Paste the original raw token (not the hash) into expiredResetToken."
+          },
+          "response": []
+        },
+        {
+          "name": "Confirm: new password same as current",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Password reuse error\", () => {",
+                  "    pm.expect(pm.response.json().code).to.eql(\"PASSWORD_REUSE\");",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{resetToken}}\",\n  \"newPassword\": \"{{password}}\",\n  \"confirmNewPassword\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/password/reset/confirm",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "password",
+                "reset",
+                "confirm"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "MANUAL: Request second reset link (invalidates first)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.collectionVariables.set(\"previousResetToken\", pm.collectionVariables.get(\"resetToken\"));"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/password/reset/request",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "password",
+                "reset",
+                "request"
+              ]
+            },
+            "description": "After sending, copy the NEW raw token from the newly received email into resetToken (overwriting its old value). The old value has already been preserved in previousResetToken by the pre-request script."
+          },
+          "response": []
+        },
+        {
+          "name": "Confirm: superseded token is rejected",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 410\", () => pm.response.to.have.status(410));",
+                  "pm.test(\"Token already used error\", () => {",
+                  "    pm.expect(pm.response.json().code).to.eql(\"TOKEN_ALREADY_USED\");",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{previousResetToken}}\",\n  \"newPassword\": \"{{resetNewPassword}}\",\n  \"confirmNewPassword\": \"{{resetNewPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/password/reset/confirm",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "password",
+                "reset",
+                "confirm"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Confirm: success",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Success message correct\", () => {",
+                  "    pm.expect(json.message).to.eql(\"Your password is updated. You can now sign in with your new password.\");",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{resetToken}}\",\n  \"newPassword\": \"{{resetNewPassword}}\",\n  \"confirmNewPassword\": \"{{resetNewPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/password/reset/confirm",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "password",
+                "reset",
+                "confirm"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Confirm: reusing consumed token is rejected",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 410\", () => pm.response.to.have.status(410));",
+                  "pm.test(\"Token already used error\", () => {",
+                  "    pm.expect(pm.response.json().code).to.eql(\"TOKEN_ALREADY_USED\");",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{resetToken}}\",\n  \"newPassword\": \"AnotherPass1\",\n  \"confirmNewPassword\": \"AnotherPass1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/password/reset/confirm",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "password",
+                "reset",
+                "confirm"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verify old password no longer works",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Old password rejected\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"Invalid credentials error\", () => {",
+                  "    pm.expect(pm.response.json().code).to.eql(\"INVALID_CREDENTIALS\");",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"rememberMe\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verify new password works",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"New password accepted\", () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{email}}\",\n  \"password\": \"{{resetNewPassword}}\",\n  \"rememberMe\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verify all sessions revoked",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Old refresh token rejected\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"Invalid refresh token error\", () => {",
+                  "    pm.expect(pm.response.json().code).to.eql(\"INVALID_REFRESH_TOKEN\");",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{resetRefreshTokenBeforeReset}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "refresh"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "inboxEmail",
+      "value": ""
+    },
+    {
+      "key": "password",
+      "value": "Password123"
+    },
+    {
+      "key": "email",
+      "value": ""
+    },
+    {
+      "key": "username",
+      "value": ""
+    },
+    {
+      "key": "verificationToken",
+      "value": ""
+    },
+    {
+      "key": "previousToken",
+      "value": ""
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "paymentId",
+      "value": ""
+    },
+    {
+      "key": "checkoutUrl",
+      "value": ""
+    },
+    {
+      "key": "paymobHmacSecret",
+      "value": ""
+    },
+    {
+      "key": "webhookHmac",
+      "value": ""
+    },
+    {
+      "key": "webhookPayload",
+      "value": ""
+    },
+    {
+      "key": "refreshToken",
+      "value": ""
+    },
+    {
+      "key": "testCurrentPassword",
+      "value": ""
+    },
+    {
+      "key": "tooLongPassword",
+      "value": ""
+    },
+    {
+      "key": "newPassword",
+      "value": ""
+    },
+    {
+      "key": "unregisteredEmail",
+      "value": "nonexistent-user-orbit-test@example.com"
+    },
+    {
+      "key": "resetToken",
+      "value": ""
+    },
+    {
+      "key": "previousResetToken",
+      "value": ""
+    },
+    {
+      "key": "expiredResetToken",
+      "value": ""
+    },
+    {
+      "key": "resetNewPassword",
+      "value": "FreshResetPass1"
+    },
+    {
+      "key": "resetRefreshTokenBeforeReset",
+      "value": ""
+    },
+    {
+      "key": "registeredResetResponseTime",
+      "value": ""
+    }
+  ]
+}

@@ -5,12 +5,12 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
-@Schema(description = "Fields required to change a known password")
-public record ChangePasswordRequest(
+@Schema(description = "Fields required to set a new password using a reset link. No current password is required — the token itself proves identity")
+public record PasswordResetConfirmRequest(
 
-        @Schema(description = "The user's current password, used to prove identity", example = "OldPass123")
+        @Schema(description = "The raw token from the reset link's URL", example = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI...")
         @NotBlank(message = "This field is required")
-        String currentPassword,
+        String token,
 
         @Schema(description = "The new password. 8 to 64 characters, at least one letter and one number", example = "NewPass456")
         @NotBlank(message = "This field is required")

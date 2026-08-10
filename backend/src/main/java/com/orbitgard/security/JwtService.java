@@ -62,6 +62,18 @@ public class JwtService {
                 .signWith(signingKey)
                 .compact();
     }
+    public String mintPasswordResetToken(UUID userId, String email, Instant expiresAt) {
+        Instant now = Instant.now();
+        return Jwts.builder()
+                .id(UUID.randomUUID().toString())
+                .subject(userId.toString())
+                .claim(CLAIM_PURPOSE, TokenPurpose.PASSWORD_RESET.name())
+                .claim(CLAIM_EMAIL, email)
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(expiresAt))
+                .signWith(signingKey)
+                .compact();
+    }
 
     /**
      * Every token -- access or refresh -- shares the same subject, session id,

@@ -58,7 +58,9 @@ public class SecurityConfig {
                                 // already expired, so requiring a valid one to reach it
                                 // would be circular. Confirm this against the contract
                                 // once /auth/refresh is actually written up.
-                                "/auth/refresh"
+                                "/auth/refresh",
+                                "/password/reset/request",   
+                                "/password/reset/confirm"
                         ).permitAll()
                         // Exact path, not a wildcard -- this is the only endpoint
                         // the Paymob integration guide defines. Both the browser
