@@ -1,0 +1,22 @@
+$kind: http-request
+url: "{{baseUrl}}/wallet"
+method: GET
+headers:
+  Authorization: Bearer {{accessToken}}
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Wallet figures are internally consistent', function () {
+        pm.response.to.have.status(200);
+        const wallet = pm.response.json();
+        pm.expect(Number(wallet.balance) - Number(wallet.held)).to.eql(Number(wallet.available));
+        pm.expect(Number(wallet.available)).to.be.at.least(0);
+      });
+      pm.test('Wallet matches expected values when configured', function () {
+        const wallet = pm.response.json();
+        pm.expect(Number(wallet.balance)).to.eql(Number(pm.collectionVariables.get('expectedBalance')));
+        pm.expect(Number(wallet.held)).to.eql(Number(pm.collectionVariables.get('expectedHeld')));
+        pm.expect(Number(wallet.available)).to.eql(Number(pm.collectionVariables.get('expectedAvailable')));
+      });
+    language: text/javascript
+order: 1000

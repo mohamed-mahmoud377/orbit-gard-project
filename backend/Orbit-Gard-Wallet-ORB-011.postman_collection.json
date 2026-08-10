@@ -1,0 +1,269 @@
+{
+  "info": {
+    "_postman_id": "9e80e3af-6a15-4d88-8d92-02167272e1bd",
+    "name": "Orbit Gard - ORB-011 Wallet Ledger",
+    "description": "Import this collection into Postman. Set baseUrl and accessToken before calling authenticated requests. Signup requires email verification before login.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api/v1"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "username",
+      "value": ""
+    },
+    {
+      "key": "password",
+      "value": "Testpass123"
+    },
+    {
+      "key": "expectedBalance",
+      "value": "500"
+    },
+    {
+      "key": "expectedHeld",
+      "value": "0"
+    },
+    {
+      "key": "expectedAvailable",
+      "value": "500"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Public validation",
+      "item": [
+        {
+          "name": "Validate WELCOME500 promo code",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/promo-code?code=WELCOME500",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "promo-code"],
+              "query": [{"key": "code", "value": "WELCOME500"}]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Promo code is valid', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().status).to.eql('VALID');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Signup wallet cases",
+      "item": [
+        {
+          "name": "Register without promo - wallet starts empty",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const suffix = Date.now();",
+                  "pm.collectionVariables.set('username', 'walletnopromo' + suffix);",
+                  "pm.collectionVariables.set('email', 'walletnopromo' + suffix + '@example.com');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Wallet\",\n  \"lastName\": \"Tester\",\n  \"username\": \"{{username}}\",\n  \"email\": \"{{email}}\",\n  \"phoneNumber\": \"01012345678\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/register"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('Account was created', function () { pm.response.to.have.status(201); });"]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register with WELCOME500 - creates PROMO transaction",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const suffix = Date.now();",
+                  "pm.collectionVariables.set('username', 'walletpromo' + suffix);",
+                  "pm.collectionVariables.set('email', 'walletpromo' + suffix + '@example.com');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Wallet\",\n  \"lastName\": \"Tester\",\n  \"username\": \"{{username}}\",\n  \"email\": \"{{email}}\",\n  \"phoneNumber\": \"01012345678\",\n  \"password\": \"{{password}}\",\n  \"promoCode\": \"WELCOME500\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/register"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('Account was created', function () { pm.response.to.have.status(201); });"]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Authenticate after email verification",
+      "item": [
+        {
+          "name": "Login and store access token",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\",\n  \"rememberMe\": false\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login succeeded', function () { pm.response.to.have.status(200); });",
+                  "pm.collectionVariables.set('accessToken', pm.response.json().accessToken);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Wallet ledger assertions",
+      "item": [
+        {
+          "name": "Get wallet balance",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+            "url": "{{baseUrl}}/wallet"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Wallet figures are internally consistent', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const wallet = pm.response.json();",
+                  "  pm.expect(Number(wallet.balance) - Number(wallet.held)).to.eql(Number(wallet.available));",
+                  "  pm.expect(Number(wallet.available)).to.be.at.least(0);",
+                  "});",
+                  "pm.test('Wallet matches expected values when configured', function () {",
+                  "  const wallet = pm.response.json();",
+                  "  pm.expect(Number(wallet.balance)).to.eql(Number(pm.collectionVariables.get('expectedBalance')));",
+                  "  pm.expect(Number(wallet.held)).to.eql(Number(pm.collectionVariables.get('expectedHeld')));",
+                  "  pm.expect(Number(wallet.available)).to.eql(Number(pm.collectionVariables.get('expectedAvailable')));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List transactions and validate ledger chain",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+            "url": "{{baseUrl}}/wallet/transactions?page=0"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Transaction records satisfy ledger invariants', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const transactionPage = pm.response.json();",
+                  "  pm.expect(transactionPage.size).to.eql(10);",
+                  "  pm.expect(transactionPage.content.length).to.be.at.most(10);",
+                  "  const transactions = transactionPage.content;",
+                  "  const publicId = /^TXN-\\d{17}-\\d{6}$/;",
+                  "  transactions.forEach((transaction, index) => {",
+                  "    pm.expect(Number(transaction.amount)).to.be.above(0);",
+                  "    pm.expect(Number(transaction.balanceBefore)).to.be.at.least(0);",
+                  "    pm.expect(Number(transaction.balanceAfter)).to.be.at.least(0);",
+                  "    pm.expect(transaction.reference).to.not.be.empty;",
+                  "    pm.expect(transaction.transactionPublicId).to.match(publicId);",
+                  "    if (index > 0) pm.expect(Number(transaction.balanceBefore)).to.eql(Number(transactions[index - 1].balanceAfter));",
+                  "  });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5. Top-up initiation",
+      "item": [
+        {
+          "name": "Initiate EGP 10,000 top-up",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {"mode": "raw", "raw": "{\n  \"amount\": 10000.00\n}"},
+            "url": "{{baseUrl}}/payments/topup"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('Payment intention was created', function () { pm.response.to.have.status(201); });"]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -6,6 +6,7 @@ import com.orbitgard.dto.response.*;
 import com.orbitgard.entity.Session;
 import com.orbitgard.entity.User;
 import com.orbitgard.entity.VerificationToken;
+import com.orbitgard.entity.Wallet;
 import com.orbitgard.enums.AccountType;
 import com.orbitgard.enums.TokenPurpose;
 import com.orbitgard.enums.UserStatus;
@@ -17,11 +18,14 @@ import com.orbitgard.mapper.UserMapper;
 import com.orbitgard.repository.SessionRepository;
 import com.orbitgard.repository.UserRepository;
 import com.orbitgard.repository.VerificationTokenRepository;
+import com.orbitgard.repository.WalletRepository;
 import com.orbitgard.security.DeviceLabelResolver;
 import com.orbitgard.security.JwtService;
 import com.orbitgard.security.RefreshTokenGenerator;
 import com.orbitgard.service.AuthService;
+import com.orbitgard.service.PromoCodeService;
 import com.orbitgard.service.VerificationEmailService;
+import com.orbitgard.service.WalletService;
 import com.orbitgard.util.TokenHasher;
 import com.orbitgard.validation.PhoneNumberNormalizer;
 import com.orbitgard.validation.UsernameNormalizer;
@@ -61,6 +65,8 @@ public class AuthServiceImpl implements AuthService {
     private final JwtService jwtService;
     private final VerificationTokenRepository verificationTokenRepository;
     private final VerificationEmailService verificationEmailService;
+    private final WalletService walletService;
+    private final PromoCodeService promoCodeService;
 
     // --- Login dependencies ---
     private final SessionRepository sessionRepository;
@@ -74,6 +80,8 @@ public class AuthServiceImpl implements AuthService {
                            JwtService jwtService,
                            VerificationTokenRepository verificationTokenRepository,
                            VerificationEmailService verificationEmailService,
+                           WalletService walletService,
+                           PromoCodeService promoCodeService,
                            SessionRepository sessionRepository,
                            RefreshTokenGenerator refreshTokenGenerator,
                            DeviceLabelResolver deviceLabelResolver) {
@@ -84,6 +92,8 @@ public class AuthServiceImpl implements AuthService {
         this.jwtService = jwtService;
         this.verificationTokenRepository = verificationTokenRepository;
         this.verificationEmailService = verificationEmailService;
+        this.walletService = walletService;
+        this.promoCodeService = promoCodeService;
         this.sessionRepository = sessionRepository;
         this.refreshTokenGenerator = refreshTokenGenerator;
         this.deviceLabelResolver = deviceLabelResolver;
@@ -107,6 +117,8 @@ public class AuthServiceImpl implements AuthService {
         throwIfErrors(errors);
 
         User saved = persistUser(request, normalized);
+        var wallet = walletService.createForUser(saved.getId());
+        promoCodeService.applyAtSignup(wallet.getId(), saved.getPromoCodeEntered());
         String verificationToken = createVerificationToken(saved);
         try {
             verificationEmailService.sendVerificationEmail(saved.getEmail(), verificationToken);
@@ -162,6 +174,11 @@ public class AuthServiceImpl implements AuthService {
                 .available(!exists)
                 .message(exists ? ErrorCode.USERNAME_TAKEN.name() : null)
                 .build();
+    }
+
+    @Override
+    public PromoCodeValidationResponse validatePromoCode(String code) {
+        return promoCodeService.validateCode(code);
     }
 
     private void checkUniqueness(NormalizedInput normalized, List<FieldErrorResponse> errors) {
