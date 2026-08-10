@@ -45,7 +45,7 @@ public class PaymobClient {
             );
             return response.getBody();
         } catch (HttpStatusCodeException ex) {
-            log.error("Paymob create intention failed: {} - body: {}", ex.getStatusCode(), ex.getResponseBodyAsString());
+            log.error("Paymob create intention failed: {}", ex.getStatusCode());
             throw new IllegalStateException("Paymob failed to create intention: " + ex.getStatusCode(), ex);
         }
     }
@@ -75,7 +75,7 @@ public class PaymobClient {
             );
             return response.getBody();
         } catch (HttpStatusCodeException ex) {
-            log.error("Paymob check intention status failed: {} - body: {}", ex.getStatusCode(), ex.getResponseBodyAsString());
+            log.error("Paymob check intention status failed: {} - body: {}", ex.getStatusCode());
             throw new IllegalStateException("Paymob failed to check intention status: " + ex.getStatusCode(), ex);
         }
     }
