@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
@@ -32,6 +33,7 @@ public class PasswordController {
     @PostMapping("/change")
     @Operation(summary = "Change my password",
             description = "Requires the current password. Signs out every device, including this one.")
+    @SecurityRequirement(name = "bearerAuth")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Password changed",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
@@ -48,6 +50,7 @@ public class PasswordController {
     @GetMapping("/active-sessions-count")
     @Operation(summary = "Count active sessions",
             description = "Returns how many devices are currently signed in, for display before a password change.")
+    @SecurityRequirement(name = "bearerAuth")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Active session count",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
