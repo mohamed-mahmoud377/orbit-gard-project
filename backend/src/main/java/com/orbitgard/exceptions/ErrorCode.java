@@ -40,6 +40,7 @@ public enum ErrorCode {
     AMOUNT_BELOW_MINIMUM(HttpStatus.BAD_REQUEST, "amount-below-minimum", "Amount below minimum"),
     AMOUNT_ABOVE_MAXIMUM(HttpStatus.BAD_REQUEST, "amount-above-maximum", "Amount above maximum"),
     AMOUNT_INVALID(HttpStatus.BAD_REQUEST, "amount-invalid", "Amount must be greater than zero"),
+    INSUFFICIENT_BALANCE(HttpStatus.CONFLICT, "insufficient-balance", "Insufficient available balance"),
     CHILD_CANNOT_TOP_UP(HttpStatus.FORBIDDEN, "child-cannot-top-up", "Child accounts cannot add money"),
     PAYMOB_UNREACHABLE(HttpStatus.SERVICE_UNAVAILABLE, "paymob-unreachable", "Payment provider unavailable"),
     PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "payment-not-found", "Payment not found"),
