@@ -12,6 +12,8 @@ public enum ErrorCode {
     EMAIL_INVALID(HttpStatus.BAD_REQUEST, "email-invalid", "Invalid email address"),
     EMAIL_TAKEN(HttpStatus.CONFLICT, "email-taken", "Email already registered"),
     PHONE_INVALID(HttpStatus.BAD_REQUEST, "phone-invalid", "Invalid phone number"),
+    PHONE_INVALID_CHAR(HttpStatus.BAD_REQUEST, "phone-invalid-char", "Phone number contains invalid characters"),
+    PHONE_TOO_LONG(HttpStatus.BAD_REQUEST, "phone-too-long", "Phone number exceeds allowed length"),
     PHONE_NOT_EGYPTIAN(HttpStatus.BAD_REQUEST, "phone-not-egyptian", "Not an Egyptian number"),
     PHONE_TAKEN(HttpStatus.CONFLICT, "phone-taken", "Phone already registered"),
     PASSWORD_TOO_WEAK(HttpStatus.BAD_REQUEST, "password-too-weak", "Password too weak"),
