@@ -15,4 +15,5 @@ public interface WalletTransactionService {
     WalletTransaction recordTopUpCredit(UUID walletId, long amountCents, UUID paymentId);
 
     WalletTransaction completePendingCredit(UUID transactionId);
+
 }
