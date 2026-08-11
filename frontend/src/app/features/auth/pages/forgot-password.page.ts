@@ -1,6 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { AuthFacade } from '../data-access/auth.facade';
 
 import { StatusView } from '../../../shared/ui/status-view';
 
@@ -26,7 +27,7 @@ import { StatusView } from '../../../shared/ui/status-view';
           <h1>Reset your password</h1>
           <p>Enter your email and we will send you a secure reset link.</p>
         </header>
-        <form class="auth-form" [formGroup]="form" (ngSubmit)="sent.set(true)">
+        <form class="auth-form" [formGroup]="form" (ngSubmit)="submit()">
           <div class="field">
             <label for="reset-email">Email address</label>
             <input class="input" id="reset-email" formControlName="email" type="email" />
@@ -44,11 +45,30 @@ import { StatusView } from '../../../shared/ui/status-view';
 export class ForgotPasswordPage {
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
+  private readonly authFacade = inject(AuthFacade);
 
   protected readonly sent = signal(false);
   protected readonly form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
   });
+
+  protected submit(): void {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+  
+    const email = this.form.controls.email.value.trim();
+  
+    this.authFacade.requestPasswordReset({ email }).subscribe({
+      next: () => {
+        this.sent.set(true);
+      },
+      error: () => {
+
+      },
+    });
+  }
 
   protected goToLogin(): void {
     void this.router.navigateByUrl('/auth/login');

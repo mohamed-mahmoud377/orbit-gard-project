@@ -51,6 +51,23 @@ export interface ResendVerifyResponse {
   readonly retryAfterSeconds: number;
 }
 
+export interface PasswordResetRequest {
+  readonly email: string;
+}
+export interface PasswordResetRequestResponse {
+  readonly message: string;
+}
+
+export interface PasswordResetConfirmRequest {
+  readonly token: string;
+  readonly newPassword: string;
+  readonly confirmNewPassword: string;
+}
+
+export interface PasswordResetConfirmResponse {
+  readonly message: string;
+}
+
 export interface LoginRequest {
   readonly username: string;
   readonly password: string;

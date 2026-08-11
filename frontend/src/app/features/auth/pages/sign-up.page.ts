@@ -95,7 +95,7 @@ type AvailabilityState = 'idle' | 'checking' | 'available' | 'taken' | 'invalid'
           } @else if (availability() === 'invalid' && form.controls.username.value.trim()) {
             <p class="field-error" id="username-availability">
             @if (usernameHasUppercase) {
-              <p class="field-error" id="username-lowercase-error">
+              <p class="field-error" id="username-lowercase-error"F>
                 Username must be written in lowercase letters.
               </p>
             }

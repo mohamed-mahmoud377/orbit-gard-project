@@ -7,6 +7,7 @@
 }
 
 .auth-card {
+  background-color: rgb(255, 255, 255,0.35);
   display: grid;
   justify-items: stretch;
   width: min(100%, 420px);
@@ -14,6 +15,10 @@
   max-width: 100%;
   margin-inline: auto;
   gap: 20px;
+  padding: 2rem;
+  // border: 3px solid white;
+  border-radius: 20px;
+  transition: all 0.7s ease;
 
   h1 {
     margin: 0;
@@ -26,6 +31,11 @@
     margin: 6px 0 0;
     color: var(--text-muted);
   }
+}
+
+.auth-card:hover{
+  transform: perspective(400px) translateZ(20px) scale(1.04);
+  box-shadow: 0 15px 30px rgba(37, 99, 235, 0.35);
 }
 
 .auth-card-wide {

@@ -16,6 +16,10 @@ import {
   AuthApiError,
   LoginRequest,
   LoginResponse,
+  PasswordResetRequest,
+  PasswordResetRequestResponse,
+  PasswordResetConfirmRequest,
+  PasswordResetConfirmResponse,
   ProblemDetails,
   ProblemFieldError,
   RefreshTokenRequest,
@@ -464,6 +468,53 @@ export class MockAuthGateway implements AuthGateway {
     return of(generic).pipe(delay(150));
   }
 
+  requestPasswordReset(
+    request: PasswordResetRequest,
+  ): Observable<PasswordResetRequestResponse> {
+    const email = normalizeEmail(request.email ?? '');
+    if (!isValidEmail(email)) {
+      return this.fail(problem(400, 'EMAIL_INVALID', [{ field: 'email', code: 'EMAIL_INVALID' }]));
+    }
+
+    return of({
+      message: 'If an account exists for that address, a reset link is on its way.',
+    }).pipe(delay(150));
+  }
+
+  confirmPasswordReset(
+    request: PasswordResetConfirmRequest,
+  ): Observable<PasswordResetConfirmResponse> {
+    if (
+      !request.token ||
+      !request.newPassword ||
+      !request.confirmNewPassword
+    ) {
+      return throwError(
+        () =>
+          new AuthApiError({
+            status: 400,
+            code: 'FIELD_REQUIRED',
+            title: 'Invalid request',
+          }),
+      );
+    }
+  
+    if (request.newPassword !== request.confirmNewPassword) {
+      return throwError(
+        () =>
+          new AuthApiError({
+            status: 400,
+            code: 'PASSWORD_MISMATCH',
+            title: 'Passwords do not match',
+          }),
+      );
+    }
+  
+    return of({
+      message: 'Password reset successfully.',
+    });
+  }
+
   login(request: LoginRequest): Observable<LoginResponse> {
     if (!request.username?.trim() || !request.password) {
       const fieldErrors: ProblemFieldError[] = [];
@@ -559,4 +610,5 @@ export class MockAuthGateway implements AuthGateway {
   private persist(): void {
     saveState(this.state);
   }
+
 }

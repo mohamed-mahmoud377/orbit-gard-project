@@ -7,6 +7,10 @@ import { AuthTokenStore } from './auth-token.store';
 import {
   LoginRequest,
   LoginResponse,
+  PasswordResetRequest,
+  PasswordResetRequestResponse,
+  PasswordResetConfirmRequest,
+  PasswordResetConfirmResponse,
   RefreshTokenRequest,
   RegisterRequest,
   RegisterResponse,
@@ -43,6 +47,18 @@ export class AuthFacade {
 
   checkUsername(username: string): Observable<UsernameAvailabilityResponse> {
     return this.gateway.checkUsername(username);
+  }
+
+  requestPasswordReset(
+    request: PasswordResetRequest,
+  ): Observable<PasswordResetRequestResponse> {
+    return this.gateway.requestPasswordReset(request);
+  }
+
+  confirmPasswordReset(
+    request: PasswordResetConfirmRequest,
+  ): Observable<PasswordResetConfirmResponse> {
+    return this.gateway.confirmPasswordReset(request);
   }
 
   register(request: RegisterRequest): Observable<RegisterResponse> {
