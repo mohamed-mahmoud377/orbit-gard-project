@@ -1,0 +1,23 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/auth/login"
+method: POST
+headers:
+  Content-Type: application/json
+  User-Agent: Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1
+body:
+  type: text
+  content: |-
+    {
+      "username": "{{email}}",
+      "password": "{{password}}",
+      "rememberMe": false
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('returns 200', () => pm.response.to.have.status(200));
+      const body = pm.response.json();
+      pm.collectionVariables.set('sessionAccessTokenB', body.accessToken);
+      pm.collectionVariables.set('sessionRefreshTokenB', body.refreshToken);
+    language: text/javascript
+order: 5000

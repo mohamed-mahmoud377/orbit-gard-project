@@ -1,0 +1,10 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/sessions"
+method: GET
+headers:
+  Authorization: Bearer {{sessionAccessTokenH}}
+scripts:
+  - type: afterResponse
+    code: pm.test('a bulk-revoked session's access token is now rejected', () => pm.response.to.have.status(401));
+    language: text/javascript
+order: 20000

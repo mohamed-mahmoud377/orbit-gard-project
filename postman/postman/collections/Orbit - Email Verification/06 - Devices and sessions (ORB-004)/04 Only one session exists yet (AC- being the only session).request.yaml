@@ -1,0 +1,16 @@
+$kind: http-request
+name: "04 Only one session exists yet (AC: being the only session)"
+url: "{{baseUrl}}/api/v1/sessions"
+method: GET
+headers:
+  Authorization: Bearer {{sessionAccessTokenA}}
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('returns 200', () => pm.response.to.have.status(200));
+      const body = pm.response.json();
+      pm.test('exactly one session exists', () => pm.expect(body.length).to.eql(1));
+      pm.test('it is marked as the current device', () => pm.expect(body[0].currentDevice).to.be.true);
+      pm.collectionVariables.set('sessionIdCurrentA', body[0].id);
+    language: text/javascript
+order: 4000

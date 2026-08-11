@@ -1,0 +1,12 @@
+$kind: collection
+description: |-
+  Depends on ORB-003 (sign-in). Registers and verifies its own user, then signs in as several simulated devices (via distinct User-Agent headers) to exercise GET /sessions, DELETE /sessions/{id}, and POST /sessions/sign-out-others.
+
+  Assumptions flagged here rather than silently baked in -- confirm each before trusting the corresponding test:
+  1. Field names on the list response (deviceLabel, lastUsedAt, location, currentDevice, id) are inferred, since SessionSummaryResponse itself wasn't available to check against.
+  2. AC3 asks for both 'location and address' as separate things; only a single 'location' field is asserted here pending confirmation of the real DTO shape.
+  3. Request '06 Cannot sign out the device you're using' encodes a guard that is NOT stated in any of the 12 acceptance criteria and wasn't confirmed against SessionService. Delete it if that guard doesn't actually exist.
+  4. Access-token revocation is tested as immediate (request 09), not just refresh-token revocation, because the API contract states the sid claim's purpose is explicitly 'so a specific session can be revoked.' If JwtAuthenticationFilter turns out not to check session status per request, this expectation and that filter need to be reconciled together.
+  5. 'Unknown device' (not 'Unrecognised device') is the exact string DeviceLabelResolver returns -- verified against that file directly.
+  6. Request 22 (AC11, password change revokes other sessions) is a placeholder: no change-password endpoint has been documented in any contract seen so far. Fill in the real method/URL before relying on it.
+order: 6000

@@ -1,5 +1,6 @@
 package com.orbitgard.entity;
 
+import com.orbitgard.validation.annotation.ValidWalletHeld;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -24,6 +25,7 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
+@ValidWalletHeld
 public class Wallet {
 
     @Id

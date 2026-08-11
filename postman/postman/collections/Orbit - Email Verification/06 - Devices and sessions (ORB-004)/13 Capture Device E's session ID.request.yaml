@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/sessions"
+method: GET
+headers:
+  Authorization: Bearer {{sessionAccessTokenE}}
+scripts:
+  - type: afterResponse
+    code: |-
+      const current = pm.response.json().find(s => s.currentDevice === true);
+      pm.collectionVariables.set('sessionIdToExpire', current.id);
+      console.log('Now run the MANUAL SQL step, then request 14.');
+    language: text/javascript
+order: 14000

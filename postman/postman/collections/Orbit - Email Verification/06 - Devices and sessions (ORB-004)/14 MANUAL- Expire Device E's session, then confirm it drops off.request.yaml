@@ -1,0 +1,15 @@
+$kind: http-request
+name: "14 MANUAL: Expire Device E's session, then confirm it drops off the list (AC: an already-expired session is not listed)"
+description: "Run this SQL first: UPDATE session SET idle_expires_at = NOW() - INTERVAL '1 minute' WHERE id = '{{sessionIdToExpire}}';"
+url: "{{baseUrl}}/api/v1/sessions"
+method: GET
+headers:
+  Authorization: Bearer {{sessionAccessTokenA}}
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('returns 200', () => pm.response.to.have.status(200));
+      const body = pm.response.json();
+      pm.test('expired session is not listed', () => pm.expect(body.some(s => s.id === pm.collectionVariables.get('sessionIdToExpire'))).to.be.false);
+    language: text/javascript
+order: 15000

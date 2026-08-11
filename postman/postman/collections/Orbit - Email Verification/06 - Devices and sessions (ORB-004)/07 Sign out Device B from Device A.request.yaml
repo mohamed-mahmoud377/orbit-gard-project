@@ -1,0 +1,10 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/sessions/{{sessionIdOtherB}}"
+method: DELETE
+headers:
+  Authorization: Bearer {{sessionAccessTokenA}}
+scripts:
+  - type: afterResponse
+    code: pm.test('returns 204', () => pm.response.to.have.status(204));
+    language: text/javascript
+order: 8000

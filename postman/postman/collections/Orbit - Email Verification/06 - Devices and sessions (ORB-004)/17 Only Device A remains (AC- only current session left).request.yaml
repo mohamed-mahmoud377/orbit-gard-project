@@ -1,0 +1,15 @@
+$kind: http-request
+name: "17 Only Device A remains (AC: only current session left)"
+url: "{{baseUrl}}/api/v1/sessions"
+method: GET
+headers:
+  Authorization: Bearer {{sessionAccessTokenA}}
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('returns 200', () => pm.response.to.have.status(200));
+      const body = pm.response.json();
+      pm.test('exactly one active session remains', () => pm.expect(body.length).to.eql(1));
+      pm.test('the remaining session is the current device', () => pm.expect(body[0].currentDevice).to.be.true);
+    language: text/javascript
+order: 18000

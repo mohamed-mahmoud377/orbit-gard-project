@@ -1,0 +1,20 @@
+$kind: http-request
+name: "02 MANUAL: Verify the account"
+description: Paste the token from the confirmation email into verificationToken before running.
+url: "{{baseUrl}}/api/v1/auth/verify"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "token": "{{verificationToken}}"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('returns 200', () => pm.response.to.have.status(200));
+      pm.test('account is active', () => pm.expect(pm.response.json().status).to.eql('ACTIVE'));
+    language: text/javascript
+order: 2000

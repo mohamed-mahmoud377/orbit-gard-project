@@ -1,0 +1,18 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/auth/refresh"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "refreshToken": "{{sessionRefreshTokenH}}"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('returns 401', () => pm.response.to.have.status(401));
+      pm.test('reports invalid refresh token', () => pm.expect(pm.response.json().code).to.eql('INVALID_REFRESH_TOKEN'));
+    language: text/javascript
+order: 19000

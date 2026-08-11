@@ -1,0 +1,34 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/auth/register"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "firstName": "Orbit",
+      "lastName": "Sessions",
+      "username": "{{username}}",
+      "email": "{{email}}",
+      "phoneNumber": "+201612345678",
+      "password": "{{password}}",
+      "confirmPassword": "{{password}}"
+    }
+scripts:
+  - type: beforeRequest
+    code: |-
+      const inbox = pm.collectionVariables.get('inboxEmail');
+      if (!inbox || !inbox.includes('@')) throw new Error('Set collection variable inboxEmail first.');
+      const [local, domain] = inbox.split('@');
+      const suffix = Date.now().toString();
+      pm.collectionVariables.set('email', `${local}+sessions${suffix}@${domain}`);
+      pm.collectionVariables.set('username', `sessions${suffix}`.slice(0, 30));
+      pm.collectionVariables.set('verificationToken', '');
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      pm.test('returns 201 Created', () => pm.response.to.have.status(201));
+      console.log('Copy the token from the confirmation email for:', pm.collectionVariables.get('email'));
+    language: text/javascript
+order: 1000

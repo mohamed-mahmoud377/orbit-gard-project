@@ -41,9 +41,7 @@ public final class TransactionRules {
                     throw new IllegalArgumentException("EXTERNAL_TRANSFER transactions must be debits");
                 }
             }
-            case INTERNAL_TRANSFER -> {
-                // credit or debit
-            }
+
         }
     }
 

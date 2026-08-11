@@ -4,18 +4,19 @@ import com.orbitgard.entity.Payment;
 import com.orbitgard.entity.Wallet;
 import com.orbitgard.enums.PaymentStatus;
 import com.orbitgard.repository.PaymentRepository;
+import com.orbitgard.service.PaymentTransitionService;
 import com.orbitgard.service.WalletService;
 import com.orbitgard.service.WalletTransactionService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
 
-@Component
+@Service
 @Slf4j
-public class PaymentTransitionService {
+public class PaymentTransitionServiceImpl implements PaymentTransitionService {
 
     private static final List<PaymentStatus> PENDING_STATUSES =
             List.of(PaymentStatus.STARTED, PaymentStatus.AWAITING_CONFIRMATION);
@@ -24,14 +25,15 @@ public class PaymentTransitionService {
     private final WalletService walletService;
     private final WalletTransactionService walletTransactionService;
 
-    public PaymentTransitionService(PaymentRepository paymentRepository,
-                                    WalletService walletService,
-                                    WalletTransactionService walletTransactionService) {
+    public PaymentTransitionServiceImpl(PaymentRepository paymentRepository,
+                                        WalletService walletService,
+                                        WalletTransactionService walletTransactionService) {
         this.paymentRepository = paymentRepository;
         this.walletService = walletService;
         this.walletTransactionService = walletTransactionService;
     }
 
+    @Override
     @Transactional
     public void complete(Payment payment) {
         int updated = paymentRepository.updateStatusIfCurrentlyIn(
@@ -47,6 +49,7 @@ public class PaymentTransitionService {
                 payment.getId());
     }
 
+    @Override
     @Transactional
     public void markFailed(Payment payment, String reason) {
         int updated = paymentRepository.updateStatusIfCurrentlyIn(
@@ -57,6 +60,7 @@ public class PaymentTransitionService {
         }
     }
 
+    @Override
     @Transactional
     public void cancelIfStillPending(UUID paymentId) {
         int canceled = paymentRepository.updateStatusIfCurrentlyIn(

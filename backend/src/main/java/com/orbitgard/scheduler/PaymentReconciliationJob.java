@@ -3,7 +3,7 @@ package com.orbitgard.scheduler;
 import com.orbitgard.entity.Payment;
 import com.orbitgard.enums.PaymentStatus;
 import com.orbitgard.repository.PaymentRepository;
-import com.orbitgard.service.Impl.PaymentTransitionService;
+import com.orbitgard.service.PaymentTransitionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;

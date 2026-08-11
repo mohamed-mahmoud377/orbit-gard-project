@@ -1,0 +1,15 @@
+$kind: http-request
+name: "08 List reflects the sign-out, Device A still present and still current (AC: entry gone, others remain, current device still signed in)"
+url: "{{baseUrl}}/api/v1/sessions"
+method: GET
+headers:
+  Authorization: Bearer {{sessionAccessTokenA}}
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('returns 200 - Device A is still signed in', () => pm.response.to.have.status(200));
+      const body = pm.response.json();
+      pm.test('Device B entry is gone', () => pm.expect(body.some(s => s.id === pm.collectionVariables.get('sessionIdOtherB'))).to.be.false);
+      pm.test('Device A entry remains, marked current', () => pm.expect(body.some(s => s.id === pm.collectionVariables.get('sessionIdCurrentA') && s.currentDevice === true)).to.be.true);
+    language: text/javascript
+order: 9000

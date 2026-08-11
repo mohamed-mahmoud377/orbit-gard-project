@@ -1,0 +1,14 @@
+$kind: http-request
+name: "06b UNCONFIRMED: Cannot sign out the device you're using (not in the acceptance criteria -- delete if SessionService doesn't guard this)"
+description: Speculative test. No acceptance criterion states this guard exists; SessionService wasn't available to confirm it. Verify before trusting this assertion.
+url: "{{baseUrl}}/api/v1/sessions/{{sessionIdCurrentA}}"
+method: DELETE
+headers:
+  Authorization: Bearer {{sessionAccessTokenA}}
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('returns 409 (UNCONFIRMED expectation)', () => pm.response.to.have.status(409));
+      pm.test('reports the guard (UNCONFIRMED expectation)', () => pm.expect(pm.response.json().code).to.eql('CANNOT_SIGN_OUT_CURRENT_DEVICE'));
+    language: text/javascript
+order: 7000

@@ -41,7 +41,7 @@ public class WalletController {
             @ApiResponse(responseCode = "401", description = "Authentication required")
     })
     public ResponseEntity<WalletBalanceResponse> getWallet() {
-        UUID userId = authenticatedUserService.currentPrincipal().userId();
+        UUID userId = authenticatedUserService.currentPrincipal().userId(); // hal de bardo el mafrod tb2a fe el service wala 3ady??
         return ResponseEntity.ok(walletService.getBalanceForUser(userId));
     }
 

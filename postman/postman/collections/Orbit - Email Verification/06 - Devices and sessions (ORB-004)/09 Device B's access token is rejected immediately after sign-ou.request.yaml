@@ -1,0 +1,12 @@
+$kind: http-request
+name: "09 Device B's access token is rejected immediately after sign-out (AC: signed-out device is returned to sign-in)"
+description: The contract states the sid claim exists specifically so a session can be revoked -- tested here as an immediate rejection, not a delayed one.
+url: "{{baseUrl}}/api/v1/sessions"
+method: GET
+headers:
+  Authorization: Bearer {{sessionAccessTokenB}}
+scripts:
+  - type: afterResponse
+    code: pm.test('a revoked session's access token is now rejected', () => pm.response.to.have.status(401));
+    language: text/javascript
+order: 10000

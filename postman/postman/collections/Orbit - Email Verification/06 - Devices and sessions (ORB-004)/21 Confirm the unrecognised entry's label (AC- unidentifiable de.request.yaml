@@ -1,0 +1,15 @@
+$kind: http-request
+name: "21 Confirm the unrecognised entry's label (AC: unidentifiable device says so plainly)"
+description: "'Unknown device' is the exact string DeviceLabelResolver.resolve() returns when neither browser nor OS is recognised -- checked directly against that class, not assumed."
+url: "{{baseUrl}}/api/v1/sessions"
+method: GET
+headers:
+  Authorization: Bearer {{sessionAccessTokenA}}
+scripts:
+  - type: afterResponse
+    code: |-
+      const body = pm.response.json();
+      const unrecognised = body.find(s => s.deviceLabel === 'Unknown device');
+      pm.test('an unidentifiable device is labelled plainly, not guessed', () => pm.expect(unrecognised).to.not.be.undefined);
+    language: text/javascript
+order: 22000
