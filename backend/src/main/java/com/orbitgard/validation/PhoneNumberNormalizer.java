@@ -30,6 +30,10 @@ public final class PhoneNumberNormalizer {
         // Not recognisable as a phone number at all, or a recognisable
         // Egyptian number that isn't a mobile (e.g. a landline).
         INVALID,
+        // Contains non-numeric characters (excluding spaces, hyphens which are trimmed)
+        INVALID_CHAR,
+        // Only numbers but length exceeds the allowed maximum
+        TOO_LONG,
         // Looks like a real international number, just not +20.
         NOT_EGYPTIAN
     }
@@ -61,6 +65,16 @@ public final class PhoneNumberNormalizer {
         String trimmed = rawInput.trim().replaceAll("[\\s-]", "");
         if (trimmed.isEmpty()) {
             return Result.invalid();
+        }
+
+        // Check for invalid characters (only digits, +, 0 are allowed after removing spaces and hyphens)
+        if (!trimmed.matches("[0-9+]*")) {
+            return new Result(Status.INVALID_CHAR, null);
+        }
+
+        // Check if input is too long (maximum reasonable length is 14 characters for +201012345678)
+        if (trimmed.length() > 14) {
+            return new Result(Status.TOO_LONG, null);
         }
 
         String local;
