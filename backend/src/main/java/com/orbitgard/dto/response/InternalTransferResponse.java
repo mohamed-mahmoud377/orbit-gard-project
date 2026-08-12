@@ -19,7 +19,7 @@ public record InternalTransferResponse(
         @Schema(description = "Reference of the credit transaction, quotable by the receiver.", example = "TXN-4D9E7A02")
         String creditReference,
 
-        @Schema(description = "Status the credit transaction was written with. COMPLETED if under EGP 5,000, PENDING if at or above the threshold — the debit is always COMPLETED and isn't reported separately.", example = "COMPLETED", allowableValues = {"COMPLETED", "PENDING"})
-        String creditStatus
+        @Schema(description = "Status the debit transaction was written with. COMPLETED if under EGP 5,000, PENDING if at or above the threshold — the debit is always COMPLETED and isn't reported separately.", example = "COMPLETED", allowableValues = {"COMPLETED", "PENDING"})
+        String debitStatus
 
 ) {}

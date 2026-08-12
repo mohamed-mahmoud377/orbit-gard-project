@@ -62,7 +62,6 @@ public class WalletTransactionServiceImpl implements WalletTransactionService {
                 .balanceBeforeCents(balanceBefore)
                 .balanceAfterCents(balanceAfter)
                 .reference(referenceGenerator.generate())
-                .transactionPublicId(referenceGenerator.generatePublicId())
                 .description(request.description())
                 .counterparty(request.counterparty())
                 .counterpartyWalletId(request.counterpartyWalletId())

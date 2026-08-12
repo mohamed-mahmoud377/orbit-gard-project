@@ -131,7 +131,7 @@ public class InternalTransferServiceImpl implements InternalTransferService {
         return new InternalTransferResponse(
                 debit.getId(), debit.getReference(),
                 credit.getId(), credit.getReference(),
-                credit.getStatus().name());
+                debit.getStatus().name());
     }
 
     private long toMinorUnits(BigDecimal amount) {

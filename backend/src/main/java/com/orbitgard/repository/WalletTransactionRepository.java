@@ -26,7 +26,7 @@ public interface WalletTransactionRepository extends JpaRepository<WalletTransac
 
     boolean existsByReference(String reference);
 
-    boolean existsByTransactionPublicId(String transactionPublicId);
+
 
 
 }

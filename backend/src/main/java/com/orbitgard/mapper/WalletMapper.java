@@ -28,7 +28,6 @@ public class WalletMapper {
                 MoneyConverter.centsToMajor(transaction.getBalanceBeforeCents()),
                 MoneyConverter.centsToMajor(transaction.getBalanceAfterCents()),
                 transaction.getReference(),
-                transaction.getTransactionPublicId(),
                 transaction.getDescription(),
                 transaction.getCounterparty(),
                 transaction.getCreatedAt(),
