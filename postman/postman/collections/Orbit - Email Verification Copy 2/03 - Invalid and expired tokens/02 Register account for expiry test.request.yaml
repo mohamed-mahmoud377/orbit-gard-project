@@ -1,0 +1,22 @@
+$kind: http-request
+url: "{{baseUrl}}/api/auth/register"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "firstName": "Orbit",
+      "lastName": "Expiry",
+      "username": "{{username}}",
+      "email": "{{email}}",
+      "phoneNumber": "+201212345678",
+      "password": "{{password}}",
+      "confirmPassword": "{{password}}"
+    }
+scripts:
+  - type: afterResponse
+    code: pm.test('returns 201', () => pm.response.to.have.status(201));
+    language: text/javascript
+order: 2000

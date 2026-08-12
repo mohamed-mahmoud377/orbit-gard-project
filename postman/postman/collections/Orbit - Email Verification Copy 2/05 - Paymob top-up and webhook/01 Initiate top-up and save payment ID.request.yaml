@@ -1,0 +1,30 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/payments/topup"
+method: POST
+headers:
+  Content-Type: application/json
+  Authorization: Bearer {{accessToken}}
+body:
+  type: text
+  content: |-
+    {
+      "amount": 50.00
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+scripts:
+  - type: beforeRequest
+    code: if (!pm.collectionVariables.get('accessToken')) throw new Error('Set accessToken to a verified adult user access token first.');
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      pm.test('returns 200 OK', () => pm.response.to.have.status(200));
+      const body = pm.response.json();
+      pm.test('returns a payment ID and checkout URL', () => { pm.expect(body.paymentId).to.be.a('string').and.not.empty; pm.expect(body.redirectUrl).to.be.a('string').and.not.empty; });
+      pm.collectionVariables.set('paymentId', body.paymentId);
+      pm.collectionVariables.set('checkoutUrl', body.redirectUrl);
+      console.log('Open checkoutUrl, complete the payment, then run request 03.');
+    language: text/javascript
+order: 1000

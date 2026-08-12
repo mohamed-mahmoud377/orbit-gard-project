@@ -195,7 +195,7 @@ public class ExternalPaymentServiceImpl implements ExternalPaymentService {
         verificationTokenRepository.save(token);
 
         return new ExternalPayResponse(
-                transaction.getTransactionPublicId(),
+                transaction.getId(),
                 transaction.getReference(),
                 transaction.getStatus(),
                 MoneyConverter.centsToMajor(transaction.getAmountCents()),

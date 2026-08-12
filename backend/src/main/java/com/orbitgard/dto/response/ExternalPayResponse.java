@@ -3,9 +3,10 @@ package com.orbitgard.dto.response;
 import com.orbitgard.enums.TransactionStatus;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 public record ExternalPayResponse(
-        String transactionId,
+        UUID transactionId,
         String reference,
         TransactionStatus status,
         BigDecimal cashAmount,

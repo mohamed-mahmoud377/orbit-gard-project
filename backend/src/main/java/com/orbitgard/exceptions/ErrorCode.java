@@ -50,7 +50,6 @@ public enum ErrorCode {
     CANNOT_SIGN_OUT_CURRENT_DEVICE(HttpStatus.CONFLICT, "cannot-sign-out-current-device", "Cannot sign out the device you're using"),
     INVALID_CURRENT_PASSWORD(HttpStatus.BAD_REQUEST, "invalid-current-password", "That is not your current password"),
     PASSWORD_REUSE(HttpStatus.CONFLICT, "password-reuse", "Choose a password you have not used before"),
-    INSUFFICIENT_BALANCE(HttpStatus.UNPROCESSABLE_ENTITY, "insufficient-balance", "Insufficient available balance"),
     RECEIVER_NOT_FOUND(HttpStatus.NOT_FOUND, "receiver-not-found", "Receiver not found"),
     SELF_TRANSFER_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "self-transfer-not-allowed", "You cannot send money to yourself");
     private final HttpStatus httpStatus;

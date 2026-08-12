@@ -1,0 +1,25 @@
+$kind: http-request
+name: "Confirm: superseded token is rejected"
+url: "{{baseUrl}}/api/v1/password/reset/confirm"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "token": "{{previousResetToken}}",
+      "newPassword": "{{resetNewPassword}}",
+      "confirmNewPassword": "{{resetNewPassword}}"
+    }
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status 410", () => pm.response.to.have.status(410));
+      pm.test("Token already used error", () => {
+          pm.expect(pm.response.json().code).to.eql("TOKEN_ALREADY_USED");
+      });
+    language: text/javascript
+order: 15000
