@@ -201,7 +201,8 @@ public class ExternalPaymentServiceImpl implements ExternalPaymentService {
                 MoneyConverter.centsToMajor(transaction.getAmountCents()),
                 request.merchantName(),
                 request.productName(),
-                transaction.getCreatedAt()
+                transaction.getCreatedAt(),
+                transaction.getDescription()
         );
     }
 
