@@ -75,6 +75,25 @@ public class JwtService {
                 .compact();
     }
 
+
+    public String mintExternalPaymentToken(
+            UUID userId,
+            String username,
+            Instant expiresAt) {
+
+        Instant now = Instant.now();
+
+        return Jwts.builder()
+                .id(UUID.randomUUID().toString())
+                .subject(userId.toString())
+                .claim(CLAIM_PURPOSE, TokenPurpose.EXTERNAL_TRANSFER.name())
+                .claim(CLAIM_USERNAME, username)
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(expiresAt))
+                .signWith(signingKey)
+                .compact();
+    }
+
     /**
      * Every token -- access or refresh -- shares the same subject, session id,
      * type claim, issued/expiry timestamps, and signing key. Only the extra
