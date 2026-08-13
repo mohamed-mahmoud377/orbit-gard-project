@@ -33,7 +33,7 @@ public enum ErrorCode {
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "invalid-refresh-token", "Invalid or expired refresh token"),
     ACCOUNT_NOT_VERIFIED(HttpStatus.FORBIDDEN, "account-not-verified", "Account not verified"),
     ACCOUNT_SUSPENDED(HttpStatus.FORBIDDEN, "account-suspended", "Account suspended"),
-    TOO_MANY_ATTEMPTS(HttpStatus.TOO_MANY_REQUESTS, "too-many-attempts", "Too many attempts"),
+   // TOO_MANY_ATTEMPTS(HttpStatus.TOO_MANY_REQUESTS, "too-many-attempts", "Too many attempts"),
     PASSWORD_INVALID(HttpStatus.BAD_REQUEST, "password-invalid", "Invalid password"),
     PASSWORD_CONFIRMATION_MISMATCH(HttpStatus.BAD_REQUEST, "password-confirmation-mismatch", "Password confirmation does not match"),
     TOKEN_INVALID(HttpStatus.BAD_REQUEST, "token-invalid", "Invalid token"),

@@ -415,7 +415,7 @@ public class AuthServiceImpl implements AuthService {
         try {
             return jwtService.parse(rawToken).getPayload();
         } catch (JwtException | IllegalArgumentException ex) {
-            throw new ApiException(ErrorCode.TOKEN_INVALID);
+            throw new ApiException(ErrorCode.TOKEN_EXPIRED);
         }
     }
 }
