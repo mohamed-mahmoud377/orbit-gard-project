@@ -15,4 +15,5 @@ public interface WalletService {
     WalletBalanceResponse getBalanceForUser(UUID userId);
 
     WalletTransactionPageResponse listTransactionsForUser(UUID userId, int page);
+
 }

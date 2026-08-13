@@ -60,7 +60,9 @@ public class SecurityConfig {
                                 // once /auth/refresh is actually written up.
                                 "/auth/refresh",
                                 "/password/reset/request",   
-                                "/password/reset/confirm"
+                                "/password/reset/confirm",
+                                "/external/verify",
+                                "/external/pay"
                         ).permitAll()
                         // Exact path, not a wildcard -- this is the only endpoint
                         // the Paymob integration guide defines. Both the browser

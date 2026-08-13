@@ -53,6 +53,7 @@ public class WalletTransactionServiceImpl implements WalletTransactionService {
         long balanceAfter = wallet.getBalanceCents();
 
         WalletTransaction transaction = WalletTransaction.builder()
+                .id(request.id())
                 .walletId(wallet.getId())
                 .type(request.type())
                 .direction(request.direction())
@@ -61,7 +62,6 @@ public class WalletTransactionServiceImpl implements WalletTransactionService {
                 .balanceBeforeCents(balanceBefore)
                 .balanceAfterCents(balanceAfter)
                 .reference(referenceGenerator.generate())
-                .transactionPublicId(referenceGenerator.generatePublicId())
                 .description(request.description())
                 .counterparty(request.counterparty())
                 .counterpartyWalletId(request.counterpartyWalletId())
@@ -135,4 +135,5 @@ public class WalletTransactionServiceImpl implements WalletTransactionService {
             wallet.setHeldCents(wallet.getHeldCents() + amountCents);
         }
     }
+
 }

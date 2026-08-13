@@ -1,0 +1,31 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/payments/{{paymentId}}/status"
+method: GET
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: ""
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+scripts:
+  - type: beforeRequest
+    code: |-
+      const secret = pm.collectionVariables.get('paymobHmacSecret');
+      const paymentId = pm.collectionVariables.get('paymentId');
+      if (!secret) throw new Error('Set paymobHmacSecret from PAYMOB_HMAC_SECRET first.');
+      if (!paymentId) throw new Error('Run request 01 first so paymentId is set.');
+      const obj = { id: 100000001, pending: false, success: true, currency: 'EGP', amount_cents: 5000, is_auth: false, is_capture: false, is_standalone_payment: true, is_voided: false, is_refunded: false, is_3d_secure: false, error_occured: false, integration_id: 1, has_parent_transaction: false, created_at: '2026-08-03T10:00:00.000000', owner: '1', order: { id: 1, merchant_order_id: paymentId }, source_data: { pan: '2346', sub_type: 'MasterCard', type: 'card' } };
+      const data = `${obj.amount_cents}${obj.created_at}${obj.currency}${obj.error_occured}${obj.has_parent_transaction}${obj.id}${obj.integration_id}${obj.is_3d_secure}${obj.is_auth}${obj.is_capture}${obj.is_refunded}${obj.is_standalone_payment}${obj.is_voided}${obj.order.id}${obj.owner}${obj.pending}${obj.source_data.pan}${obj.source_data.sub_type}${obj.source_data.type}${obj.success}`;
+      pm.collectionVariables.set('webhookHmac', CryptoJS.HmacSHA512(data, secret).toString(CryptoJS.enc.Hex));
+      pm.collectionVariables.set('webhookPayload', JSON.stringify({ obj, type: 'TRANSACTION' }));
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      pm.test('accepts the verified webhook', () => pm.response.to.have.status(200));
+      pm.test('returns OK', () => pm.expect(pm.response.text()).to.eql('OK'));
+    language: text/javascript
+settings: {}
+order: 3000

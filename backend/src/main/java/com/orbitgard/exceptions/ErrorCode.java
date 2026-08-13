@@ -33,7 +33,7 @@ public enum ErrorCode {
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "invalid-refresh-token", "Invalid or expired refresh token"),
     ACCOUNT_NOT_VERIFIED(HttpStatus.FORBIDDEN, "account-not-verified", "Account not verified"),
     ACCOUNT_SUSPENDED(HttpStatus.FORBIDDEN, "account-suspended", "Account suspended"),
-    TOO_MANY_ATTEMPTS(HttpStatus.TOO_MANY_REQUESTS, "too-many-attempts", "Too many attempts"),
+   // TOO_MANY_ATTEMPTS(HttpStatus.TOO_MANY_REQUESTS, "too-many-attempts", "Too many attempts"),
     PASSWORD_INVALID(HttpStatus.BAD_REQUEST, "password-invalid", "Invalid password"),
     PASSWORD_CONFIRMATION_MISMATCH(HttpStatus.BAD_REQUEST, "password-confirmation-mismatch", "Password confirmation does not match"),
     TOKEN_INVALID(HttpStatus.BAD_REQUEST, "token-invalid", "Invalid token"),
@@ -42,13 +42,16 @@ public enum ErrorCode {
     AMOUNT_BELOW_MINIMUM(HttpStatus.BAD_REQUEST, "amount-below-minimum", "Amount below minimum"),
     AMOUNT_ABOVE_MAXIMUM(HttpStatus.BAD_REQUEST, "amount-above-maximum", "Amount above maximum"),
     AMOUNT_INVALID(HttpStatus.BAD_REQUEST, "amount-invalid", "Amount must be greater than zero"),
+    INSUFFICIENT_BALANCE(HttpStatus.CONFLICT, "insufficient-balance", "Insufficient available balance"),
     CHILD_CANNOT_TOP_UP(HttpStatus.FORBIDDEN, "child-cannot-top-up", "Child accounts cannot add money"),
     PAYMOB_UNREACHABLE(HttpStatus.SERVICE_UNAVAILABLE, "paymob-unreachable", "Payment provider unavailable"),
     PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "payment-not-found", "Payment not found"),
     ALREADY_VERIFIED(HttpStatus.OK, "already-verified", "Account already verified"),
     CANNOT_SIGN_OUT_CURRENT_DEVICE(HttpStatus.CONFLICT, "cannot-sign-out-current-device", "Cannot sign out the device you're using"),
     INVALID_CURRENT_PASSWORD(HttpStatus.BAD_REQUEST, "invalid-current-password", "That is not your current password"),
-    PASSWORD_REUSE(HttpStatus.CONFLICT, "password-reuse", "Choose a password you have not used before");
+    PASSWORD_REUSE(HttpStatus.CONFLICT, "password-reuse", "Choose a password you have not used before"),
+    RECEIVER_NOT_FOUND(HttpStatus.NOT_FOUND, "receiver-not-found", "Receiver not found"),
+    SELF_TRANSFER_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "self-transfer-not-allowed", "You cannot send money to yourself");
     private final HttpStatus httpStatus;
     private final String typeSlug;
     private final String title;
