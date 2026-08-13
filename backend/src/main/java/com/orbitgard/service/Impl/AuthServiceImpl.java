@@ -1,5 +1,6 @@
 package com.orbitgard.service.Impl;
 
+import com.orbitgard.dto.request.AddChildRequest;
 import com.orbitgard.dto.request.LoginRequest;
 import com.orbitgard.dto.request.RegisterRequest;
 import com.orbitgard.dto.response.*;
@@ -15,10 +16,7 @@ import com.orbitgard.exceptions.ErrorCode;
 import com.orbitgard.exceptions.ValidationException;
 import com.orbitgard.mapper.SessionMapper;
 import com.orbitgard.mapper.UserMapper;
-import com.orbitgard.repository.SessionRepository;
-import com.orbitgard.repository.UserRepository;
-import com.orbitgard.repository.VerificationTokenRepository;
-import com.orbitgard.repository.WalletRepository;
+import com.orbitgard.repository.*;
 import com.orbitgard.security.DeviceLabelResolver;
 import com.orbitgard.security.JwtService;
 import com.orbitgard.security.RefreshTokenGenerator;
@@ -38,7 +36,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import com.orbitgard.entity.SpendingLimit;
+import com.orbitgard.service.AuthenticatedUserService;
 import java.net.InetAddress;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -64,10 +63,11 @@ public class AuthServiceImpl implements AuthService {
     private final EntityManager entityManager;
     private final JwtService jwtService;
     private final VerificationTokenRepository verificationTokenRepository;
+    private final SpendingLimitRepository spendingLimitRepository;
     private final VerificationEmailService verificationEmailService;
     private final WalletService walletService;
     private final PromoCodeService promoCodeService;
-
+    private final AuthenticatedUserService authenticatedUserService;
     // --- Login dependencies ---
     private final SessionRepository sessionRepository;
     private final RefreshTokenGenerator refreshTokenGenerator;
@@ -80,11 +80,13 @@ public class AuthServiceImpl implements AuthService {
                            JwtService jwtService,
                            VerificationTokenRepository verificationTokenRepository,
                            VerificationEmailService verificationEmailService,
+                           SpendingLimitRepository spendingLimitRepository,
                            WalletService walletService,
                            PromoCodeService promoCodeService,
                            SessionRepository sessionRepository,
                            RefreshTokenGenerator refreshTokenGenerator,
-                           DeviceLabelResolver deviceLabelResolver) {
+                           DeviceLabelResolver deviceLabelResolver,
+                           AuthenticatedUserService authenticatedUserService) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
@@ -92,11 +94,13 @@ public class AuthServiceImpl implements AuthService {
         this.jwtService = jwtService;
         this.verificationTokenRepository = verificationTokenRepository;
         this.verificationEmailService = verificationEmailService;
+        this.spendingLimitRepository=spendingLimitRepository;
         this.walletService = walletService;
         this.promoCodeService = promoCodeService;
         this.sessionRepository = sessionRepository;
         this.refreshTokenGenerator = refreshTokenGenerator;
         this.deviceLabelResolver = deviceLabelResolver;
+        this.authenticatedUserService = authenticatedUserService;
     }
 
     // =========================================================================
@@ -417,5 +421,106 @@ public class AuthServiceImpl implements AuthService {
         } catch (JwtException | IllegalArgumentException ex) {
             throw new ApiException(ErrorCode.TOKEN_EXPIRED);
         }
+    }
+    // =========================================================================
+    // Child Registration
+    // =========================================================================
+
+    @Override
+    @Transactional
+    public AddChildResponse addChild(AddChildRequest request) {
+        log.info("Starting add-child request.");
+
+        List<FieldErrorResponse> errors = new ArrayList<>();
+
+        UUID parentId = authenticatedUserService.currentPrincipal().userId();
+
+        User parent = userRepository.findById(parentId)
+                .orElseThrow(() -> new ApiException(ErrorCode.RESOURCE_NOT_FOUND));
+
+        // Children cannot create children — parent chain is exactly one level deep.
+        if (parent.getAccountType() == AccountType.CHILD) {
+            log.warn("Child account attempted to add a child. parentId={}", parentId);
+            throw new ApiException(ErrorCode.PARENT_CANNOT_BE_CHILD);
+        }
+
+        if (!request.password().equals(request.confirmPassword())) {
+            errors.add(new FieldErrorResponse("confirmPassword", ErrorCode.PASSWORD_CONFIRMATION_MISMATCH.name()));
+        }
+
+        String normalizedUsername = UsernameNormalizer.normalize(request.username());
+        if (!UsernameNormalizer.isValidFormat(normalizedUsername)) {
+            errors.add(new FieldErrorResponse("username", ErrorCode.USERNAME_INVALID.name()));
+        } else if (userRepository.existsByUsername(normalizedUsername)) {
+            errors.add(new FieldErrorResponse("username", ErrorCode.USERNAME_TAKEN.name()));
+        }
+
+        if (request.maxPerTransaction() != null && request.dailyLimit() != null
+                && request.maxPerTransaction().compareTo(request.dailyLimit()) > 0) {
+            errors.add(new FieldErrorResponse("dailyLimit", ErrorCode.LIMIT_ORDER_INVALID.name()));
+        }
+        if (request.dailyLimit() != null && request.monthlyLimit() != null
+                && request.dailyLimit().compareTo(request.monthlyLimit()) > 0) {
+            errors.add(new FieldErrorResponse("monthlyLimit", ErrorCode.LIMIT_ORDER_INVALID.name()));
+        }
+
+        throwIfErrors(errors);
+
+        User child = persistChild(request, normalizedUsername, parent);
+        SpendingLimit limit = persistSpendingLimit(request, child);
+
+        log.info("Child added successfully. childId={}, parentId={}", child.getId(), parentId);
+
+        return new AddChildResponse(
+                child.getId(),
+                child.getUsername(),
+                child.getFirstName(),
+                child.getLastName(),
+                child.getStatus(),
+                parentId,
+                limit.getMaxPerTransaction(),
+                limit.getDailyLimit(),
+                limit.getMonthlyLimit(),
+                child.getCreatedAt()
+        );
+    }
+
+    private User persistChild(AddChildRequest request, String normalizedUsername, User parent) {
+        User child = User.builder()
+                .accountType(AccountType.CHILD)
+                .status(UserStatus.ACTIVE) // no email verification for a child
+                .firstName(request.firstName().trim())
+                .lastName(request.lastName().trim())
+                .username(normalizedUsername)
+                .email(null)
+                .phoneNumber(null)
+                .passwordHash(passwordEncoder.encode(request.password()))
+                .parent(parent)
+                .build();
+
+        try {
+            User saved = userRepository.save(child);
+            entityManager.flush();
+            entityManager.refresh(saved);
+            return saved;
+        } catch (DataIntegrityViolationException e) {
+            log.warn("Constraint violated while adding child. constraint={}", extractConstraintName(e));
+            List<FieldErrorResponse> raceErrors = mapConstraintViolation(e);
+            if (raceErrors.isEmpty()) {
+                throw e;
+            }
+            throw new ValidationException(raceErrors);
+        }
+    }
+
+    private SpendingLimit persistSpendingLimit(AddChildRequest request, User child) {
+        SpendingLimit limit = SpendingLimit.builder()
+                .user(child)
+                .maxPerTransaction(request.maxPerTransaction())
+                .dailyLimit(request.dailyLimit())
+                .monthlyLimit(request.monthlyLimit())
+                .build();
+
+        return spendingLimitRepository.save(limit);
     }
 }
