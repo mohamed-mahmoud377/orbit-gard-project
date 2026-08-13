@@ -2,55 +2,55 @@
 
 :host {
   display: block;
-  min-height: 100vh;
+  // min-height: 100vh;
 }
 
 .auth-shell {
   display: grid;
-  min-height: 100vh;
+  height: 100vh;
   grid-template-columns: minmax(420px, 600px) minmax(520px, 1fr);
   background: var(--bg-base);
   position: relative;
   overflow: hidden;
-  border-radius: 30px 30px 30px;
-  background-color: #85b1c2c9;
+  // border-radius: 30px 30px 30px;
+  // background-color: #85b1c2c9;
 }
 
 
 .blur-circle{
   position: absolute;
   border-radius: 50%;
-  filter: blur(120px);
-  z-index: 2;
+  filter: blur(110px);
+  z-index: 1;
 }
 
 .blur-1{
   width: 350px;
   height: 350px;
-  // background-color: #8cb8ff;
+  background-color: #8cb8ffdc;
   top: -100px;
   right: -100px;
 }
 .blur-2{
-  width: 290px;
-  height: 200px;
-  // background-color: #c58deb;
+  width: 200px;
+  height: 300px;
+  background-color: #c58deb;
   top: -100px;
-  right: 600px;
+  left: 750px;
 }
 .blur-3{
   width: 250px;
   height: 250px;
-  // background-color: #8cd5ff;
-  bottom: 100px;
-  right: -100px;
+  background-color: #8cd5ff;
+  bottom: 10px;
+  right: -50px;
 }
 .blur-4{
   width: 250px;
   height: 250px;
-  // background-color: #ff8ce6;
-  bottom:100px;
-  left: 650px;
+  background-color: #cf619dd2;
+  bottom:10px;
+  left: 750px;
 }
 
 
@@ -62,7 +62,7 @@
   overflow: hidden;
   background: var(--bg-surface);
   padding: 56px;
-  border-radius: 0px 50px 50px 0px ;
+  // border-radius: 0px 50px 50px 0px ;
 }
 
 .brand-content {
@@ -103,7 +103,7 @@
   align-items: center;
   min-width: 0;
   width: 100%;
-  padding: 48px clamp(32px, 7vw, 90px);
+  padding: 5px 30px clamp(32px, 7vw, 90px);
 
   router-outlet {
     display: contents;

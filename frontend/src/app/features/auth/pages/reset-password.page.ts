@@ -15,6 +15,10 @@ import { AuthApiError } from '../data-access/auth.models';
   template: `
     @if (success()) {
       <section class="auth-card">
+      <div class="blur-circle blur-1"></div>
+      <div class="blur-circle blur-2"></div>
+      <div class="blur-circle blur-3"></div>
+      <div class="blur-circle blur-4"></div>
         <header>
           <h1>Password reset successful</h1>
           <p>
