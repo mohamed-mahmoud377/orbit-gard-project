@@ -4,6 +4,7 @@ import com.orbitgard.dto.request.InternalTransferRequest;
 import com.orbitgard.dto.response.InternalTransferResponse;
 import com.orbitgard.dto.response.WalletBalanceResponse;
 import com.orbitgard.dto.response.WalletTransactionPageResponse;
+import com.orbitgard.dto.response.WalletTransactionSummaryResponse;
 import com.orbitgard.service.AuthenticatedUserService;
 import com.orbitgard.service.InternalTransferService;
 import com.orbitgard.service.WalletService;
@@ -58,6 +59,17 @@ public class WalletController {
             @RequestParam(defaultValue = "0") @Min(0) int page) {
         UUID userId = authenticatedUserService.currentPrincipal().userId();
         return ResponseEntity.ok(walletService.listTransactionsForUser(userId, page));
+    }
+
+    @GetMapping("/transactions/summary")
+    @Operation(summary = "Get monthly transaction summary", description = "Returns money in this month, money out this month, currently held funds, and rejected transaction count — backs the four cards at the top of the Transactions tab.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Summary returned"),
+            @ApiResponse(responseCode = "401", description = "Authentication required")
+    })
+    public ResponseEntity<WalletTransactionSummaryResponse> getTransactionSummary() {
+        UUID userId = authenticatedUserService.currentPrincipal().userId();
+        return ResponseEntity.ok(walletService.getMonthlySummaryForUser(userId));
     }
 
     @PostMapping("/internal/transfer")
