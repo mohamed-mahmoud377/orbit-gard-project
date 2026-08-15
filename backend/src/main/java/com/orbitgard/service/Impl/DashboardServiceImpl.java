@@ -2,6 +2,7 @@ package com.orbitgard.service.Impl;
 
 import com.orbitgard.dto.response.UserProfileResponse;
 import com.orbitgard.entity.User;
+import com.orbitgard.enums.AccountType;
 import com.orbitgard.repository.UserRepository;
 import com.orbitgard.service.AuthenticatedUserService;
 import com.orbitgard.service.DashboardService;
@@ -35,11 +36,16 @@ public class DashboardServiceImpl implements DashboardService {
                 .orElseThrow(() ->
                         new NoSuchElementException("User not found: " + userId));
 
+        Integer childrenCount = user.getAccountType() == AccountType.USER
+                ? (int) userRepository.countByParent_Id(user.getId())
+                : null;
+
         return new UserProfileResponse(
                 user.getFirstName(),
                 user.getLastName(),
                 user.getUsername(),
-                user.getAccountType().name()
+                user.getAccountType().name(),
+                childrenCount
         );
     }
 }
