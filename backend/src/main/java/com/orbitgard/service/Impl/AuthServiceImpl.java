@@ -1,6 +1,7 @@
 package com.orbitgard.service.Impl;
 
 import com.orbitgard.dto.request.AddChildRequest;
+import com.orbitgard.dto.request.InternalTransferRequest;
 import com.orbitgard.dto.request.LoginRequest;
 import com.orbitgard.dto.request.RegisterRequest;
 import com.orbitgard.dto.response.*;
@@ -20,10 +21,7 @@ import com.orbitgard.repository.*;
 import com.orbitgard.security.DeviceLabelResolver;
 import com.orbitgard.security.JwtService;
 import com.orbitgard.security.RefreshTokenGenerator;
-import com.orbitgard.service.AuthService;
-import com.orbitgard.service.PromoCodeService;
-import com.orbitgard.service.VerificationEmailService;
-import com.orbitgard.service.WalletService;
+import com.orbitgard.service.*;
 import com.orbitgard.util.TokenHasher;
 import com.orbitgard.validation.PhoneNumberNormalizer;
 import com.orbitgard.validation.UsernameNormalizer;
@@ -37,7 +35,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.orbitgard.entity.SpendingLimit;
-import com.orbitgard.service.AuthenticatedUserService;
+
 import java.net.InetAddress;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -68,6 +66,7 @@ public class AuthServiceImpl implements AuthService {
     private final WalletService walletService;
     private final PromoCodeService promoCodeService;
     private final AuthenticatedUserService authenticatedUserService;
+    private final InternalTransferService internalTransferService;
     // --- Login dependencies ---
     private final SessionRepository sessionRepository;
     private final RefreshTokenGenerator refreshTokenGenerator;
@@ -86,7 +85,8 @@ public class AuthServiceImpl implements AuthService {
                            SessionRepository sessionRepository,
                            RefreshTokenGenerator refreshTokenGenerator,
                            DeviceLabelResolver deviceLabelResolver,
-                           AuthenticatedUserService authenticatedUserService) {
+                           AuthenticatedUserService authenticatedUserService,
+                           InternalTransferService internalTransferService) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
@@ -101,6 +101,7 @@ public class AuthServiceImpl implements AuthService {
         this.refreshTokenGenerator = refreshTokenGenerator;
         this.deviceLabelResolver = deviceLabelResolver;
         this.authenticatedUserService = authenticatedUserService;
+        this.internalTransferService = internalTransferService;
     }
 
     // =========================================================================
@@ -316,7 +317,7 @@ public class AuthServiceImpl implements AuthService {
         // avoid making account existence observable through response timing.
         boolean passwordMatches = passwordEncoder.matches(
                 request.password(), user.map(User::getPasswordHash).orElse(DUMMY_PASSWORD_HASH));
-        if (user.isEmpty() || !passwordMatches || user.get().getAccountType() != AccountType.USER) {
+        if (user.isEmpty() || !passwordMatches) {
             throw new ApiException(ErrorCode.INVALID_CREDENTIALS);
         }
 
@@ -467,7 +468,14 @@ public class AuthServiceImpl implements AuthService {
         throwIfErrors(errors);
 
         User child = persistChild(request, normalizedUsername, parent);
+        Wallet childWallet = walletService.createForUser(child.getId());
         SpendingLimit limit = persistSpendingLimit(request, child);
+
+        if (request.startingAllocation() != null) {
+            internalTransferService.transfer(
+                    new InternalTransferRequest(child.getUsername(), request.startingAllocation()));
+        }
+
 
         log.info("Child added successfully. childId={}, parentId={}", child.getId(), parentId);
 

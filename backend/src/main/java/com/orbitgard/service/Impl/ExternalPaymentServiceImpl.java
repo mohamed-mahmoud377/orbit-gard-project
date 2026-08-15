@@ -19,6 +19,7 @@ import com.orbitgard.exceptions.ErrorCode;
 import com.orbitgard.repository.UserRepository;
 import com.orbitgard.repository.VerificationTokenRepository;
 import com.orbitgard.security.JwtService;
+import com.orbitgard.service.ChildSpendingLimitService;
 import com.orbitgard.service.ExternalPaymentService;
 import com.orbitgard.service.WalletService;
 import com.orbitgard.service.WalletTransactionService;
@@ -74,19 +75,21 @@ public class ExternalPaymentServiceImpl implements ExternalPaymentService {
     private final WalletTransactionService walletTransactionService;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final ChildSpendingLimitService childSpendingLimitService;
 
     public ExternalPaymentServiceImpl(UserRepository userRepository,
                                       VerificationTokenRepository verificationTokenRepository,
                                       WalletService walletService,
                                       WalletTransactionService walletTransactionService,
                                       PasswordEncoder passwordEncoder,
-                                      JwtService jwtService) {
+                                      JwtService jwtService, ChildSpendingLimitService childSpendingLimitService) {
         this.userRepository = userRepository;
         this.verificationTokenRepository = verificationTokenRepository;
         this.walletService = walletService;
         this.walletTransactionService = walletTransactionService;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.childSpendingLimitService = childSpendingLimitService;
     }
 
     // =========================================================================
@@ -173,6 +176,8 @@ public class ExternalPaymentServiceImpl implements ExternalPaymentService {
 
         Wallet wallet = walletService.requireByUserId(user.getId());
         long amountCents = MoneyConverter.majorToCents(request.cashAmount());
+        childSpendingLimitService.enforceIfChild(user, wallet.getId(), amountCents);
+
 
         WalletTransaction transaction;
         try {

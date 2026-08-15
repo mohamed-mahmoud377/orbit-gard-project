@@ -2,6 +2,7 @@ package com.orbitgard.dto.request;
 
 import com.orbitgard.validation.annotation.ValidName;
 import com.orbitgard.validation.annotation.ValidUsername;
+import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -44,6 +45,10 @@ public record AddChildRequest(
 
         @NotNull(message = "FIELD_REQUIRED")
         @DecimalMin(value = "0.01", message = "AMOUNT_INVALID")
-        BigDecimal monthlyLimit
+        BigDecimal monthlyLimit,
+        
+        @DecimalMin(value = "0.01", message = "AMOUNT_INVALID")
+        @DecimalMax(value = "100000.00", message = "AMOUNT_ABOVE_MAXIMUM")
+        BigDecimal startingAllocation
 
 ) {}

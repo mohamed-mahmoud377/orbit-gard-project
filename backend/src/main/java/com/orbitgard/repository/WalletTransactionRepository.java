@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,7 +27,13 @@ public interface WalletTransactionRepository extends JpaRepository<WalletTransac
 
     boolean existsByReference(String reference);
 
-
-
+    @Query("SELECT COALESCE(SUM(t.amountCents), 0) FROM WalletTransaction t " +
+            "WHERE t.walletId = :walletId AND t.direction = com.orbitgard.enums.TransactionDirection.DEBIT " +
+            "AND t.status = com.orbitgard.enums.TransactionStatus.COMPLETED " +
+            "AND t.createdAt >= :from AND t.createdAt < :to")
+    long sumCompletedDebitsBetween(@Param("walletId") UUID walletId,
+                                   @Param("from") OffsetDateTime from,
+                                   @Param("to") OffsetDateTime to);
+    
 
 }
