@@ -148,6 +148,7 @@ public class ProfileServiceImpl implements ProfileService {
                 .lastName(user.getLastName())
                 .username(user.getUsername())
                 .phoneNumber(user.getPhoneNumber())
+                .email(user.getEmail())
                 .nonRevokedSessionCount(nonRevokedSessionCount)
                 .build();
     }
