@@ -96,8 +96,8 @@ public class WalletServiceImpl implements WalletService {
                 wallet.getId(), TransactionDirection.CREDIT, TransactionStatus.COMPLETED, monthStart, monthEnd);
         long moneyOutCents = walletTransactionRepository.sumAmountCentsByWalletAndDirectionAndStatusAndPeriod(
                 wallet.getId(), TransactionDirection.DEBIT, TransactionStatus.COMPLETED, monthStart, monthEnd);
-        long rejectedCount = walletTransactionRepository.countByWalletIdAndStatus(
-                wallet.getId(), TransactionStatus.REJECTED, monthStart , monthEnd);
+        long rejectedCount = walletTransactionRepository.countByWalletAndStatusAndPeriod(
+                wallet.getId(), TransactionStatus.REJECTED, monthStart, monthEnd);
 
         BigDecimal currentlyHeld = walletMapper.toBalanceResponse(wallet).held();
 
