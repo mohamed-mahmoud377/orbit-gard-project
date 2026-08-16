@@ -1,0 +1,31 @@
+$kind: http-request
+description: Second child gives the overview aggregates more than one row to sum.
+url: "{{baseUrl}}/auth/add-child"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "firstName": "Sara",
+      "lastName": "Mahmoud",
+      "username": "{{childBUsername}}",
+      "password": "{{childPassword}}",
+      "confirmPassword": "{{childPassword}}",
+      "maxPerTransaction": 50.0,
+      "dailyLimit": 100.0,
+      "monthlyLimit": 500.0
+    }
+scripts:
+  - type: beforeRequest
+    code: |-
+      const suffix = Date.now().toString().slice(-8);
+      pm.collectionVariables.set('childBUsername', 'test.child.b' + suffix);
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      pm.test('Child B created', () => pm.response.to.have.status(200));
+      pm.collectionVariables.set('childBId', pm.response.json().id);
+    language: text/javascript
+order: 4000

@@ -1,0 +1,3 @@
+$kind: collection
+description: Moves real money, so it must run after folder 0 and needs a funded parent.
+order: 4000
