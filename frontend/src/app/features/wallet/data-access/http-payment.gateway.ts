@@ -2,7 +2,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, catchError, map, throwError } from 'rxjs';
 
-import { ProblemDetails } from '../../auth/data-access/auth.models';
+import { networkProblem, problemFromHttpError } from '../../../core/http/problem-details';
 import { environment } from '../../../../environments/environment';
 import { PaymentGateway } from './payment.gateway';
 import {
@@ -71,42 +71,9 @@ export class HttpPaymentGateway implements PaymentGateway {
         );
       }
 
-      const body = error.error as Partial<ProblemDetails> | null;
-      const code = body && typeof body === 'object' ? body.code : undefined;
-      if (body && typeof body === 'object' && typeof code === 'string') {
-        return throwError(
-          () =>
-            new PaymentApiError({
-              type: body.type,
-              title: body.title,
-              status: body.status ?? error.status,
-              code,
-              detail: body.detail,
-              instance: body.instance,
-              timestamp: body.timestamp,
-              traceId: body.traceId,
-              fieldErrors: body.fieldErrors,
-            }),
-        );
-      }
-
-      return throwError(
-        () =>
-          new PaymentApiError({
-            status: error.status || 0,
-            code: error.status === 0 ? 'NETWORK_ERROR' : 'UNKNOWN',
-            title: error.statusText || 'Request failed',
-          }),
-      );
+      return throwError(() => new PaymentApiError(problemFromHttpError(error)));
     }
 
-    return throwError(
-      () =>
-        new PaymentApiError({
-          status: 0,
-          code: 'NETWORK_ERROR',
-          title: 'Network error',
-        }),
-    );
+    return throwError(() => new PaymentApiError(networkProblem()));
   }
 }

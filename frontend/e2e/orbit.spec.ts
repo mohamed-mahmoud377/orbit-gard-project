@@ -262,8 +262,37 @@ test('parent can sign in, top up, and send money', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Top-up succeeded' })).toBeVisible();
 
   await page.getByRole('link', { name: 'Send money' }).first().click();
+  const recipient = page.locator('#recipient');
+  await recipient.fill('sara');
+  await recipient.blur();
+  await expect(page.getByText('@sara')).toBeVisible();
+  await page.locator('#send-amount').fill('200');
   await page.getByRole('button', { name: /Send EGP 200.00 to @sara/ }).click();
   await expect(page.getByRole('heading', { name: 'Money sent' })).toBeVisible();
+});
+
+test('send money blocks stale recipient after username edit', async ({ page }) => {
+  await clearAuthState(page);
+  await signIn(page, 'mohamed', 'Orbit@123');
+
+  await page.getByRole('link', { name: 'Send money' }).first().click();
+  const recipient = page.locator('#recipient');
+  await recipient.fill('sara');
+  await recipient.blur();
+  await expect(page.getByText('@sara')).toBeVisible();
+
+  const sendButton = page.getByRole('button', { name: /Send EGP/ });
+  await expect(sendButton).toBeEnabled();
+
+  await recipient.fill('omar');
+  await expect(page.getByText('@sara')).not.toBeVisible();
+  await expect(sendButton).toBeDisabled();
+
+  await recipient.fill('sara');
+  await recipient.blur();
+  await expect(page.getByText('@sara')).toBeVisible();
+  await page.locator('#send-amount').fill('200');
+  await expect(sendButton).toBeEnabled();
 });
 
 test('sign-up, activate, and sign-in flow works end to end', async ({ page }) => {

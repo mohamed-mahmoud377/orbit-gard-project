@@ -123,14 +123,32 @@ export class WalletFacade {
           return of(null);
         }
 
-        if (firstPage.totalPages === 1) {
-          this.cache.remember(firstPage.transactions);
-          return of(this.matchTransaction(firstPage.transactions, id));
-        }
+        return this.searchTransactionInPages(id, firstPage, firstPage.totalPages - 1);
+      }),
+    );
+  }
 
-        return this.loadPageRange(firstPage, 0, firstPage.totalPages - 1).pipe(
-          map((loaded) => this.matchTransaction(loaded.transactions, id)),
-        );
+  private searchTransactionInPages(
+    id: string,
+    firstPage: WalletTransactionPage,
+    pageIndex: number,
+  ): Observable<Transaction | null> {
+    const page$ =
+      pageIndex === 0 && firstPage.page === 0
+        ? of(firstPage)
+        : this.gateway.listTransactions(pageIndex);
+
+    return page$.pipe(
+      switchMap((page) => {
+        this.cache.remember(page.transactions);
+        const match = this.matchTransaction(page.transactions, id);
+        if (match) {
+          return of(match);
+        }
+        if (pageIndex <= 0) {
+          return of(null);
+        }
+        return this.searchTransactionInPages(id, firstPage, pageIndex - 1);
       }),
     );
   }

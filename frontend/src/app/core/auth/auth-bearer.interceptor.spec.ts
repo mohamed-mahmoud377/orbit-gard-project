@@ -155,4 +155,34 @@ describe('authBearerInterceptor', () => {
     expect(retry.request.headers.get('X-Orbit-Retry')).toBe('1');
     retry.flush({});
   });
+
+  it('does not attach bearer or refresh for password reset request', () => {
+    seedSession(-1);
+
+    http.post('/api/v1/password/reset/request', { email: 'user@example.com' }).subscribe();
+    expect(auth.refreshSessionOnce).not.toHaveBeenCalled();
+
+    const req = httpMock.expectOne('/api/v1/password/reset/request');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.headers.has('Authorization')).toBe(false);
+    req.flush({ message: 'If an account exists, a reset link is on its way.' });
+  });
+
+  it('does not attach bearer or refresh for password reset confirm', () => {
+    seedSession(-1);
+
+    http
+      .post('/api/v1/password/reset/confirm', {
+        token: 'reset-token',
+        newPassword: 'Passw0rd1',
+        confirmNewPassword: 'Passw0rd1',
+      })
+      .subscribe();
+    expect(auth.refreshSessionOnce).not.toHaveBeenCalled();
+
+    const req = httpMock.expectOne('/api/v1/password/reset/confirm');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.headers.has('Authorization')).toBe(false);
+    req.flush({ message: 'Password reset' });
+  });
 });

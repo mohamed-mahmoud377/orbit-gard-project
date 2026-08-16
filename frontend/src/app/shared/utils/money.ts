@@ -3,6 +3,9 @@ export const TOP_UP_MAX_MINOR = 2_000_000;
 export const TOP_UP_MAX_MAJOR = 20000;
 export const TOP_UP_MAX_INPUT_LENGTH = 5;
 
+/** Max digits in the whole-number part of transfer amounts (e.g. 999999.99). */
+export const TRANSFER_AMOUNT_MAX_WHOLE_DIGITS = 6;
+
 export function formatMoney(minorUnits: number, currency = 'EGP'): string {
   const value = minorUnits / 100;
   return `${currency} ${new Intl.NumberFormat('en-EG', {
@@ -27,6 +30,24 @@ export function sanitizeMoneyInput(raw: string): string {
 
   const whole = cleaned.slice(0, dotIndex);
   const fraction = cleaned.slice(dotIndex + 1).replace(/\./g, '').slice(0, 2);
+  return `${whole}.${fraction}`;
+}
+
+/** Transfer amount input: digits and one decimal, whole part capped at six digits. */
+export function sanitizeTransferAmountInput(raw: string): string {
+  const cleaned = raw.replace(/[^\d.]/g, '');
+  if (!cleaned) return '';
+
+  const dotIndex = cleaned.indexOf('.');
+  if (dotIndex === -1) {
+    return cleaned.slice(0, TRANSFER_AMOUNT_MAX_WHOLE_DIGITS);
+  }
+
+  const whole = cleaned.slice(0, dotIndex).slice(0, TRANSFER_AMOUNT_MAX_WHOLE_DIGITS);
+  const fraction = cleaned.slice(dotIndex + 1).replace(/\./g, '').slice(0, 2);
+  if (fraction.length === 0 && !cleaned.endsWith('.')) {
+    return whole;
+  }
   return `${whole}.${fraction}`;
 }
 

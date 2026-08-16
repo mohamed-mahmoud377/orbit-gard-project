@@ -1,7 +1,9 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { EMPTY, Subject, catchError, finalize, map, of, switchMap } from 'rxjs';
 import { AssetUrlPipe } from '../../core/asset-url';
 import { Transaction, WalletSnapshot } from '../../shared/models';
 import { LoadingSpinner } from '../../shared/ui/loading-spinner';
@@ -11,8 +13,9 @@ import { TransactionList, TransactionListItem } from '../../shared/ui/transactio
 import {
   formatMoney,
   parseMoney,
-  sanitizeMoneyInput,
   sanitizeTopUpAmountInput,
+  sanitizeTransferAmountInput,
+  TRANSFER_AMOUNT_MAX_WHOLE_DIGITS,
   TOP_UP_MAX_MINOR,
   TOP_UP_MIN_MINOR,
 } from '../../shared/utils/money';
@@ -32,6 +35,7 @@ import {
   bannerMessageFromPaymentError,
   bannerMessageFromWalletError,
 } from './data-access';
+import { isRecipientReadyForSend } from './send-recipient.validation';
 
 function signedAmount(transaction: Transaction): number {
   return transaction.type === 'top-up' || transaction.type === 'transfer-in'
@@ -548,7 +552,7 @@ export class TransactionsPage implements OnInit {
             </div>
             <div><p class="overline">Reference</p><strong>{{ item.id }}</strong></div>
             <div><p class="overline">Status</p><span class="pill" [class]="'pill pill-' + item.status">{{ item.status.toUpperCase() }}</span></div>
-            @if (item.balanceBeforeMinor != null && item.balanceAfterMinor != null) {
+            @if (item.balanceBeforeMinor !== undefined && item.balanceAfterMinor !== undefined) {
               <div><p class="overline">Balance before</p><strong>{{ money(item.balanceBeforeMinor) }}</strong></div>
               <div><p class="overline">Balance after</p><strong>{{ money(item.balanceAfterMinor) }}</strong></div>
             }
@@ -627,6 +631,7 @@ export class TransactionDetailPage implements OnInit {
                 class="input"
                 id="recipient"
                 [(ngModel)]="username"
+                (input)="onRecipientInput()"
                 (blur)="validateRecipient()"
                 placeholder="@username"
               />
@@ -679,7 +684,7 @@ export class TransactionDetailPage implements OnInit {
             <button
               class="btn btn-primary"
               type="button"
-              [disabled]="!recipientUsername() || submitting() || !canSendAmount()"
+              [disabled]="!canSendRecipient() || submitting() || !canSendAmount()"
               (click)="send()"
             >
               Send {{ money(amountMinor()) }} to &#64;{{ recipientUsername() ?? 'recipient' }}
@@ -703,7 +708,10 @@ export class TransactionDetailPage implements OnInit {
 export class SendMoneyPage implements OnInit {
   private readonly wallet = inject(WalletFacade);
   private readonly auth = inject(AuthFacade);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly recipientValidation$ = new Subject<string>();
   protected readonly recipientUsername = signal<string | null>(null);
+  protected readonly validatingRecipient = signal(false);
   protected readonly walletSnapshot = signal<WalletSnapshot | null>(null);
   protected readonly error = signal('');
   protected readonly sent = signal(false);
@@ -724,6 +732,13 @@ export class SendMoneyPage implements OnInit {
     const value = this.amount().trim();
     return value !== '' && this.amountValidationError() === null;
   });
+  protected readonly canSendRecipient = computed(() =>
+    isRecipientReadyForSend(
+      this.username,
+      this.recipientUsername(),
+      this.validatingRecipient(),
+    ),
+  );
 
   private validateAmount(value: string): string | null {
     if (!value) return WALLET_MESSAGES.amountInvalid;
@@ -747,53 +762,43 @@ export class SendMoneyPage implements OnInit {
         this.loading.set(false);
       },
     });
-  }
 
-  protected onAmountInput(event: Event): void {
-    this.amountTouched.set(true);
-    const input = event.target as HTMLInputElement;
-    this.setAmountValue(input, sanitizeMoneyInput(input.value));
-  }
+    this.recipientValidation$
+      .pipe(
+        switchMap((trimmed) => {
+          if (!trimmed) {
+            this.validatingRecipient.set(false);
+            this.recipientUsername.set(null);
+            this.error.set('');
+            return EMPTY;
+          }
 
-  protected markAmountTouched(): void {
-    this.amountTouched.set(true);
-  }
+          this.validatingRecipient.set(true);
+          this.recipientUsername.set(null);
+          return this.auth.checkUsername(trimmed).pipe(
+            map((response) => ({ trimmed, response })),
+            catchError(() => of({ trimmed, error: true as const })),
+            finalize(() => this.validatingRecipient.set(false)),
+          );
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((result) => {
+        if (!result) {
+          return;
+        }
 
-  protected onAmountKeydown(event: KeyboardEvent): void {
-    if (event.ctrlKey || event.metaKey) return;
-    const allowedKeys = ['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'Home', 'End'];
-    if (allowedKeys.includes(event.key)) return;
-    if (/^\d$/.test(event.key)) return;
-    if (event.key === '.' && !this.amount().includes('.')) return;
-    event.preventDefault();
-  }
+        if (normalizeUsername(this.username) !== result.trimmed) {
+          return;
+        }
 
-  protected onAmountPaste(event: ClipboardEvent): void {
-    event.preventDefault();
-    this.amountTouched.set(true);
-    const input = event.target as HTMLInputElement;
-    const pasted = event.clipboardData?.getData('text') ?? '';
-    this.setAmountValue(input, sanitizeMoneyInput(input.value + pasted));
-  }
+        if ('error' in result) {
+          this.recipientUsername.set(null);
+          this.error.set(WALLET_MESSAGES.networkError);
+          return;
+        }
 
-  private setAmountValue(input: HTMLInputElement, sanitized: string): void {
-    if (input.value !== sanitized) {
-      input.value = sanitized;
-    }
-    this.error.set('');
-    this.amount.set(sanitized);
-  }
-
-  protected validateRecipient(): void {
-    const trimmed = normalizeUsername(this.username);
-    if (!trimmed) {
-      this.recipientUsername.set(null);
-      this.error.set('');
-      return;
-    }
-
-    this.auth.checkUsername(trimmed).subscribe({
-      next: (response) => {
+        const { response } = result;
         if (response.available) {
           this.recipientUsername.set(null);
           this.error.set(WALLET_MESSAGES.receiverNotFound);
@@ -812,16 +817,77 @@ export class SendMoneyPage implements OnInit {
         }
         this.recipientUsername.set(response.username);
         this.error.set('');
-      },
-      error: () => {
-        this.recipientUsername.set(null);
-        this.error.set(WALLET_MESSAGES.networkError);
-      },
-    });
+      });
+  }
+
+  protected onRecipientInput(): void {
+    this.recipientUsername.set(null);
+  }
+
+  protected onAmountInput(event: Event): void {
+    this.amountTouched.set(true);
+    const input = event.target as HTMLInputElement;
+    this.setAmountValue(input, sanitizeTransferAmountInput(input.value));
+  }
+
+  protected markAmountTouched(): void {
+    this.amountTouched.set(true);
+  }
+
+  protected onAmountKeydown(event: KeyboardEvent): void {
+    if (event.ctrlKey || event.metaKey) return;
+    const allowedKeys = ['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'Home', 'End'];
+    if (allowedKeys.includes(event.key)) return;
+
+    const input = event.target as HTMLInputElement;
+    const value = input.value;
+    const caret = input.selectionStart ?? value.length;
+    const dotIndex = value.indexOf('.');
+
+    if (/^\d$/.test(event.key)) {
+      const inWholePart = dotIndex === -1 || caret <= dotIndex;
+      if (inWholePart) {
+        const whole = dotIndex === -1 ? value : value.slice(0, dotIndex);
+        const selectionEnd = input.selectionEnd ?? caret;
+        const replacing = selectionEnd > caret;
+        const wholeDigits = whole.replace(/\D/g, '').length;
+        if (!replacing && wholeDigits >= TRANSFER_AMOUNT_MAX_WHOLE_DIGITS) {
+          event.preventDefault();
+        }
+      }
+      return;
+    }
+
+    if (event.key === '.' && !this.amount().includes('.')) return;
+    event.preventDefault();
+  }
+
+  protected onAmountPaste(event: ClipboardEvent): void {
+    event.preventDefault();
+    this.amountTouched.set(true);
+    const input = event.target as HTMLInputElement;
+    const pasted = event.clipboardData?.getData('text') ?? '';
+    this.setAmountValue(input, sanitizeTransferAmountInput(input.value + pasted));
+  }
+
+  private setAmountValue(input: HTMLInputElement, sanitized: string): void {
+    if (input.value !== sanitized) {
+      input.value = sanitized;
+    }
+    this.error.set('');
+    this.amount.set(sanitized);
+  }
+
+  protected validateRecipient(): void {
+    const trimmed = normalizeUsername(this.username);
+    this.recipientValidation$.next(trimmed);
   }
 
   protected send(): void {
     const recipient = this.recipientUsername();
+    if (!isRecipientReadyForSend(this.username, recipient, this.validatingRecipient())) {
+      return;
+    }
     if (!recipient) return;
 
     this.amountTouched.set(true);

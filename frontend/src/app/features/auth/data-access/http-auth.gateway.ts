@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, catchError, map, throwError} from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
+import { networkProblem, problemFromHttpError } from '../../../core/http/problem-details';
 import {
   BackendLoginResponse,
   BackendRegisterResponse,
@@ -22,7 +23,6 @@ import {
   PasswordResetRequestResponse,
   PasswordResetConfirmRequest,
   PasswordResetConfirmResponse,
-  ProblemDetails,
   RegisterRequest,
   PromoCodeValidationResponse,
   RefreshTokenRequest,
@@ -128,43 +128,9 @@ export class HttpAuthGateway implements AuthGateway {
     }
 
     if (error instanceof HttpErrorResponse) {
-      const body = error.error as Partial<ProblemDetails> | null;
-      const code = body && typeof body === 'object' ? body.code : undefined;
-      if (body && typeof body === 'object' && typeof code === 'string') {
-        return throwError(
-          () =>
-            new AuthApiError({
-              type: body.type,
-              title: body.title,
-              status: body.status ?? error.status,
-              code,
-              detail: body.detail,
-              instance: body.instance,
-              timestamp: body.timestamp,
-              traceId: body.traceId,
-              fieldErrors: body.fieldErrors,
-              retryAfterSeconds: body.retryAfterSeconds,
-            }),
-        );
-      }
-
-      return throwError(
-        () =>
-          new AuthApiError({
-            status: error.status || 0,
-            code: error.status === 0 ? 'NETWORK_ERROR' : 'UNKNOWN',
-            title: error.statusText || 'Request failed',
-          }),
-      );
+      return throwError(() => new AuthApiError(problemFromHttpError(error)));
     }
 
-    return throwError(
-      () =>
-        new AuthApiError({
-          status: 0,
-          code: 'NETWORK_ERROR',
-          title: 'Network error',
-        }),
-    );
+    return throwError(() => new AuthApiError(networkProblem()));
   }
 }

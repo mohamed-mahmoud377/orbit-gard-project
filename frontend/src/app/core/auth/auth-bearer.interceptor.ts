@@ -3,11 +3,13 @@ import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, map, switchMap, throwError } from 'rxjs';
 
+import { normalizeRequestPath } from '../http/problem-details';
 import { AuthFacade } from '../../features/auth/data-access/auth.facade';
 import { AuthTokenStore } from '../../features/auth/data-access/auth-token.store';
 import { loginUrlWithReturn } from '../navigation/return-url';
 
-const PUBLIC_AUTH_PATHS = [
+/** Unauthenticated auth/password endpoints — matched by exact path suffix. */
+const PUBLIC_API_PATH_SUFFIXES = [
   '/auth/login',
   '/auth/register',
   '/auth/verify',
@@ -15,10 +17,13 @@ const PUBLIC_AUTH_PATHS = [
   '/auth/refresh',
   '/auth/username-available',
   '/auth/promo-code',
+  '/password/reset/request',
+  '/password/reset/confirm',
 ] as const;
 
 function isPublicAuthRequest(url: string): boolean {
-  return PUBLIC_AUTH_PATHS.some((path) => url.includes(path));
+  const path = normalizeRequestPath(url);
+  return PUBLIC_API_PATH_SUFFIXES.some((suffix) => path.endsWith(suffix));
 }
 
 function attachBearer(req: Parameters<HttpInterceptorFn>[0], accessToken: string) {

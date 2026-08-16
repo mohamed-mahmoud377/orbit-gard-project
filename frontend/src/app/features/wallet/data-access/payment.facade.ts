@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { EMPTY, Observable, expand, map, of, switchMap, take, timer } from 'rxjs';
+import { EMPTY, Observable, expand, map, switchMap, take, timer } from 'rxjs';
 
 import { PAYMENT_GATEWAY } from './payment.gateway';
 import {
