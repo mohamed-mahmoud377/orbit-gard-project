@@ -29,6 +29,149 @@ async function seedAuthenticatedParent(page: import('@playwright/test').Page): P
   });
 }
 
+async function mockFamilyApis(page: import('@playwright/test').Page): Promise<void> {
+  const children = [
+    {
+      id: 'child-youssef',
+      name: 'Youssef Mahmoud',
+      handle: '@youssef',
+      status: 'ACTIVE',
+      available: '245.00',
+      balance: '295.00',
+      held: '50.00',
+      limits: {
+        today: { spent: '60.00', max: '150.00' },
+        month: { spent: '255.00', max: '1000.00' },
+        perTransaction: '100.00',
+      },
+    },
+    {
+      id: 'child-nour',
+      name: 'Nour Mahmoud',
+      handle: '@nour',
+      status: 'ACTIVE',
+      available: '110.00',
+      balance: '160.00',
+      held: '50.00',
+      limits: {
+        today: { spent: '90.00', max: '100.00' },
+        month: { spent: '160.00', max: '600.00' },
+        perTransaction: '100.00',
+      },
+    },
+  ];
+
+  await page.route('**/api/v1/family/overview', async (route) => {
+    if (route.request().method() === 'GET') {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          childrenCount: 2,
+          allocatedThisMonth: '800.00',
+          spentThisMonth: '415.00',
+          blockedAttempts: 3,
+        }),
+      });
+      return;
+    }
+    await route.continue();
+  });
+
+  await page.route(/\/api\/v1\/family\/children(\/.*)?$/, async (route) => {
+    const request = route.request();
+    if (request.method() !== 'GET') {
+      await route.continue();
+      return;
+    }
+
+    const url = new URL(request.url());
+    const pathname = url.pathname.replace(/\/$/, '');
+    const listPath = '/api/v1/family/children';
+
+    if (pathname === listPath) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(children),
+      });
+      return;
+    }
+
+    const transactionsSuffix = '/transactions';
+    if (pathname.endsWith(transactionsSuffix)) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          content: [],
+          page: 0,
+          size: 20,
+          totalElements: 0,
+          totalPages: 0,
+          first: true,
+          last: true,
+        }),
+      });
+      return;
+    }
+
+    const childId = pathname.slice(`${listPath}/`.length);
+    const child = children.find((item) => item.id === childId);
+    if (!child) {
+      await route.fulfill({ status: 404, contentType: 'application/json', body: '{}' });
+      return;
+    }
+
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        id: child.id,
+        name: child.name,
+        handle: child.handle,
+        status: child.status,
+        walletOpenedAt: '2026-06-12',
+        available: child.available,
+        balance: child.balance,
+        held: child.held,
+        allocatedThisMonth: '500.00',
+        limits: {
+          today: {
+            spent: child.limits.today.spent,
+            max: child.limits.today.max,
+            remaining: '90.00',
+          },
+          month: {
+            spent: child.limits.month.spent,
+            max: child.limits.month.max,
+            remaining: '745.00',
+          },
+          perTransaction: child.limits.perTransaction,
+        },
+      }),
+    });
+  });
+
+  await page.route('**/api/v1/auth/add-child', async (route) => {
+    if (route.request().method() === 'POST') {
+      await route.fulfill({
+        status: 201,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          id: 'child-mariam',
+          username: 'mariam',
+          firstName: 'Mariam',
+          lastName: 'Mahmoud',
+          status: 'ACTIVE',
+        }),
+      });
+      return;
+    }
+    await route.continue();
+  });
+}
+
 async function mockAccountApis(page: import('@playwright/test').Page): Promise<void> {
   await page.route('**/api/v1/profile', async (route) => {
     if (route.request().method() === 'GET') {
@@ -119,8 +262,37 @@ test('parent can sign in, top up, and send money', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Top-up succeeded' })).toBeVisible();
 
   await page.getByRole('link', { name: 'Send money' }).first().click();
+  const recipient = page.locator('#recipient');
+  await recipient.fill('sara');
+  await recipient.blur();
+  await expect(page.getByText('@sara')).toBeVisible();
+  await page.locator('#send-amount').fill('200');
   await page.getByRole('button', { name: /Send EGP 200.00 to @sara/ }).click();
   await expect(page.getByRole('heading', { name: 'Money sent' })).toBeVisible();
+});
+
+test('send money blocks stale recipient after username edit', async ({ page }) => {
+  await clearAuthState(page);
+  await signIn(page, 'mohamed', 'Orbit@123');
+
+  await page.getByRole('link', { name: 'Send money' }).first().click();
+  const recipient = page.locator('#recipient');
+  await recipient.fill('sara');
+  await recipient.blur();
+  await expect(page.getByText('@sara')).toBeVisible();
+
+  const sendButton = page.getByRole('button', { name: /Send EGP/ });
+  await expect(sendButton).toBeEnabled();
+
+  await recipient.fill('omar');
+  await expect(page.getByText('@sara')).not.toBeVisible();
+  await expect(sendButton).toBeDisabled();
+
+  await recipient.fill('sara');
+  await recipient.blur();
+  await expect(page.getByText('@sara')).toBeVisible();
+  await page.locator('#send-amount').fill('200');
+  await expect(sendButton).toBeEnabled();
 });
 
 test('sign-up, activate, and sign-in flow works end to end', async ({ page }) => {
@@ -183,15 +355,40 @@ test('unverified users cannot sign in', async ({ page }) => {
 
 test('parent can manage a child wallet', async ({ page }) => {
   await clearAuthState(page);
-  await signIn(page, 'mohamed', 'Orbit@123');
+  await mockFamilyApis(page);
+  await seedAuthenticatedParent(page);
+
   await page.goto('/family');
   await expect(page.getByRole('heading', { name: 'Family' })).toBeVisible();
   await expect(page.getByText('Youssef Mahmoud')).toBeVisible();
   await expect(page.getByText('Nour Mahmoud')).toBeVisible();
+  await expect(page.getByText('EGP 800.00')).toBeVisible();
 
   await page.getByRole('link', { name: 'Add a child', exact: true }).first().click();
+  await page.getByLabel('First name').fill('Mariam');
+  await page.getByLabel('Last name').fill('Mahmoud');
+  await page.getByLabel('Username', { exact: true }).fill('mariam');
+  await page.getByLabel('Temporary password').fill('Mariam@123');
+  await page.getByLabel('Confirm password').fill('Mariam@123');
   await page.getByRole('button', { name: 'Create child wallet' }).click();
   await expect(page.getByRole('heading', { name: 'Child wallet created' })).toBeVisible();
+});
+
+test('parent can view child wallet detail with limits progress', async ({ page }) => {
+  await clearAuthState(page);
+  await mockFamilyApis(page);
+  await seedAuthenticatedParent(page);
+
+  await page.goto('/family');
+  await page.getByRole('link', { name: 'View activity' }).first().click();
+  await expect(page).toHaveURL(/\/family\/child-youssef$/);
+  await expect(page.getByText('Youssef Mahmoud').first()).toBeVisible();
+  await expect(page.getByText('@youssef')).toBeVisible();
+  await expect(page.getByText('ACTIVE')).toBeVisible();
+  await expect(page.getByText('EGP 60.00 of EGP 150.00')).toBeVisible();
+  await expect(page.getByText('EGP 90.00 remaining today')).toBeVisible();
+  await expect(page.getByText('Per transaction').first()).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Edit spending limits' })).toBeVisible();
 });
 
 test('child account sees the restricted wallet shell', async ({ page }) => {

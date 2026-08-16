@@ -2,20 +2,30 @@ import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http'
 import { Injectable, inject } from '@angular/core';
 import { Observable, catchError, map, throwError } from 'rxjs';
 
-import { ProblemDetails } from '../../auth/data-access/auth.models';
+import { networkProblem, problemFromHttpError } from '../../../core/http/problem-details';
 import { environment } from '../../../../environments/environment';
 import {
   BackendUserProfileResponse,
   normalizeUserProfile,
 } from './user-api.adapter';
 import {
+  BackendInternalTransferResponse,
   BackendWalletBalanceResponse,
   BackendWalletTransactionPageResponse,
+  BackendWalletTransactionSummaryResponse,
+  normalizeInternalTransfer,
+  normalizeTransactionSummary,
   normalizeWalletBalance,
   normalizeWalletTransactionPage,
 } from './wallet-api.adapter';
-import { WALLET_GATEWAY, WalletGateway } from './wallet.gateway';
-import { WalletApiError, WalletTransactionPage } from './wallet.models';
+import { WalletGateway } from './wallet.gateway';
+import {
+  InternalTransferRequest,
+  InternalTransferResult,
+  WalletApiError,
+  WalletTransactionPage,
+  WalletTransactionSummary,
+} from './wallet.models';
 
 @Injectable({ providedIn: 'root' })
 export class HttpWalletGateway implements WalletGateway {
@@ -56,40 +66,36 @@ export class HttpWalletGateway implements WalletGateway {
       );
   }
 
+  getTransactionSummary(): Observable<WalletTransactionSummary> {
+    return this.http
+      .get<BackendWalletTransactionSummaryResponse>(
+        `${this.baseUrl}/wallet/transactions/summary`,
+      )
+      .pipe(
+        map((body) => normalizeTransactionSummary(body)),
+        catchError((error) => this.mapError(error)),
+      );
+  }
+
+  internalTransfer(request: InternalTransferRequest): Observable<InternalTransferResult> {
+    return this.http
+      .post<BackendInternalTransferResponse>(`${this.baseUrl}/wallet/internal/transfer`, {
+        receiverUsername: request.receiverUsername,
+        amount: request.amountMajor,
+      })
+      .pipe(
+        map((body) => normalizeInternalTransfer(body)),
+        catchError((error) => this.mapError(error)),
+      );
+  }
+
   private mapError(error: unknown): Observable<never> {
     if (error instanceof WalletApiError) {
       return throwError(() => error);
     }
     if (error instanceof HttpErrorResponse) {
-      const body = error.error as Partial<ProblemDetails> | null;
-      const code = body && typeof body === 'object' ? body.code : undefined;
-      if (body && typeof body === 'object' && typeof code === 'string') {
-        return throwError(
-          () =>
-            new WalletApiError({
-              status: body.status ?? error.status,
-              code,
-              title: body.title,
-              detail: body.detail,
-            }),
-        );
-      }
-      return throwError(
-        () =>
-          new WalletApiError({
-            status: error.status || 0,
-            code: error.status === 0 ? 'NETWORK_ERROR' : 'UNKNOWN',
-            title: error.statusText || 'Request failed',
-          }),
-      );
+      return throwError(() => new WalletApiError(problemFromHttpError(error)));
     }
-    return throwError(
-      () =>
-        new WalletApiError({
-          status: 0,
-          code: 'NETWORK_ERROR',
-          title: 'Network error',
-        }),
-    );
+    return throwError(() => new WalletApiError(networkProblem()));
   }
 }

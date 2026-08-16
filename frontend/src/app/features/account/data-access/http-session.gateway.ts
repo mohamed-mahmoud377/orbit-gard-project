@@ -2,9 +2,9 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, catchError, map, throwError } from 'rxjs';
 
-import { ProblemDetails } from '../../auth/data-access/auth.models';
+import { networkProblem, problemFromHttpError } from '../../../core/http/problem-details';
 import { environment } from '../../../../environments/environment';
-import { SESSION_GATEWAY, SessionGateway } from './session.gateway';
+import { SessionGateway } from './session.gateway';
 import { SessionApiError, SessionSummary } from './session.models';
 
 interface BackendSessionSummaryResponse {
@@ -52,35 +52,8 @@ export class HttpSessionGateway implements SessionGateway {
       return throwError(() => error);
     }
     if (error instanceof HttpErrorResponse) {
-      const body = error.error as Partial<ProblemDetails> | null;
-      const code = body && typeof body === 'object' ? body.code : undefined;
-      if (body && typeof body === 'object' && typeof code === 'string') {
-        return throwError(
-          () =>
-            new SessionApiError({
-              status: body.status ?? error.status,
-              code,
-              title: body.title,
-              detail: body.detail,
-            }),
-        );
-      }
-      return throwError(
-        () =>
-          new SessionApiError({
-            status: error.status || 0,
-            code: error.status === 0 ? 'NETWORK_ERROR' : 'UNKNOWN',
-            title: error.statusText || 'Request failed',
-          }),
-      );
+      return throwError(() => new SessionApiError(problemFromHttpError(error)));
     }
-    return throwError(
-      () =>
-        new SessionApiError({
-          status: 0,
-          code: 'NETWORK_ERROR',
-          title: 'Network error',
-        }),
-    );
+    return throwError(() => new SessionApiError(networkProblem()));
   }
 }

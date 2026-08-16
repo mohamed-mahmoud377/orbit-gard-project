@@ -61,6 +61,11 @@ export interface Transaction {
   readonly title: string;
   readonly subtitle: string;
   readonly occurredAt: string;
+  /** Backend UUID — used when the public id is the TXN reference string. */
+  readonly backendId?: string;
+  readonly balanceBeforeMinor?: MinorUnits;
+  readonly balanceAfterMinor?: MinorUnits;
+  readonly resolvedAt?: string;
   readonly counterpartyUserId?: string;
   readonly merchantId?: string;
   readonly paymentId?: string;

@@ -15,9 +15,37 @@ export interface DashboardData {
   readonly recentTransactions: readonly Transaction[];
 }
 
+export interface WalletTransactionSummary {
+  readonly moneyInMinor: number;
+  readonly moneyOutMinor: number;
+  readonly heldMinor: number;
+  readonly rejectedCount: number;
+}
+
+export interface InternalTransferRequest {
+  readonly receiverUsername: string;
+  readonly amountMajor: number;
+}
+
+export interface InternalTransferResult {
+  readonly debitReference: string;
+  readonly creditReference: string;
+  readonly debitStatus: string;
+}
+
+export interface LoadedTransactions {
+  readonly transactions: readonly Transaction[];
+  readonly totalElements: number;
+  readonly oldestLoadedPage: number;
+  readonly totalPages: number;
+}
+
 export type WalletErrorCode =
   | 'UNAUTHENTICATED'
   | 'ACCESS_DENIED'
+  | 'INSUFFICIENT_BALANCE'
+  | 'RECEIVER_NOT_FOUND'
+  | 'SELF_TRANSFER_NOT_ALLOWED'
   | 'NETWORK_ERROR'
   | 'UNKNOWN';
 

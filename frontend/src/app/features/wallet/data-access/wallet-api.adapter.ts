@@ -1,5 +1,7 @@
 import { Transaction, TransactionStatus, TransactionType, WalletSnapshot } from '../../../shared/models';
 
+import { InternalTransferResult, WalletTransactionSummary } from './wallet.models';
+
 export function majorUnitsToMinor(value: number | string): number {
   const parsed = typeof value === 'number' ? value : Number.parseFloat(String(value));
   if (!Number.isFinite(parsed)) return 0;
@@ -14,6 +16,21 @@ export interface BackendWalletBalanceResponse {
   readonly balance: number | string;
   readonly held: number | string;
   readonly available: number | string;
+}
+
+export interface BackendWalletTransactionSummaryResponse {
+  readonly moneyInThisMonth: number | string;
+  readonly moneyOutThisMonth: number | string;
+  readonly currentlyHeld: number | string;
+  readonly rejectedCount: number;
+}
+
+export interface BackendInternalTransferResponse {
+  readonly debitTransactionId: string;
+  readonly debitReference: string;
+  readonly creditTransactionId: string;
+  readonly creditReference: string;
+  readonly debitStatus: string;
 }
 
 export interface BackendWalletTransactionResponse {
@@ -52,6 +69,27 @@ export function normalizeWalletBalance(body: BackendWalletBalanceResponse): Wall
   };
 }
 
+export function normalizeTransactionSummary(
+  body: BackendWalletTransactionSummaryResponse,
+): WalletTransactionSummary {
+  return {
+    moneyInMinor: majorUnitsToMinor(body.moneyInThisMonth),
+    moneyOutMinor: majorUnitsToMinor(body.moneyOutThisMonth),
+    heldMinor: majorUnitsToMinor(body.currentlyHeld),
+    rejectedCount: body.rejectedCount,
+  };
+}
+
+export function normalizeInternalTransfer(
+  body: BackendInternalTransferResponse,
+): InternalTransferResult {
+  return {
+    debitReference: body.debitReference,
+    creditReference: body.creditReference,
+    debitStatus: body.debitStatus,
+  };
+}
+
 function mapTransactionType(type: string, direction: string): TransactionType {
   if (type === 'TOPUP' || type === 'PROMO') return 'top-up';
   if (type === 'INTERNAL_TRANSFER') {
@@ -71,17 +109,23 @@ export function normalizeWalletTransaction(
   body: BackendWalletTransactionResponse,
   walletOwnerId = '',
 ): Transaction {
+  const reference = body.reference ?? body.transactionPublicId;
   return {
-    id: body.transactionPublicId ?? body.id,
+    id: reference ?? body.id,
+    backendId: body.id,
     walletOwnerId,
     type: mapTransactionType(body.type, body.direction),
     status: mapTransactionStatus(body.status),
     amountMinor: majorUnitsToMinor(body.amount),
     currency: 'EGP',
     title: body.description ?? body.type,
-    subtitle: body.counterparty ?? body.reference ?? '',
+    subtitle: body.counterparty ?? reference ?? '',
     occurredAt: body.createdAt ?? new Date().toISOString(),
-    paymentId: body.reference,
+    balanceBeforeMinor:
+      body.balanceBefore != null ? majorUnitsToMinor(body.balanceBefore) : undefined,
+    balanceAfterMinor:
+      body.balanceAfter != null ? majorUnitsToMinor(body.balanceAfter) : undefined,
+    resolvedAt: body.resolvedAt ?? undefined,
   };
 }
 
@@ -90,4 +134,13 @@ export function normalizeWalletTransactionPage(
   walletOwnerId = '',
 ): Transaction[] {
   return body.content.map((item) => normalizeWalletTransaction(item, walletOwnerId));
+}
+
+export function sortTransactionsNewestFirst(
+  transactions: readonly Transaction[],
+): Transaction[] {
+  return [...transactions].sort(
+    (left, right) =>
+      new Date(right.occurredAt).getTime() - new Date(left.occurredAt).getTime(),
+  );
 }

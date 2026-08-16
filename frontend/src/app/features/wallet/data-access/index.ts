@@ -11,5 +11,7 @@ export * from './wallet.gateway';
 export * from './wallet.facade';
 export * from './wallet.providers';
 export * from './wallet-api.adapter';
+export * from './wallet.messages';
+export * from './transaction-cache.store';
 export * from './user-api.adapter';
 export * from './http-wallet.gateway';
