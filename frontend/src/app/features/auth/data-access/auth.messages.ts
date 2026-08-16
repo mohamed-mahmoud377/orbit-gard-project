@@ -26,6 +26,7 @@ export const AUTH_MESSAGES = {
   accountSuspended: 'This account is suspended. Contact support for help.',
   rateLimited: 'Too many attempts. Please try again shortly.',
   networkError: 'Something went wrong. Please try again.',
+  sessionExpired: 'Your session has ended. Sign in again to continue.',
   tokenExpired:
     'This link has expired. Confirmation links last 12 hours. We can send you a fresh one straight away.',
   tokenAlreadyUsed:

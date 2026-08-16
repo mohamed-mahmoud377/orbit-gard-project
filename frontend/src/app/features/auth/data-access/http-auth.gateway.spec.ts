@@ -116,6 +116,57 @@ describe('HttpAuthGateway', () => {
     });
   });
 
+  it('posts refresh payloads and normalizes the login-shaped response', () => {
+    gateway.refresh({ refreshToken: 'stale-refresh' }).subscribe((response) => {
+      expect(response.accessToken).toBe('new-access');
+      expect(response.refreshToken).toBe('new-refresh');
+      expect(response.user.id).toBe('82fb922f-1c0f-443d-9e02-245bb87d6139');
+    });
+    const req = http.expectOne('/api/v1/auth/refresh');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ refreshToken: 'stale-refresh' });
+    req.flush({
+      accessToken: 'new-access',
+      refreshToken: 'new-refresh',
+      tokenType: 'Bearer',
+      expiresIn: 900,
+      user: {
+        id: '82fb922f-1c0f-443d-9e02-245bb87d6139',
+        username: 'omar.hassan',
+        firstName: 'Omar',
+        lastName: 'Hassan',
+        accountType: 'USER',
+      },
+    });
+  });
+
+  it('posts password reset request and confirm endpoints', () => {
+    gateway.requestPasswordReset({ email: 'omar@example.com' }).subscribe((response) => {
+      expect(response.message).toContain('reset link');
+    });
+    const request = http.expectOne('/api/v1/password/reset/request');
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({ email: 'omar@example.com' });
+    request.flush({
+      message: 'If an account exists for that address, a reset link is on its way.',
+    });
+
+    gateway
+      .confirmPasswordReset({
+        token: 'reset-token',
+        newPassword: 'NewPass1',
+        confirmNewPassword: 'NewPass1',
+      })
+      .subscribe((response) => {
+        expect(response.message).toContain('password');
+      });
+    const confirm = http.expectOne('/api/v1/password/reset/confirm');
+    expect(confirm.request.method).toBe('POST');
+    confirm.flush({
+      message: 'Your password is updated. You can now sign in with your new password.',
+    });
+  });
+
   it('posts verify and resend endpoints', () => {
     gateway.verify({ token: 'abc' }).subscribe((response) => {
       expect(response.status).toBe('ACTIVE');

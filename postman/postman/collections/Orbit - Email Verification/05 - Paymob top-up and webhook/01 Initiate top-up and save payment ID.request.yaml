@@ -8,8 +8,12 @@ body:
   type: text
   content: |-
     {
-      "amount": 50.00
+      "amount": 500.00
     }
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
 scripts:
   - type: beforeRequest
     code: if (!pm.collectionVariables.get('accessToken')) throw new Error('Set accessToken to a verified adult user access token first.');

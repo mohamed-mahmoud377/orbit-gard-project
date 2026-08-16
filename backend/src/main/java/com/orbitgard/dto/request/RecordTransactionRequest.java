@@ -14,6 +14,7 @@ import java.util.UUID;
  */
 @Builder
 public record RecordTransactionRequest(
+        UUID id,
         @NotNull UUID walletId,
         @NotNull TransactionType type,
         @NotNull TransactionDirection direction,

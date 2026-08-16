@@ -15,88 +15,91 @@ import { environment } from '../../../../environments/environment';
   selector: 'app-login-page',
   imports: [ReactiveFormsModule, RouterLink],
   template: `
-    <section class="auth-card" data-node-id="6:2">
-      <header>
-        <h1>Welcome back</h1>
-        <p>Sign in to your Orbit wallet</p>
-      </header>
+  <section class="login-page">
+  
+  <section class="auth-card" data-node-id="6:2">
+    <header>
+      <h1>Welcome back</h1>
+      <p>Sign in to your Orbit wallet</p>
+    </header>
 
-      @if (banner()) {
-        <div class="notice notice-danger" role="alert" aria-live="assertive">
-          {{ banner() }}
-        </div>
-      }
+    @if (banner()) {
+      <div class="notice notice-danger" role="alert" aria-live="assertive">
+        {{ banner() }}
+      </div>
+    }
 
-      <form class="auth-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
-        <div class="field" [class.field-invalid]="fieldErrors()['username']">
-          <label for="login-username">Username</label>
+    <form class="auth-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="field" [class.field-invalid]="fieldErrors()['username']">
+        <label for="login-username">Username</label>
+        <input
+          class="input"
+          id="login-username"
+          formControlName="username"
+          autocomplete="username"
+          placeholder="Enter your username"
+          [attr.aria-invalid]="!!fieldErrors()['username']"
+          [attr.aria-describedby]="fieldErrors()['username'] ? 'login-username-error' : null"
+        />
+        @if (fieldErrors()['username']) {
+          <p class="field-error" id="login-username-error">{{ fieldErrors()['username'] }}</p>
+        }
+      </div>
+
+      <div class="field" [class.field-invalid]="fieldErrors()['password']">
+        <label for="login-password">Password</label>
+        <div class="password-input">
           <input
             class="input"
-            id="login-username"
-            formControlName="username"
-            autocomplete="username"
-            placeholder="Enter your username"
-            [attr.aria-invalid]="!!fieldErrors()['username']"
-            [attr.aria-describedby]="fieldErrors()['username'] ? 'login-username-error' : null"
+            id="login-password"
+            formControlName="password"
+            [type]="showPassword() ? 'text' : 'password'"
+            autocomplete="current-password"
+            placeholder="Enter your password"
+            [attr.aria-invalid]="!!fieldErrors()['password']"
+            [attr.aria-describedby]="fieldErrors()['password'] ? 'login-password-error' : null"
           />
-          @if (fieldErrors()['username']) {
-            <p class="field-error" id="login-username-error">{{ fieldErrors()['username'] }}</p>
-          }
+          <button
+            class="password-toggle"
+            type="button"
+            [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+            (click)="showPassword.set(!showPassword())"
+          >
+            {{ showPassword() ? 'Hide' : 'Show' }}
+          </button>
         </div>
+        @if (fieldErrors()['password']) {
+          <p class="field-error" id="login-password-error">{{ fieldErrors()['password'] }}</p>
+        }
+      </div>
 
-        <div class="field" [class.field-invalid]="fieldErrors()['password']">
-          <label for="login-password">Password</label>
-          <div class="password-input">
-            <input
-              class="input"
-              id="login-password"
-              formControlName="password"
-              [type]="showPassword() ? 'text' : 'password'"
-              autocomplete="current-password"
-              placeholder="Enter your password"
-              [attr.aria-invalid]="!!fieldErrors()['password']"
-              [attr.aria-describedby]="fieldErrors()['password'] ? 'login-password-error' : null"
-            />
-            <button
-              class="password-toggle"
-              type="button"
-              [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
-              (click)="showPassword.set(!showPassword())"
-            >
-              {{ showPassword() ? 'Hide' : 'Show' }}
-            </button>
-          </div>
-          @if (fieldErrors()['password']) {
-            <p class="field-error" id="login-password-error">{{ fieldErrors()['password'] }}</p>
-          }
-        </div>
+      <div class="remember-row">
+        <label>
+          <input type="checkbox" formControlName="rememberMe" />
+          Remember me for 30 days
+        </label>
+        <a class="text-link" routerLink="/auth/forgot-password">Forgot password?</a>
+      </div>
 
-        <div class="remember-row">
-          <label>
-            <input type="checkbox" formControlName="rememberMe" />
-            Remember me for 30 days
-          </label>
-          <a class="text-link" routerLink="/auth/forgot-password">Forgot password?</a>
-        </div>
+      <button class="btn btn-primary" type="submit" [disabled]="submitting()">
+        {{ submitting() ? 'Signing in…' : 'Sign in' }}
+      </button>
+    </form>
 
-        <button class="btn btn-primary" type="submit" [disabled]="submitting()">
-          {{ submitting() ? 'Signing in…' : 'Sign in' }}
-        </button>
-      </form>
+    @if (showDemoHint) {
+      <div class="demo-hint">
+        <strong>Mock auth accounts</strong>
+        <span>Parent: {{ parentUsername }} / {{ parentPassword }}</span>
+        <span>Child: {{ childUsername }} / {{ childPassword }}</span>
+      </div>
+    }
 
-      @if (showDemoHint) {
-        <div class="demo-hint">
-          <strong>Mock auth accounts</strong>
-          <span>Parent: {{ parentUsername }} / {{ parentPassword }}</span>
-          <span>Child: {{ childUsername }} / {{ childPassword }}</span>
-        </div>
-      }
-
-      <footer class="auth-footer">
-        <span>New to Orbit?</span>
-        <a class="text-link" routerLink="/auth/sign-up">Create an account</a>
-      </footer>
-    </section>
+    <footer class="auth-footer">
+      <span>New to Orbit?</span>
+      <a class="text-link" routerLink="/auth/sign-up">Create an account</a>
+    </footer>
+  </section>
+  </section>
   `,
   styleUrl: '../auth-pages.scss',
 })

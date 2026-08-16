@@ -58,6 +58,23 @@ export interface ResendVerifyResponse {
   readonly retryAfterSeconds: number;
 }
 
+export interface PasswordResetRequest {
+  readonly email: string;
+}
+export interface PasswordResetRequestResponse {
+  readonly message: string;
+}
+
+export interface PasswordResetConfirmRequest {
+  readonly token: string;
+  readonly newPassword: string;
+  readonly confirmNewPassword: string;
+}
+
+export interface PasswordResetConfirmResponse {
+  readonly message: string;
+}
+
 export interface LoginRequest {
   readonly username: string;
   readonly password: string;
@@ -114,6 +131,9 @@ export type AuthErrorCode =
   | 'PHONE_TAKEN'
   | 'PASSWORD_TOO_WEAK'
   | 'PASSWORD_MISMATCH'
+  | 'PASSWORD_INVALID'
+  | 'PASSWORD_CONFIRMATION_MISMATCH'
+  | 'PASSWORD_REUSE'
   | 'RATE_LIMITED'
   | 'TOKEN_INVALID'
   | 'TOKEN_EXPIRED'

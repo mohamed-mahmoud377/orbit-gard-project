@@ -8,6 +8,10 @@ import {
   LoginRequest,
   LoginResponse,
   PromoCodeValidationResponse,
+  PasswordResetRequest,
+  PasswordResetRequestResponse,
+  PasswordResetConfirmRequest,
+  PasswordResetConfirmResponse,
   RefreshTokenRequest,
   RegisterRequest,
   RegisterResponse,
@@ -48,6 +52,16 @@ export class AuthFacade {
 
   validatePromoCode(code: string): Observable<PromoCodeValidationResponse> {
     return this.gateway.validatePromoCode(code);
+  }
+
+  requestPasswordReset(request: PasswordResetRequest): Observable<PasswordResetRequestResponse> {
+    return this.gateway.requestPasswordReset(request);
+  }
+
+  confirmPasswordReset(
+    request: PasswordResetConfirmRequest,
+  ): Observable<PasswordResetConfirmResponse> {
+    return this.gateway.confirmPasswordReset(request);
   }
 
   register(request: RegisterRequest): Observable<RegisterResponse> {

@@ -82,9 +82,47 @@ jobs:
           cache-from: type=gha,scope=frontend
           cache-to: type=gha,mode=max,scope=frontend
 
+  build-shop:
+    name: Build & push shop
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.meta.outputs.image }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute image tags
+        id: meta
+        run: |
+          REPO="${GITHUB_REPOSITORY,,}"
+          echo "image=ghcr.io/${REPO}:shop-${GITHUB_SHA::12}" >> "$GITHUB_OUTPUT"
+          echo "latest=ghcr.io/${REPO}:shop-latest" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push shop
+        uses: docker/build-push-action@v6
+        with:
+          context: shop
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.image }}
+            ${{ steps.meta.outputs.latest }}
+          cache-from: type=gha,scope=shop
+          cache-to: type=gha,mode=max,scope=shop
+
   deploy:
     name: Deploy to server
-    needs: [build-backend, build-frontend]
+    needs: [build-backend, build-frontend, build-shop]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -108,6 +146,7 @@ jobs:
         env:
           APP_IMAGE: ${{ needs.build-backend.outputs.image }}
           WEB_IMAGE: ${{ needs.build-frontend.outputs.image }}
+          SHOP_IMAGE: ${{ needs.build-shop.outputs.image }}
           GHCR_USER: ${{ github.actor }}
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -115,13 +154,14 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT || 22 }}
-          envs: APP_IMAGE,WEB_IMAGE,GHCR_USER,GHCR_TOKEN
+          envs: APP_IMAGE,WEB_IMAGE,SHOP_IMAGE,GHCR_USER,GHCR_TOKEN
           script: |
             set -e
             cd /root/orbit
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
             export APP_IMAGE="$APP_IMAGE"
             export WEB_IMAGE="$WEB_IMAGE"
+            export SHOP_IMAGE="$SHOP_IMAGE"
             docker compose pull
             docker compose up -d --remove-orphans
             docker image prune -f
@@ -139,6 +179,39 @@ jobs:
             ROOT_CODE=$(curl -fsS -o /dev/null -w '%{http_code}' http://localhost/)
             if [ "$ROOT_CODE" != "302" ]; then
               echo "Expected / to return 302, got $ROOT_CODE"
+              exit 1
+            fi
+
+            # /orbit/ and /api/ are safe to hit immediately: `up -d` blocks on
+            # their depends_on service_healthy conditions. Nothing depends on the
+            # shop being *healthy*, and its first boot creates the `shop`
+            # database, migrates, and seeds 500 products — so poll instead of
+            # guessing at a sleep. Up to 150s, exits as soon as it is ready.
+            echo "Waiting for the shop to become healthy..."
+            SHOP_HEALTH=""
+            i=0
+            while [ "$i" -lt 30 ]; do
+              SHOP_HEALTH=$(curl -fsS --max-time 10 http://localhost/shop/api/health 2>/dev/null || true)
+              case "$SHOP_HEALTH" in
+                *'"status":"ok"'*) break ;;
+              esac
+              i=$((i + 1))
+              sleep 5
+            done
+            case "$SHOP_HEALTH" in
+              *'"status":"ok"'*)
+                echo "Shop health: $SHOP_HEALTH"
+                ;;
+              *)
+                echo "Expected /shop/api/health to report status ok, got: ${SHOP_HEALTH:-<no response>}"
+                docker compose logs --tail 80 shop || true
+                exit 1
+                ;;
+            esac
+
+            SHOP_CODE=$(curl -fsS -o /dev/null -w '%{http_code}' http://localhost/shop/)
+            if [ "$SHOP_CODE" != "200" ]; then
+              echo "Expected /shop/ to return 200, got $SHOP_CODE"
               exit 1
             fi
 

@@ -5,9 +5,21 @@
 #
 # Required variables (read from /root/orbit/.env on the server):
 #   POSTGRES_PASSWORD  - database password (already present)
+#   JWT_SECRET         - Spring Boot session signing key (already present)
+# Recommended (add to /root/orbit/.env):
+#   SHOP_JWT_SECRET    - Orbit Bazaar session signing key. Deliberately separate
+#                        from JWT_SECRET; see the `shop` service below. If it is
+#                        absent the shop falls back to a value derived from
+#                        POSTGRES_PASSWORD so a deploy never breaks on it.
 # Optional (injected by the deploy workflow):
 #   APP_IMAGE          - backend image tag; defaults to :backend-latest
 #   WEB_IMAGE          - frontend/nginx image tag; defaults to :frontend-latest
+#   SHOP_IMAGE         - Orbit Bazaar image tag; defaults to :shop-latest
+#
+# URL layout behind nginx (orbit-web):
+#   /orbit/  static Angular admin/banking SPA
+#   /api/    orbit-app:8080  (Spring Boot)
+#   /shop/   orbit-shop:4000 (Orbit Bazaar — Angular bundle + /shop/api)
 
 services:
   db:
@@ -61,6 +73,56 @@ services:
       retries: 5
       start_period: 60s
 
+  # Orbit Bazaar storefront. One Node process serves the Angular bundle at
+  # /shop/ and the Express API at /shop/api (CONTRACT.md §1), so nginx only ever
+  # reverse-proxies to it — it holds no shop assets of its own.
+  shop:
+    image: ${SHOP_IMAGE:-ghcr.io/mohamed-mahmoud377/orbit-gard-project:shop-latest}
+    container_name: orbit-shop
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      # Wallet checkout is a server-to-server call to the Spring backend
+      # (/api/v1/external/*), so the shop is useless until `app` is up.
+      app:
+        condition: service_healthy
+    env_file:
+      # Same /root/orbit/.env as `app`, read here only to pick up
+      # SHOP_JWT_SECRET. Everything the shop actually needs is pinned in
+      # `environment:` below, which takes precedence over env_file — that is
+      # what stops the backend's JWT_SECRET from leaking in as the shop's.
+      - .env
+    environment:
+      # The `shop` database lives inside the existing orbit-db container. Its
+      # volume predates this app so docker-entrypoint-initdb.d never runs; the
+      # API creates the database itself at boot through BOOTSTRAP_DATABASE_URL.
+      DATABASE_URL: postgres://orbit:${POSTGRES_PASSWORD}@db:5432/shop
+      BOOTSTRAP_DATABASE_URL: postgres://orbit:${POSTGRES_PASSWORD}@db:5432/postgres
+      ORBIT_API_BASE: http://app:8080/api/v1
+      PORT: "4000"
+      NODE_ENV: production
+      # Deliberately NOT the backend's JWT_SECRET. The two secrets sign
+      # different things — Spring signs Orbit banking sessions, the shop signs
+      # storefront logins — and they have different blast radii: a leaked shop
+      # token must never be presentable to the banking API, and vice versa.
+      # Falls back to a POSTGRES_PASSWORD-derived value (never a public
+      # constant) so a server whose .env predates this line still deploys; set
+      # SHOP_JWT_SECRET in /root/orbit/.env to decouple them fully.
+      JWT_SECRET: ${SHOP_JWT_SECRET:-orbit-bazaar-${POSTGRES_PASSWORD}}
+    # No published ports on purpose. Unlike db (external SQL clients) and app
+    # (direct :8080 access), the shop has exactly one consumer — nginx, over the
+    # compose network — so binding a host port would only widen the attack
+    # surface and let people bypass the proxy.
+    healthcheck:
+      # BusyBox wget ships with node:22-alpine; curl does not.
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:4000/shop/api/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      # First boot creates the database, migrates, and seeds 500 products.
+      start_period: 90s
+
   web:
     image: ${WEB_IMAGE:-ghcr.io/mohamed-mahmoud377/orbit-gard-project:frontend-latest}
     container_name: orbit-web
@@ -68,6 +130,12 @@ services:
     depends_on:
       app:
         condition: service_healthy
+      # nginx resolves `shop` at config-parse time (literal hostname in
+      # proxy_pass), so the container must exist or nginx refuses to start.
+      # service_started, not service_healthy: a sick storefront must not be able
+      # to take /orbit/ and /api/ down with it.
+      shop:
+        condition: service_started
     ports:
       - "80:80"
 

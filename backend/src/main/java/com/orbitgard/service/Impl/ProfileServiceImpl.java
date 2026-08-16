@@ -6,6 +6,7 @@ import com.orbitgard.dto.response.ProfileResponse;
 import com.orbitgard.entity.User;
 import com.orbitgard.exceptions.ErrorCode;
 import com.orbitgard.exceptions.ValidationException;
+import com.orbitgard.repository.SessionRepository;
 import com.orbitgard.repository.UserRepository;
 import com.orbitgard.service.AuthenticatedUserService;
 import com.orbitgard.service.ProfileService;
@@ -26,25 +27,36 @@ import java.util.UUID;
 public class ProfileServiceImpl implements ProfileService {
 
     private final UserRepository userRepository;
+    private final SessionRepository sessionRepository;
     private final AuthenticatedUserService currentUserProvider;
     private final Validator validator;
 
-    public ProfileServiceImpl(UserRepository userRepository, AuthenticatedUserService currentUserProvider,
+    public ProfileServiceImpl(UserRepository userRepository, SessionRepository sessionRepository,
+                              AuthenticatedUserService currentUserProvider,
                               Validator validator) {
         this.userRepository = userRepository;
+        this.sessionRepository = sessionRepository;
         this.currentUserProvider = currentUserProvider;
         this.validator = validator;
     }
 
     @Override
     public ProfileResponse get() {
-        return toResponse(loadCurrentUser());
+        User user = loadCurrentUser();
+        return toResponse(user);
     }
 
     @Override
     @Transactional
     public ProfileResponse update(UpdateProfileRequest request) {
         User user = loadCurrentUser();
+
+        // Validate that username is not being changed
+        if (!user.getUsername().equals(request.username())) {
+            throw new ValidationException(List.of(
+                    new FieldErrorResponse("username", ErrorCode.USERNAME_INVALID.name())
+            ));
+        }
 
         List<FieldErrorResponse> errors = new ArrayList<>();
         String firstName = trim(request.firstName());
@@ -110,6 +122,8 @@ public class ProfileServiceImpl implements ProfileService {
         PhoneNumberNormalizer.Result result = PhoneNumberNormalizer.normalize(rawPhoneNumber);
         switch (result.status()) {
             case INVALID -> errors.add(new FieldErrorResponse("phoneNumber", ErrorCode.PHONE_INVALID.name()));
+            case INVALID_CHAR -> errors.add(new FieldErrorResponse("phoneNumber", ErrorCode.PHONE_INVALID_CHAR.name()));
+            case TOO_LONG -> errors.add(new FieldErrorResponse("phoneNumber", ErrorCode.PHONE_TOO_LONG.name()));
             case NOT_EGYPTIAN -> errors.add(new FieldErrorResponse("phoneNumber", ErrorCode.PHONE_NOT_EGYPTIAN.name()));
             case VALID -> {
                 boolean unchanged = result.canonicalNumber().equals(user.getPhoneNumber());
@@ -128,11 +142,14 @@ public class ProfileServiceImpl implements ProfileService {
     }
 
     private ProfileResponse toResponse(User user) {
+        int nonRevokedSessionCount = sessionRepository.countByUserIdAndRevokedAtIsNull(user.getId());
         return ProfileResponse.builder()
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
                 .username(user.getUsername())
                 .phoneNumber(user.getPhoneNumber())
+                .email(user.getEmail())
+                .nonRevokedSessionCount(nonRevokedSessionCount)
                 .build();
     }
 

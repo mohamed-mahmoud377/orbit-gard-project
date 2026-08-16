@@ -35,19 +35,36 @@ function listItem(transaction: Transaction): TransactionListItem {
   };
 }
 
+function timeOfDayGreeting(): string {
+  const hour = new Date().getHours();
+
+  if (hour >= 5 && hour < 12) return 'Good Morning';
+  if (hour >= 12 && hour < 17) return 'Good Afternoon';
+  return 'Good Evening';
+}
+
+function currentDate(): string {
+  return new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+}
+
 @Component({
   selector: 'app-dashboard-page',
   imports: [RouterLink, PageHeader, TransactionList, StatusView, AssetUrlPipe],
   template: `
-    <section class="page stack" data-node-id="3:2">
+    <section class="page stack wallet-background" data-node-id="3:2">
       @if (loading()) {
         <app-status-view title="Loading dashboard" message="Fetching your wallet and activity…" tone="pending" />
       } @else if (error()) {
         <app-status-view title="Unable to load dashboard" [message]="error()" tone="danger" />
       } @else {
         <app-page-header
-          [title]="'Good evening, ' + (user()?.firstName ?? 'there')"
-          [subtitle]="today"
+          [title]="greetingPrefix + ', ' + (user()?.firstName ?? 'there')"
+          [subtitle]="currentDate"
         >
           <img [src]="'assets/notifications.svg' | assetUrl" width="40" height="40" alt="Notifications" />
         </app-page-header>
@@ -112,12 +129,8 @@ export default class DashboardPage implements OnInit {
   protected readonly walletSnapshot = signal<WalletSnapshot | null>(null);
   protected readonly recent = signal<TransactionListItem[]>([]);
   protected readonly money = formatMoney;
-  protected readonly today = new Date().toLocaleDateString('en-GB', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
+  protected readonly greetingPrefix = timeOfDayGreeting();
+  protected readonly currentDate = currentDate();
 
   ngOnInit(): void {
     this.wallet.loadDashboard().subscribe({

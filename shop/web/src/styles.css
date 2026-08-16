@@ -1,0 +1,507 @@
+@import 'tailwindcss';
+
+/* ==========================================================================
+   Orbit Bazaar — "night market" design system
+   Deep aubergine ink + orbit violet + marigold, on warm parchment.
+   No webfonts: the deployed CSP is `style-src 'self' 'unsafe-inline'`, so an
+   external Google Fonts stylesheet would be blocked in production.
+   ========================================================================== */
+
+@theme {
+  --font-sans:
+    ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    'Noto Sans', sans-serif;
+
+  --color-ink: #1a1327;
+  --color-ink-soft: #2a2040;
+  --color-ink-line: #3a2f55;
+
+  --color-canvas: #f7f4ef;
+  --color-surface: #ffffff;
+  --color-line: #e8e1d6;
+  --color-line-soft: #f1ece3;
+
+  --color-body: #241d33;
+  --color-muted: #6d6580;
+
+  --color-brand: #6c2bd9;
+  --color-brand-dark: #4c1d95;
+  --color-brand-soft: #f2ebfe;
+
+  --color-accent: #ff9f1c;
+  --color-accent-dark: #b26400;
+  --color-accent-soft: #fff3df;
+
+  --color-pop: #e5385f;
+  --color-pop-soft: #ffe9ee;
+
+  --color-teal: #0f9b8e;
+  --color-teal-soft: #e2f7f4;
+
+  --color-warn: #b8730c;
+  --color-warn-soft: #fdf3e0;
+
+  --shadow-card: 0 1px 2px rgb(26 19 39 / 0.04), 0 8px 24px -12px rgb(26 19 39 / 0.16);
+  --shadow-lift: 0 2px 4px rgb(26 19 39 / 0.05), 0 18px 40px -16px rgb(26 19 39 / 0.28);
+  --shadow-pop: 0 24px 60px -20px rgb(26 19 39 / 0.35);
+}
+
+/* Per-category accent, set at runtime from the catalog `accent` field. */
+:root {
+  --cat-accent: #6c2bd9;
+  --cat-accent-dark: #4c1d95;
+  --cat-accent-soft: #f2ebfe;
+}
+
+* {
+  min-width: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background-color: var(--color-canvas);
+  color: var(--color-body);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Consistent, visible keyboard affordance everywhere. */
+:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@utility ob-container {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 88rem;
+  padding-inline: 1rem;
+  @media (min-width: 768px) {
+    padding-inline: 1.5rem;
+  }
+  @media (min-width: 1280px) {
+    padding-inline: 2rem;
+  }
+}
+
+/* Horizontal rails: scrollable, snapping, with the scrollbar hidden. */
+@utility ob-rail {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding-block: 0.25rem 1rem;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  > * {
+    scroll-snap-align: start;
+    flex: 0 0 auto;
+  }
+}
+
+/* Vertical scroll pane with a slim, palette-matched scrollbar. Used by the
+   mobile drawer, the mobile filter sheet and the long facet lists. */
+@utility ob-scroll-y {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #d6cec1 transparent;
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background-color: #d6cec1;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+@utility ob-noscroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Clamp helpers — used constantly in dense product grids. */
+@utility ob-clamp-* {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: --value(integer);
+  overflow: hidden;
+}
+
+/* ---------------------------------------------------------------- buttons */
+
+@layer components {
+  .ob-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    font-size: 0.9375rem;
+    line-height: 1.15;
+    padding: 0.75rem 1.125rem;
+    transition:
+      background-color 0.18s ease,
+      color 0.18s ease,
+      box-shadow 0.18s ease,
+      transform 0.12s ease,
+      border-color 0.18s ease;
+    cursor: pointer;
+    white-space: nowrap;
+    user-select: none;
+  }
+  .ob-btn:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+  .ob-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  .ob-btn-primary {
+    background: linear-gradient(180deg, #ffb347 0%, var(--color-accent) 55%, #f38f00 100%);
+    color: #3a2200;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.5),
+      0 8px 18px -10px rgb(255 159 28 / 0.9);
+  }
+  .ob-btn-primary:hover:not(:disabled) {
+    background: linear-gradient(180deg, #ffbe61 0%, #ffa733 55%, #f59a12 100%);
+  }
+
+  .ob-btn-brand {
+    background-color: var(--color-brand);
+    color: #fff;
+    box-shadow: 0 8px 18px -12px rgb(108 43 217 / 0.9);
+  }
+  .ob-btn-brand:hover:not(:disabled) {
+    background-color: var(--color-brand-dark);
+  }
+
+  .ob-btn-ghost {
+    background-color: transparent;
+    color: var(--color-body);
+    border: 1px solid var(--color-line);
+  }
+  .ob-btn-ghost:hover:not(:disabled) {
+    background-color: var(--color-line-soft);
+    border-color: #d9d0c2;
+  }
+
+  .ob-btn-dark {
+    background-color: var(--color-ink);
+    color: #fff;
+  }
+  .ob-btn-dark:hover:not(:disabled) {
+    background-color: var(--color-ink-soft);
+  }
+
+  .ob-btn-sm {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8125rem;
+    border-radius: 0.625rem;
+  }
+  .ob-btn-lg {
+    padding: 0.9375rem 1.5rem;
+    font-size: 1rem;
+    border-radius: 0.875rem;
+  }
+
+  /* ------------------------------------------------------------- surfaces */
+
+  .ob-card {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: 1rem;
+    box-shadow: var(--shadow-card);
+  }
+
+  .ob-panel {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: 1rem;
+  }
+
+  /* --------------------------------------------------------------- inputs */
+
+  .ob-input {
+    width: 100%;
+    border-radius: 0.75rem;
+    border: 1px solid var(--color-line);
+    background-color: var(--color-surface);
+    padding: 0.6875rem 0.875rem;
+    font-size: 0.9375rem;
+    color: var(--color-body);
+    transition:
+      border-color 0.15s ease,
+      box-shadow 0.15s ease;
+  }
+  .ob-input::placeholder {
+    color: #a49bb4;
+  }
+  .ob-input:focus {
+    outline: none;
+    border-color: var(--color-brand);
+    box-shadow: 0 0 0 3px rgb(108 43 217 / 0.14);
+  }
+  .ob-input[aria-invalid='true'] {
+    border-color: var(--color-pop);
+    box-shadow: 0 0 0 3px rgb(229 56 95 / 0.12);
+  }
+
+  .ob-label {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--color-body);
+    margin-bottom: 0.375rem;
+  }
+
+  .ob-field-error {
+    margin-top: 0.3125rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--color-pop);
+  }
+
+  /* --------------------------------------------------------------- chips */
+
+  .ob-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    border-radius: 999px;
+    border: 1px solid var(--color-line);
+    background-color: var(--color-surface);
+    padding: 0.3125rem 0.6875rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-body);
+  }
+
+  .ob-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    border-radius: 999px;
+    padding: 0.1875rem 0.5rem;
+    font-size: 0.625rem;
+    font-weight: 800;
+    letter-spacing: 0.045em;
+    text-transform: uppercase;
+    line-height: 1.4;
+  }
+
+  /* Active/open state in the dark department bar. */
+  .ob-nav-open {
+    background-color: rgb(255 255 255 / 0.12);
+  }
+
+  .ob-link {
+    color: var(--color-brand);
+    font-weight: 600;
+    text-decoration-line: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+    text-decoration-color: rgb(108 43 217 / 0.35);
+  }
+  .ob-link:hover {
+    color: var(--color-brand-dark);
+    text-decoration-color: currentColor;
+  }
+}
+
+/* --------------------------------------------------------------- motion */
+
+@keyframes ob-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+@keyframes ob-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes ob-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes ob-slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes ob-slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+@keyframes ob-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ob-anim-fade-up {
+  animation: ob-fade-up 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.ob-anim-fade-in {
+  animation: ob-fade-in 0.3s ease both;
+}
+.ob-anim-slide-in {
+  animation: ob-slide-in-right 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.ob-anim-slide-up {
+  animation: ob-slide-up 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.ob-spin {
+  animation: ob-spin 0.9s linear infinite;
+}
+
+/* Skeleton shimmer (we use skeletons, never spinners, for content surfaces). */
+.ob-skeleton {
+  position: relative;
+  overflow: hidden;
+  background-color: #ece7de;
+  border-radius: 0.5rem;
+}
+.ob-skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    90deg,
+    rgb(255 255 255 / 0) 0,
+    rgb(255 255 255 / 0.55) 55%,
+    rgb(255 255 255 / 0) 100%
+  );
+  animation: ob-shimmer 1.5s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Aspect-ratio image box — prevents CLS while remote CDN photos load. */
+.ob-media {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--color-line-soft);
+}
+.ob-media > img {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+}
+
+/* Range slider, restyled — the default is unusable next to this palette. */
+input[type='range'].ob-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  background: transparent;
+  height: 1.25rem;
+  cursor: pointer;
+}
+input[type='range'].ob-range::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--color-line);
+}
+input[type='range'].ob-range::-moz-range-track {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--color-line);
+}
+input[type='range'].ob-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  margin-top: -7px;
+  height: 18px;
+  width: 18px;
+  border-radius: 999px;
+  background: #fff;
+  border: 2px solid var(--color-brand);
+  box-shadow: 0 2px 6px rgb(26 19 39 / 0.25);
+}
+input[type='range'].ob-range::-moz-range-thumb {
+  height: 16px;
+  width: 16px;
+  border-radius: 999px;
+  background: #fff;
+  border: 2px solid var(--color-brand);
+  box-shadow: 0 2px 6px rgb(26 19 39 / 0.25);
+}
+
+/* Dual-thumb price slider: two overlaid range inputs. Only the thumbs take
+   pointer events, so both handles stay grabbable across the whole track. */
+.ob-range-dual input[type='range'] {
+  pointer-events: none;
+  background: transparent;
+}
+.ob-range-dual input[type='range']::-webkit-slider-runnable-track {
+  background: transparent;
+}
+.ob-range-dual input[type='range']::-moz-range-track {
+  background: transparent;
+}
+.ob-range-dual input[type='range']::-webkit-slider-thumb {
+  pointer-events: auto;
+}
+.ob-range-dual input[type='range']::-moz-range-thumb {
+  pointer-events: auto;
+}
+
+/* Native controls should follow the palette too. */
+input[type='checkbox'],
+input[type='radio'] {
+  accent-color: var(--color-brand);
+}

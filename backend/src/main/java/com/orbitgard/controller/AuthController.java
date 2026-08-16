@@ -1,5 +1,6 @@
 package com.orbitgard.controller;
 
+import com.orbitgard.dto.request.AddChildRequest;
 import com.orbitgard.dto.request.LoginRequest;
 import com.orbitgard.dto.request.RefreshTokenRequest;
 import com.orbitgard.dto.request.RegisterRequest;
@@ -80,5 +81,16 @@ public class AuthController {
         } catch (UnknownHostException ex) {
             throw new IllegalStateException("Unable to resolve request IP address", ex);
         }
+    }
+
+    @PostMapping("/add-child")
+    public ResponseEntity<AddChildResponse> addChild(
+            @Valid @RequestBody AddChildRequest request) {
+
+        AddChildResponse response = authService.addChild(request);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
     }
 }

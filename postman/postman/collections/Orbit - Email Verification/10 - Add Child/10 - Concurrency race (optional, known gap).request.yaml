@@ -1,0 +1,18 @@
+$kind: http-request
+description: "Optional. Fire this request twice at the same instant (e.g. two Postman Runner threads, or a quick script) against a child with dailyLimit=500.00 and no prior spend today — each 300.00 call is individually within the limit but together they exceed it. If both are accepted, this confirms the known race condition: the sum-then-write pattern has no lock preventing two concurrent reads from both seeing 'not yet exceeded'. Not something to silently patch without discussing the transaction isolation tradeoff with the team first."
+url: "{{baseUrl}}/api/v1/wallet/internal/transfer"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "receiverUsername": "{{receiverUsername}}",
+      "amount": 300.00
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{childAccessToken}}"
+order: 17000

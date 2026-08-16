@@ -1,0 +1,18 @@
+$kind: http-request
+description: As the parent (a USER, not CHILD), send an amount well above any of the child's limits. Expect 200 success with no limit check firing — confirms enforceIfChild no-ops for non-child senders.
+url: "{{baseUrl}}/api/v1/wallet/internal/transfer"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "receiverUsername": "{{receiverUsername}}",
+      "amount": 100.00
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{parentAccessToken}}"
+order: 11000

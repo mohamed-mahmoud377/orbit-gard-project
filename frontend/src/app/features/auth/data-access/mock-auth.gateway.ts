@@ -17,6 +17,10 @@ import {
   LoginRequest,
   LoginResponse,
   PromoCodeValidationResponse,
+  PasswordResetRequest,
+  PasswordResetRequestResponse,
+  PasswordResetConfirmRequest,
+  PasswordResetConfirmResponse,
   ProblemDetails,
   ProblemFieldError,
   RefreshTokenRequest,
@@ -221,7 +225,9 @@ export class MockAuthGateway implements AuthGateway {
   checkUsername(username: string): Observable<UsernameAvailabilityResponse> {
     const normalized = normalizeUsername(username);
     if (!normalized) {
-      return this.fail(problem(400, 'FIELD_REQUIRED', [{ field: 'username', code: 'FIELD_REQUIRED' }]));
+      return this.fail(
+        problem(400, 'FIELD_REQUIRED', [{ field: 'username', code: 'FIELD_REQUIRED' }]),
+      );
     }
     if (!isValidUsername(normalized)) {
       return of({ username: normalized, available: false, reason: 'INVALID' as const }).pipe(
@@ -353,8 +359,7 @@ export class MockAuthGateway implements AuthGateway {
 
     // Mirror production: email send happens after commit and never blocks signup.
     if (typeof window !== 'undefined') {
-      (window as unknown as { __orbitLastVerifyToken?: string }).__orbitLastVerifyToken =
-        rawToken;
+      (window as unknown as { __orbitLastVerifyToken?: string }).__orbitLastVerifyToken = rawToken;
       (window as unknown as { __orbitLastVerifyEmail?: string }).__orbitLastVerifyEmail = email;
     }
 
@@ -431,19 +436,14 @@ export class MockAuthGateway implements AuthGateway {
     }
 
     const newest = [...this.state.tokens]
-      .filter(
-        (token) =>
-          token.userId === account.id && token.purpose === 'EMAIL_VERIFICATION',
-      )
+      .filter((token) => token.userId === account.id && token.purpose === 'EMAIL_VERIFICATION')
       .sort((a, b) => b.createdAt - a.createdAt)[0];
 
     if (newest && Date.now() - newest.createdAt < RESEND_COOLDOWN_MS) {
       const retryAfterSeconds = Math.ceil(
         (RESEND_COOLDOWN_MS - (Date.now() - newest.createdAt)) / 1000,
       );
-      return this.fail(
-        problem(429, 'RATE_LIMITED', [], { retryAfterSeconds }),
-      );
+      return this.fail(problem(429, 'RATE_LIMITED', [], { retryAfterSeconds }));
     }
 
     const now = Date.now();
@@ -471,12 +471,52 @@ export class MockAuthGateway implements AuthGateway {
     this.persist();
 
     if (typeof window !== 'undefined') {
-      (window as unknown as { __orbitLastVerifyToken?: string }).__orbitLastVerifyToken =
-        rawToken;
+      (window as unknown as { __orbitLastVerifyToken?: string }).__orbitLastVerifyToken = rawToken;
       (window as unknown as { __orbitLastVerifyEmail?: string }).__orbitLastVerifyEmail = email;
     }
 
     return of(generic).pipe(delay(150));
+  }
+
+  requestPasswordReset(request: PasswordResetRequest): Observable<PasswordResetRequestResponse> {
+    const email = normalizeEmail(request.email ?? '');
+    if (!isValidEmail(email)) {
+      return this.fail(problem(400, 'EMAIL_INVALID', [{ field: 'email', code: 'EMAIL_INVALID' }]));
+    }
+
+    return of({
+      message: 'If an account exists for that address, a reset link is on its way.',
+    }).pipe(delay(150));
+  }
+
+  confirmPasswordReset(
+    request: PasswordResetConfirmRequest,
+  ): Observable<PasswordResetConfirmResponse> {
+    if (!request.token || !request.newPassword || !request.confirmNewPassword) {
+      return throwError(
+        () =>
+          new AuthApiError({
+            status: 400,
+            code: 'FIELD_REQUIRED',
+            title: 'Invalid request',
+          }),
+      );
+    }
+
+    if (request.newPassword !== request.confirmNewPassword) {
+      return throwError(
+        () =>
+          new AuthApiError({
+            status: 400,
+            code: 'PASSWORD_MISMATCH',
+            title: 'Passwords do not match',
+          }),
+      );
+    }
+
+    return of({
+      message: 'Password reset successfully.',
+    });
   }
 
   login(request: LoginRequest): Observable<LoginResponse> {

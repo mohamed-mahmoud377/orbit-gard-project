@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -49,7 +50,7 @@ public class VerificationEmailServiceImpl implements VerificationEmailService {
     @Transactional
     public ResendVerificationResponse resendVerification(String email) {
 
-        User user = userRepository.findByEmail(email).orElse(null);
+        User user = userRepository.findByEmail(email.trim().toLowerCase()).orElse(null);
 
         if (user == null || user.getStatus() == UserStatus.ACTIVE) {
             return new ResendVerificationResponse(GENERIC_RESEND_MESSAGE, COOLDOWN_SECONDS);

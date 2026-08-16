@@ -1,0 +1,21 @@
+$kind: http-request
+url: "{{baseUrl}}/wallet/internal/transfer"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "receiverUsername": "{{childAUsername}}",
+      "amount": "{{allocationAmount}}"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Transfer accepted', () => pm.response.to.have.status(200));
+      pm.test('Credit leg reported', () => {
+          pm.expect(pm.response.json()).to.have.property('creditTransactionId');
+      });
+    language: text/javascript
+order: 1000

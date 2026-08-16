@@ -44,6 +44,8 @@ public class PaymentConfirmationServiceImpl implements PaymentConfirmationServic
 
         var obj = payload.getObj();
         String merchantOrderId = obj.getOrder() == null ? null : obj.getOrder().getMerchantOrderId();
+        log.info("Webhook received: merchantOrderId={}, success={}, pending={}, amountCents={}",
+                merchantOrderId, obj.isSuccess(), obj.isPending(), obj.getAmountCents());
         if (merchantOrderId == null) {
             log.warn("Paymob webhook missing merchant_order_id");
             return;
@@ -59,22 +61,28 @@ public class PaymentConfirmationServiceImpl implements PaymentConfirmationServic
 
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new ApiException(ErrorCode.PAYMENT_NOT_FOUND));
-
+        log.info("Loaded payment {} with current status={}", paymentId, payment.getStatus());
         if (!PENDING_STATUSES.contains(payment.getStatus())) {
             log.info("Payment {} already in status {}, ignoring webhook", paymentId, payment.getStatus());
             return;
         }
 
         if (obj.isSuccess()) {
+            log.info("Webhook reports success=true, checking amount: expected={}, actual={}",
+                    payment.getAmountCents(), obj.getAmountCents());
             if (obj.getAmountCents() == null || payment.getAmountCents() != obj.getAmountCents()) {
                 log.error("Amount mismatch for payment {}: expected {} cents, webhook said {}",
                         paymentId, payment.getAmountCents(), obj.getAmountCents());
                 transitionService.markFailed(payment, "Settled amount did not match the requested amount");
                 return;
             }
+            log.info("Calling transitionService.complete() for payment {}", paymentId);
             transitionService.complete(payment);
         } else if (!obj.isPending()) {
+            log.info("Webhook reports failure for payment {}", paymentId);
             transitionService.markFailed(payment, "Paymob webhook reported an unsuccessful transaction");
+        }else {
+            log.info("Webhook reports pending=true for payment {}, leaving as-is", paymentId); // ADD
         }
         // pending == true -> leave as-is, nothing to do yet
     }

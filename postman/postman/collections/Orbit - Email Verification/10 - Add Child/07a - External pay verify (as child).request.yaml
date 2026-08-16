@@ -1,0 +1,22 @@
+$kind: http-request
+description: Step 1 of external payment. Save the returned verificationToken as a collection/environment variable (e.g. externalPaymentToken) to use in the /external/pay requests below.
+url: "{{baseUrl}}/api/v1/external/verify"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "username": "{{childUsername}}",
+      "password": "{{childPassword}}"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      if (pm.response.code === 200) {
+          const body = pm.response.json();
+          pm.collectionVariables.set('externalPaymentToken', body.verificationToken || body.token || '');
+      }
+    language: text/javascript
+order: 12000

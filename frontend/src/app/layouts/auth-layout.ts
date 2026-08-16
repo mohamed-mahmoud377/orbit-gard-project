@@ -17,6 +17,11 @@ import { OrbitLogo } from '../shared/ui/orbit-logo';
         <img class="rings" [src]="'assets/auth-rings.svg' | assetUrl" alt="" aria-hidden="true" />
       </section>
       <section class="form-panel">
+      
+       <div class="blur-circle blur-1"></div>
+       <div class="blur-circle blur-2"></div>
+       <div class="blur-circle blur-3"></div>
+       <div class="blur-circle blur-4"></div>
         <router-outlet />
       </section>
     </main>

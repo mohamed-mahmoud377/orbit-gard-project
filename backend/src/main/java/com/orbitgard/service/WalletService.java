@@ -2,6 +2,7 @@ package com.orbitgard.service;
 
 import com.orbitgard.dto.response.WalletBalanceResponse;
 import com.orbitgard.dto.response.WalletTransactionPageResponse;
+import com.orbitgard.dto.response.WalletTransactionSummaryResponse;
 import com.orbitgard.entity.Wallet;
 
 import java.util.UUID;
@@ -15,4 +16,6 @@ public interface WalletService {
     WalletBalanceResponse getBalanceForUser(UUID userId);
 
     WalletTransactionPageResponse listTransactionsForUser(UUID userId, int page);
+
+    WalletTransactionSummaryResponse getMonthlySummaryForUser(UUID userId);
 }

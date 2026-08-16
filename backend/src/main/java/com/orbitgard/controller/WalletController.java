@@ -1,20 +1,22 @@
 package com.orbitgard.controller;
 
+import com.orbitgard.dto.request.InternalTransferRequest;
+import com.orbitgard.dto.response.InternalTransferResponse;
 import com.orbitgard.dto.response.WalletBalanceResponse;
 import com.orbitgard.dto.response.WalletTransactionPageResponse;
+import com.orbitgard.dto.response.WalletTransactionSummaryResponse;
 import com.orbitgard.service.AuthenticatedUserService;
+import com.orbitgard.service.InternalTransferService;
 import com.orbitgard.service.WalletService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 import jakarta.validation.constraints.Min;
@@ -28,10 +30,12 @@ public class WalletController {
 
     private final WalletService walletService;
     private final AuthenticatedUserService authenticatedUserService;
+    private final InternalTransferService internalTransferService;
 
-    public WalletController(WalletService walletService, AuthenticatedUserService authenticatedUserService) {
+    public WalletController(WalletService walletService, AuthenticatedUserService authenticatedUserService, InternalTransferService internalTransferService) {
         this.walletService = walletService;
         this.authenticatedUserService = authenticatedUserService;
+        this.internalTransferService = internalTransferService;
     }
 
     @GetMapping
@@ -55,5 +59,29 @@ public class WalletController {
             @RequestParam(defaultValue = "0") @Min(0) int page) {
         UUID userId = authenticatedUserService.currentPrincipal().userId();
         return ResponseEntity.ok(walletService.listTransactionsForUser(userId, page));
+    }
+
+    @GetMapping("/transactions/summary")
+    @Operation(summary = "Get monthly transaction summary", description = "Returns money in this month, money out this month, currently held funds, and rejected transaction count — backs the four cards at the top of the Transactions tab.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Summary returned"),
+            @ApiResponse(responseCode = "401", description = "Authentication required")
+    })
+    public ResponseEntity<WalletTransactionSummaryResponse> getTransactionSummary() {
+        UUID userId = authenticatedUserService.currentPrincipal().userId();
+        return ResponseEntity.ok(walletService.getMonthlySummaryForUser(userId));
+    }
+
+    @PostMapping("/internal/transfer")
+    @Operation(summary = "Send an internal transfer", description = "Moves money from the authenticated user's wallet to another Orbit user's wallet by username. Writes two linked transactions — a debit on the sender and a credit on the receiver.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Transfer recorded"),
+            @ApiResponse(responseCode = "400", description = "Invalid amount or self-transfer attempted"),
+            @ApiResponse(responseCode = "401", description = "Authentication required"),
+            @ApiResponse(responseCode = "404", description = "Receiver not found"),
+            @ApiResponse(responseCode = "422", description = "Insufficient available balance")
+    })
+    public ResponseEntity<InternalTransferResponse> transfer(@Valid @RequestBody InternalTransferRequest request) {
+        return ResponseEntity.ok(internalTransferService.transfer(request));
     }
 }

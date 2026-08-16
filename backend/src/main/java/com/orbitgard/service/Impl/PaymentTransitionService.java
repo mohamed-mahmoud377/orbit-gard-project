@@ -36,6 +36,7 @@ public class PaymentTransitionService {
     public void complete(Payment payment) {
         int updated = paymentRepository.updateStatusIfCurrentlyIn(
                 payment.getId(), PENDING_STATUSES, PaymentStatus.COMPLETED);
+        log.info("complete(): updateStatusIfCurrentlyIn affected {} row(s) for payment {}", updated, payment.getId());
         if (updated == 0) return;
 
         UUID userId = payment.getUser().getId();
