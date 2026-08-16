@@ -1,0 +1,230 @@
+{
+  "version": "sample-1",
+  "currency": "EGP",
+  "categories": [
+    {
+      "slug": "electronics",
+      "name": "Electronics",
+      "tagline": "Tech that keeps up with you",
+      "icon": "laptop",
+      "accent": "indigo",
+      "heroImage": "https://cdn.stocksnap.io/img-thumbs/960w/electronics-hero_SAMPLE1.jpg",
+      "subcategories": [
+        { "slug": "laptops", "name": "Laptops & Ultrabooks" },
+        { "slug": "headphones", "name": "Headphones & Audio" }
+      ]
+    },
+    {
+      "slug": "home-kitchen",
+      "name": "Home & Kitchen",
+      "tagline": "Small upgrades, everyday difference",
+      "icon": "cooking-pot",
+      "accent": "amber",
+      "heroImage": "https://cdn.stocksnap.io/img-thumbs/960w/home-hero_SAMPLE2.jpg",
+      "subcategories": [
+        { "slug": "coffee", "name": "Coffee & Espresso" },
+        { "slug": "cookware", "name": "Cookware" }
+      ]
+    }
+  ],
+  "products": [
+    {
+      "id": "p-00001",
+      "slug": "aurora-x14-ultrabook-16gb",
+      "name": "Aurora X14 Ultrabook 16GB",
+      "brand": "Aurora",
+      "categorySlug": "electronics",
+      "subcategorySlug": "laptops",
+      "priceCents": 4599900,
+      "listPriceCents": 5299900,
+      "rating": 4.6,
+      "ratingCount": 1284,
+      "stock": 37,
+      "badges": ["BEST_SELLER"],
+      "shortDescription": "A 1.1 kg ultrabook with a 2.8K OLED panel and all-day battery.",
+      "description": "The Aurora X14 pairs a 14-inch 2.8K OLED display with a low-power chassis that stays quiet under load.\n\nSixteen gigabytes of soldered LPDDR5 and a 1 TB drive come as standard, so there is nothing to upgrade later.",
+      "features": [
+        "14\" 2.8K OLED, 120 Hz",
+        "16 GB LPDDR5 memory",
+        "1 TB PCIe 4.0 storage",
+        "1.1 kg magnesium chassis",
+        "18-hour rated battery"
+      ],
+      "specs": {
+        "Display": "14\" 2.8K OLED",
+        "Memory": "16 GB LPDDR5",
+        "Storage": "1 TB NVMe",
+        "Weight": "1.1 kg",
+        "Ports": "2x USB-C, HDMI 2.1"
+      },
+      "tags": ["laptop", "ultrabook", "oled"],
+      "images": [
+        "https://cdn.stocksnap.io/img-thumbs/960w/laptop-a_SAMPLE.jpg",
+        "https://cdn.stocksnap.io/img-thumbs/960w/laptop-b_SAMPLE.jpg",
+        "https://cdn.stocksnap.io/img-thumbs/960w/laptop-c_SAMPLE.jpg"
+      ],
+      "freeShipping": true,
+      "createdAt": "2026-03-11T00:00:00.000Z"
+    },
+    {
+      "id": "p-00002",
+      "slug": "aurora-x14-ultrabook-32gb",
+      "name": "Aurora X14 Ultrabook 32GB",
+      "brand": "Aurora",
+      "categorySlug": "electronics",
+      "subcategorySlug": "laptops",
+      "priceCents": 5899900,
+      "listPriceCents": null,
+      "rating": 4.7,
+      "ratingCount": 402,
+      "stock": 9,
+      "badges": ["LIMITED"],
+      "shortDescription": "The X14 with double the memory, for people who keep 40 tabs open.",
+      "description": "Identical chassis, twice the memory.\n\nWorth it if your working set is large; otherwise the 16 GB model is the better buy.",
+      "features": ["32 GB LPDDR5", "14\" 2.8K OLED", "2 TB NVMe", "Thunderbolt 4", "1.1 kg"],
+      "specs": {
+        "Display": "14\" 2.8K OLED",
+        "Memory": "32 GB LPDDR5",
+        "Storage": "2 TB NVMe",
+        "Weight": "1.1 kg",
+        "Ports": "2x Thunderbolt 4"
+      },
+      "tags": ["laptop", "ultrabook", "workstation"],
+      "images": [
+        "https://cdn.stocksnap.io/img-thumbs/960w/laptop-d_SAMPLE.jpg",
+        "https://cdn.stocksnap.io/img-thumbs/960w/laptop-e_SAMPLE.jpg",
+        "https://cdn.stocksnap.io/img-thumbs/960w/laptop-f_SAMPLE.jpg"
+      ],
+      "freeShipping": true,
+      "createdAt": "2026-04-02T00:00:00.000Z"
+    },
+    {
+      "id": "p-00003",
+      "slug": "meridian-anc-over-ear-headphones",
+      "name": "Meridian ANC Over-Ear Headphones",
+      "brand": "Meridian",
+      "categorySlug": "electronics",
+      "subcategorySlug": "headphones",
+      "priceCents": 749900,
+      "listPriceCents": 899900,
+      "rating": 4.4,
+      "ratingCount": 2210,
+      "stock": 140,
+      "badges": ["DEAL"],
+      "shortDescription": "Adaptive noise cancelling with 40 hours of playback per charge.",
+      "description": "Meridian's adaptive ANC samples the room 400 times a second and adjusts without the pressure sensation cheaper sets have.\n\nMulti-point pairing keeps a laptop and a phone connected at once.",
+      "features": ["Adaptive ANC", "40 h battery", "Multi-point Bluetooth 5.3", "USB-C fast charge", "Foldable"],
+      "specs": {
+        "Driver": "40 mm dynamic",
+        "Battery": "40 hours",
+        "Bluetooth": "5.3",
+        "Weight": "254 g",
+        "Codecs": "LDAC, AAC, SBC"
+      },
+      "tags": ["headphones", "anc", "wireless"],
+      "images": [
+        "https://cdn.stocksnap.io/img-thumbs/960w/headphones-a_SAMPLE.jpg",
+        "https://cdn.stocksnap.io/img-thumbs/960w/headphones-b_SAMPLE.jpg",
+        "https://cdn.stocksnap.io/img-thumbs/960w/headphones-c_SAMPLE.jpg"
+      ],
+      "freeShipping": false,
+      "createdAt": "2026-01-19T00:00:00.000Z"
+    },
+    {
+      "id": "p-00004",
+      "slug": "kettleworks-pour-over-kettle",
+      "name": "Kettleworks Pour-Over Kettle 1L",
+      "brand": "Kettleworks",
+      "categorySlug": "home-kitchen",
+      "subcategorySlug": "coffee",
+      "priceCents": 189900,
+      "listPriceCents": 219900,
+      "rating": 4.5,
+      "ratingCount": 631,
+      "stock": 88,
+      "badges": ["DEAL"],
+      "shortDescription": "Gooseneck kettle with 1-degree temperature control and a 60-minute hold.",
+      "description": "A counterweighted gooseneck gives you a pour slow enough to bloom properly.\n\nThe base holds any temperature between 40 and 100 degrees for an hour.",
+      "features": ["1 °C control", "60-minute hold", "Counterweighted spout", "1 L capacity", "Stainless interior"],
+      "specs": {
+        "Capacity": "1 L",
+        "Range": "40-100 °C",
+        "Material": "304 stainless",
+        "Power": "1200 W",
+        "Cord": "Detachable base"
+      },
+      "tags": ["coffee", "kettle", "pour over"],
+      "images": [
+        "https://cdn.stocksnap.io/img-thumbs/960w/kettle-a_SAMPLE.jpg",
+        "https://cdn.stocksnap.io/img-thumbs/960w/kettle-b_SAMPLE.jpg",
+        "https://cdn.stocksnap.io/img-thumbs/960w/kettle-c_SAMPLE.jpg"
+      ],
+      "freeShipping": false,
+      "createdAt": "2026-02-08T00:00:00.000Z"
+    },
+    {
+      "id": "p-00005",
+      "slug": "kettleworks-burr-grinder-v2",
+      "name": "Kettleworks Burr Grinder V2",
+      "brand": "Kettleworks",
+      "categorySlug": "home-kitchen",
+      "subcategorySlug": "coffee",
+      "priceCents": 329900,
+      "listPriceCents": null,
+      "rating": 4.2,
+      "ratingCount": 318,
+      "stock": 0,
+      "badges": ["NEW"],
+      "shortDescription": "Forty-stop conical burr grinder that goes from espresso to French press.",
+      "description": "Conical steel burrs and a stepped collar with forty positions.\n\nRetention is under half a gram, so single-dosing is practical.",
+      "features": ["40 grind settings", "Conical steel burrs", "<0.5 g retention", "Static-reducing bin", "Quiet DC motor"],
+      "specs": {
+        "Burrs": "38 mm conical steel",
+        "Settings": "40",
+        "Hopper": "250 g",
+        "Motor": "DC, 165 W",
+        "Retention": "0.4 g"
+      },
+      "tags": ["coffee", "grinder", "espresso"],
+      "images": [
+        "https://cdn.stocksnap.io/img-thumbs/960w/grinder-a_SAMPLE.jpg",
+        "https://cdn.stocksnap.io/img-thumbs/960w/grinder-b_SAMPLE.jpg",
+        "https://cdn.stocksnap.io/img-thumbs/960w/grinder-c_SAMPLE.jpg"
+      ],
+      "freeShipping": false,
+      "createdAt": "2026-05-21T00:00:00.000Z"
+    },
+    {
+      "id": "p-00006",
+      "slug": "ferro-tri-ply-saucepan-2l",
+      "name": "Ferro Tri-Ply Saucepan 2L",
+      "brand": "Ferro",
+      "categorySlug": "home-kitchen",
+      "subcategorySlug": "cookware",
+      "priceCents": 94900,
+      "listPriceCents": 119900,
+      "rating": 4.3,
+      "ratingCount": 155,
+      "stock": 210,
+      "badges": [],
+      "shortDescription": "Fully clad tri-ply saucepan that works on induction and holds heat evenly.",
+      "description": "An aluminium core between two layers of steel, clad all the way up the wall rather than just across the base.\n\nOven safe to 260 degrees, handle included.",
+      "features": ["Tri-ply fully clad", "Induction ready", "Oven safe to 260 °C", "Riveted stay-cool handle", "2 L"],
+      "specs": {
+        "Capacity": "2 L",
+        "Construction": "Tri-ply clad",
+        "Base": "Induction compatible",
+        "Oven": "260 °C",
+        "Care": "Dishwasher safe"
+      },
+      "tags": ["cookware", "saucepan", "induction"],
+      "images": [
+        "https://cdn.stocksnap.io/img-thumbs/960w/saucepan-a_SAMPLE.jpg",
+        "https://cdn.stocksnap.io/img-thumbs/960w/saucepan-b_SAMPLE.jpg",
+        "https://cdn.stocksnap.io/img-thumbs/960w/saucepan-c_SAMPLE.jpg"
+      ],
+      "freeShipping": false,
+      "createdAt": "2026-06-30T00:00:00.000Z"
+    }
+  ]
+}

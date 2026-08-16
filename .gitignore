@@ -31,3 +31,6 @@ Thumbs.db
 *.local
 
 .vscode
+
+# Catalog builder cache (regenerate with shop/tools/build-catalog.mjs)
+shop/tools/.cache/

@@ -1,0 +1,82 @@
+# Local development stack for Orbit Bazaar.
+#
+#   docker compose -f shop/docker-compose.dev.yml up --build
+#
+# Brings up Postgres + the shop only. The Java backend is NOT part of this file:
+# every Orbit call is server-to-server, so ORBIT_API_BASE can point at the
+# deployed backend and wallet checkout works without a local JVM.
+#
+#   ORBIT_API_BASE=http://46.224.100.97/api/v1  (default — deployed backend)
+#   ORBIT_API_BASE=http://host.docker.internal:8080/api/v1  (local Spring Boot)
+#
+# Production lives in backend/deploy/docker-compose.yml; this file is never
+# copied to the server.
+#
+# Note: the image build compiles shop/web/ (Angular). If you are only working on
+# the API, run it with bare node instead — see shop/README.md.
+
+name: orbit-bazaar-dev
+
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: orbit-bazaar-dev-db
+    restart: unless-stopped
+    environment:
+      # Matches production: the server's database is `orbit` and the shop
+      # creates its own `shop` database at boot via BOOTSTRAP_DATABASE_URL.
+      POSTGRES_DB: orbit
+      POSTGRES_USER: orbit
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-orbit}
+    ports:
+      # 5433 on the host so this never collides with a local Postgres or with
+      # the production database on :5432.
+      - "${DB_PORT:-5433}:5432"
+    volumes:
+      - orbit-bazaar-dev-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U orbit -d orbit"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  shop:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: orbit-bazaar-dev-shop
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://orbit:${POSTGRES_PASSWORD:-orbit}@db:5432/shop
+      BOOTSTRAP_DATABASE_URL: postgres://orbit:${POSTGRES_PASSWORD:-orbit}@db:5432/postgres
+      # Default targets the deployed Spring backend through its nginx, so
+      # /shop/api/orders/:id/pay/orbit/* works with real Orbit accounts.
+      ORBIT_API_BASE: ${ORBIT_API_BASE:-http://46.224.100.97/api/v1}
+      ORBIT_MERCHANT_NAME: ${ORBIT_MERCHANT_NAME:-Orbit Bazaar}
+      ORBIT_TIMEOUT_MS: ${ORBIT_TIMEOUT_MS:-15000}
+      JWT_SECRET: ${SHOP_JWT_SECRET:-dev-only-insecure-shop-secret-change-me}
+      SEED_ON_BOOT: ${SEED_ON_BOOT:-true}
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      NODE_ENV: production
+      PORT: "4000"
+    volumes:
+      # Read-only bind mount so API edits land after `docker compose restart
+      # shop`, without a rebuild. node_modules and the built Angular bundle stay
+      # in the image. Drop this to test exactly what CI produces.
+      - ./api/src:/app/src:ro
+    ports:
+      # Published here (unlike production, where only nginx reaches the shop) so
+      # you can open http://localhost:4000/shop/ directly.
+      - "${SHOP_PORT:-4000}:4000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:4000/shop/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 90s
+
+volumes:
+  orbit-bazaar-dev-db:
