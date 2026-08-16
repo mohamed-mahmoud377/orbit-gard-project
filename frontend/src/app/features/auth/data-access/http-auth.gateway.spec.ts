@@ -167,6 +167,15 @@ describe('HttpAuthGateway', () => {
     });
   });
 
+  it('posts logout to revoke the current server session', () => {
+    gateway.logout().subscribe((result) => {
+      expect(result).toBeUndefined();
+    });
+    const req = http.expectOne('/api/v1/auth/logout');
+    expect(req.request.method).toBe('POST');
+    req.flush(null);
+  });
+
   it('posts verify and resend endpoints', () => {
     gateway.verify({ token: 'abc' }).subscribe((response) => {
       expect(response.status).toBe('ACTIVE');

@@ -23,6 +23,7 @@ import {
 } from '../data-access/auth.messages';
 
 type AvailabilityState = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
+type PromoState = 'idle' | 'checking' | 'valid' | 'invalid' | 'expired';
 
 @Component({
   selector: 'app-sign-up-page',
@@ -186,7 +187,7 @@ type AvailabilityState = 'idle' | 'checking' | 'available' | 'taken' | 'invalid'
           </div>
         </div>
 
-        <div class="field" [class.field-invalid]="fieldErrors()['promoCode']">
+        <div class="field" [class.field-invalid]="promoShowsInvalid()">
           <label for="promo">Promotional code <span class="muted">(optional)</span></label>
           <input
             class="input"
@@ -194,7 +195,19 @@ type AvailabilityState = 'idle' | 'checking' | 'available' | 'taken' | 'invalid'
             formControlName="promoCode"
             placeholder="WELCOME50"
             maxlength="32"
+            [attr.aria-describedby]="promoDescribedBy()"
           />
+          @if (promoState() === 'checking') {
+            <p class="field-hint" id="promo-status">Checking promotional code…</p>
+          } @else if (promoState() === 'valid' && promoAmount() !== null) {
+            <p class="field-hint field-hint-success" id="promo-status">
+              {{ AUTH_MESSAGES.promoValid(promoAmount()!) }}
+            </p>
+          } @else if (promoState() === 'invalid') {
+            <p class="field-error" id="promo-status">{{ AUTH_MESSAGES.promoInvalid }}</p>
+          } @else if (promoState() === 'expired') {
+            <p class="field-error" id="promo-status">{{ AUTH_MESSAGES.promoExpired }}</p>
+          }
           @if (fieldErrors()['promoCode']) {
             <p class="field-error">{{ fieldErrors()['promoCode'] }}</p>
           }
@@ -203,7 +216,7 @@ type AvailabilityState = 'idle' | 'checking' | 'available' | 'taken' | 'invalid'
         <button
           class="btn btn-primary"
           type="submit"
-          [disabled]="submitting() || availability() === 'taken' || availability() === 'checking' || availability() === 'invalid'"
+          [disabled]="submitting() || availability() === 'taken' || availability() === 'checking' || availability() === 'invalid' || promoState() === 'checking' || promoState() === 'invalid' || promoState() === 'expired'"
         >
           {{ submitting() ? 'Creating account…' : 'Create account' }}
         </button>
@@ -229,6 +242,8 @@ export class SignUpPage {
   protected readonly banner = signal('');
   protected readonly fieldErrors = signal<Record<string, string>>({});
   protected readonly availability = signal<AvailabilityState>('idle');
+  protected readonly promoState = signal<PromoState>('idle');
+  protected readonly promoAmount = signal<number | null>(null);
   protected readonly showPassword = signal(false);
   protected readonly submitting = signal(false);
 
@@ -284,6 +299,43 @@ export class SignUpPage {
         else if (response.reason === 'TAKEN') this.availability.set('taken');
         else this.availability.set('invalid');
       });
+
+    this.form.controls.promoCode.valueChanges
+      .pipe(
+        debounceTime(400),
+        distinctUntilChanged(),
+        switchMap((value) => {
+          const trimmed = value.trim();
+          this.clearFieldError('promoCode');
+          if (!trimmed) {
+            this.promoState.set('idle');
+            this.promoAmount.set(null);
+            return of(null);
+          }
+          this.promoState.set('checking');
+          const requested = trimmed.toUpperCase();
+          return this.auth.validatePromoCode(trimmed).pipe(
+            catchError(() => {
+              this.promoState.set('idle');
+              this.promoAmount.set(null);
+              return of(null);
+            }),
+            filter((response) => response === null || value.trim().toUpperCase() === requested),
+          );
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((response) => {
+        if (!response) return;
+        if (response.status === 'VALID') {
+          this.promoState.set('valid');
+          this.promoAmount.set(response.amount);
+          return;
+        }
+        this.promoAmount.set(null);
+        if (response.status === 'EXPIRED') this.promoState.set('expired');
+        else this.promoState.set('invalid');
+      });
   }
 
   protected usernameDescribedBy(): string | null {
@@ -299,6 +351,19 @@ export class SignUpPage {
     return !!this.fieldErrors()['username'];
   }
 
+  protected promoDescribedBy(): string | null {
+    if (this.promoState() !== 'idle') return 'promo-status';
+    if (this.fieldErrors()['promoCode']) return 'promo-error';
+    return null;
+  }
+
+  protected promoShowsInvalid(): boolean {
+    const state = this.promoState();
+    if (state === 'invalid' || state === 'expired') return true;
+    if (state === 'valid' || state === 'checking' || state === 'idle') return false;
+    return !!this.fieldErrors()['promoCode'];
+  }
+
   protected submit(): void {
     this.banner.set('');
     const value = this.form.getRawValue();
@@ -309,6 +374,16 @@ export class SignUpPage {
       localErrors.username = AUTH_MESSAGES.usernameInvalid;
     } else if (this.availability() === 'available') {
       delete localErrors.username;
+    }
+    const promo = value.promoCode.trim();
+    if (promo) {
+      if (this.promoState() === 'invalid') {
+        localErrors.promoCode = AUTH_MESSAGES.promoInvalid;
+      } else if (this.promoState() === 'expired') {
+        localErrors.promoCode = AUTH_MESSAGES.promoExpired;
+      } else if (this.promoState() !== 'valid') {
+        localErrors.promoCode = 'Enter a valid promotional code or leave this field empty.';
+      }
     }
     this.fieldErrors.set(localErrors);
     if (Object.keys(localErrors).length) {

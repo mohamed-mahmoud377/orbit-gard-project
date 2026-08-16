@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, tap, throwError } from 'rxjs';
+import { Observable, catchError, of, tap, throwError } from 'rxjs';
 
 import { DemoStore } from '../../../data-access';
 import { AUTH_GATEWAY } from './auth.gateway';
@@ -7,6 +7,7 @@ import { AuthTokenStore } from './auth-token.store';
 import {
   LoginRequest,
   LoginResponse,
+  PromoCodeValidationResponse,
   PasswordResetRequest,
   PasswordResetRequestResponse,
   PasswordResetConfirmRequest,
@@ -49,9 +50,11 @@ export class AuthFacade {
     return this.gateway.checkUsername(username);
   }
 
-  requestPasswordReset(
-    request: PasswordResetRequest,
-  ): Observable<PasswordResetRequestResponse> {
+  validatePromoCode(code: string): Observable<PromoCodeValidationResponse> {
+    return this.gateway.validatePromoCode(code);
+  }
+
+  requestPasswordReset(request: PasswordResetRequest): Observable<PasswordResetRequestResponse> {
     return this.gateway.requestPasswordReset(request);
   }
 
@@ -103,9 +106,25 @@ export class AuthFacade {
     );
   }
 
-  /** Local sign-out only — server logout is outside the five-endpoint baseline. */
+  /** Clears client session state without calling the server. */
   logoutLocal(): void {
     this.tokens.clear();
     this.demoStore.logout();
+  }
+
+  /** Revokes the current server session, then clears local auth state. */
+  logout(): Observable<void> {
+    if (!this.tokens.accessToken() && !this.tokens.canRefresh()) {
+      this.logoutLocal();
+      return of(undefined);
+    }
+
+    return this.gateway.logout().pipe(
+      tap(() => this.logoutLocal()),
+      catchError(() => {
+        this.logoutLocal();
+        return of(undefined);
+      }),
+    );
   }
 }

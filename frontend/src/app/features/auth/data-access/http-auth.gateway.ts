@@ -24,6 +24,7 @@ import {
   PasswordResetConfirmResponse,
   ProblemDetails,
   RegisterRequest,
+  PromoCodeValidationResponse,
   RefreshTokenRequest,
   RegisterResponse,
   ResendVerifyRequest,
@@ -48,6 +49,13 @@ export class HttpAuthGateway implements AuthGateway {
         ),
         catchError((error) => this.mapError(error)),
       );
+  }
+
+  validatePromoCode(code: string): Observable<PromoCodeValidationResponse> {
+    const params = new HttpParams().set('code', code);
+    return this.http
+      .get<PromoCodeValidationResponse>(`${this.baseUrl}/auth/promo-code`, { params })
+      .pipe(catchError((error) => this.mapError(error)));
   }
 
   register(request: RegisterRequest): Observable<RegisterResponse> {
@@ -103,6 +111,13 @@ export class HttpAuthGateway implements AuthGateway {
   refresh(request: RefreshTokenRequest): Observable<LoginResponse> {
     return this.http.post<BackendLoginResponse>(`${this.baseUrl}/auth/refresh`, request).pipe(
       map((body: BackendLoginResponse) => normalizeLoginResponse(body)),
+      catchError((error) => this.mapError(error)),
+    );
+  }
+
+  logout(): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/auth/logout`, null).pipe(
+      map(() => undefined),
       catchError((error) => this.mapError(error)),
     );
   }

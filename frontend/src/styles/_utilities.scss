@@ -37,6 +37,14 @@
   gap: 16px;
 }
 
+.page-center {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  width: 100%;
+  min-height: min(60vh, calc(100vh - 180px));
+}
+
 .skeleton {
   border-radius: 8px;
   background: linear-gradient(90deg, var(--bg-raised), var(--bg-elevated), var(--bg-raised));

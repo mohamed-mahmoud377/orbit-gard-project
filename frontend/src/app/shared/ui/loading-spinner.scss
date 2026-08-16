@@ -1,0 +1,32 @@
+:host {
+  display: grid;
+  place-items: center;
+}
+
+.loading-spinner {
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+}
+
+.loading-spinner-ring {
+  display: block;
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border-subtle);
+  border-top-color: var(--accent-primary);
+  border-radius: 50%;
+  animation: loading-spinner-spin 0.75s linear infinite;
+}
+
+.loading-spinner-label {
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+@keyframes loading-spinner-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

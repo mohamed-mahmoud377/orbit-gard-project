@@ -9,6 +9,20 @@ import { loginUrlWithReturn } from '../navigation/return-url';
 
 let refreshInFlight: Observable<boolean> | null = null;
 
+const PUBLIC_AUTH_PATHS = [
+  '/auth/login',
+  '/auth/register',
+  '/auth/verify',
+  '/auth/verify/resend',
+  '/auth/refresh',
+  '/auth/username-available',
+  '/auth/promo-code',
+] as const;
+
+function isPublicAuthRequest(url: string): boolean {
+  return PUBLIC_AUTH_PATHS.some((path) => url.includes(path));
+}
+
 /** @internal Test helper — clears the in-flight refresh queue between specs. */
 export function resetAuthBearerRefreshStateForTests(): void {
   refreshInFlight = null;
@@ -53,7 +67,7 @@ export const authBearerInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthFacade);
   const router = inject(Router);
 
-  if (req.headers.has('Authorization') || req.url.includes('/auth/')) {
+  if (req.headers.has('Authorization') || isPublicAuthRequest(req.url)) {
     return next(req);
   }
 
@@ -64,7 +78,7 @@ export const authBearerInterceptor: HttpInterceptorFn = (req, next) => {
         if (
           error instanceof HttpErrorResponse &&
           error.status === 401 &&
-          !req.url.includes('/auth/') &&
+          !isPublicAuthRequest(req.url) &&
           !req.headers.has('X-Orbit-Retry')
         ) {
           if (!tokens.canRefresh()) {

@@ -5,6 +5,13 @@ export type AccountType = 'USER' | 'CHILD';
 
 export type UsernameAvailabilityReason = 'TAKEN' | 'INVALID' | null;
 
+export type PromoCodeValidationStatus = 'VALID' | 'INVALID' | 'EXPIRED';
+
+export interface PromoCodeValidationResponse {
+  readonly status: PromoCodeValidationStatus;
+  readonly amount: number | null;
+}
+
 export interface UsernameAvailabilityResponse {
   readonly username: string;
   readonly available: boolean;

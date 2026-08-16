@@ -16,6 +16,7 @@ import {
   AuthApiError,
   LoginRequest,
   LoginResponse,
+  PromoCodeValidationResponse,
   PasswordResetRequest,
   PasswordResetRequestResponse,
   PasswordResetConfirmRequest,
@@ -224,7 +225,9 @@ export class MockAuthGateway implements AuthGateway {
   checkUsername(username: string): Observable<UsernameAvailabilityResponse> {
     const normalized = normalizeUsername(username);
     if (!normalized) {
-      return this.fail(problem(400, 'FIELD_REQUIRED', [{ field: 'username', code: 'FIELD_REQUIRED' }]));
+      return this.fail(
+        problem(400, 'FIELD_REQUIRED', [{ field: 'username', code: 'FIELD_REQUIRED' }]),
+      );
     }
     if (!isValidUsername(normalized)) {
       return of({ username: normalized, available: false, reason: 'INVALID' as const }).pipe(
@@ -237,6 +240,20 @@ export class MockAuthGateway implements AuthGateway {
       available: !taken,
       reason: taken ? ('TAKEN' as const) : null,
     }).pipe(delay(120));
+  }
+
+  validatePromoCode(code: string): Observable<PromoCodeValidationResponse> {
+    const normalized = code.trim().toUpperCase();
+    if (!normalized) {
+      return of({ status: 'INVALID' as const, amount: null }).pipe(delay(120));
+    }
+    if (normalized === 'EXPIRED') {
+      return of({ status: 'EXPIRED' as const, amount: null }).pipe(delay(120));
+    }
+    if (normalized === 'WELCOME50' || normalized === 'ORBIT500') {
+      return of({ status: 'VALID' as const, amount: 50 }).pipe(delay(120));
+    }
+    return of({ status: 'INVALID' as const, amount: null }).pipe(delay(120));
   }
 
   register(request: RegisterRequest): Observable<RegisterResponse> {
@@ -342,8 +359,7 @@ export class MockAuthGateway implements AuthGateway {
 
     // Mirror production: email send happens after commit and never blocks signup.
     if (typeof window !== 'undefined') {
-      (window as unknown as { __orbitLastVerifyToken?: string }).__orbitLastVerifyToken =
-        rawToken;
+      (window as unknown as { __orbitLastVerifyToken?: string }).__orbitLastVerifyToken = rawToken;
       (window as unknown as { __orbitLastVerifyEmail?: string }).__orbitLastVerifyEmail = email;
     }
 
@@ -420,19 +436,14 @@ export class MockAuthGateway implements AuthGateway {
     }
 
     const newest = [...this.state.tokens]
-      .filter(
-        (token) =>
-          token.userId === account.id && token.purpose === 'EMAIL_VERIFICATION',
-      )
+      .filter((token) => token.userId === account.id && token.purpose === 'EMAIL_VERIFICATION')
       .sort((a, b) => b.createdAt - a.createdAt)[0];
 
     if (newest && Date.now() - newest.createdAt < RESEND_COOLDOWN_MS) {
       const retryAfterSeconds = Math.ceil(
         (RESEND_COOLDOWN_MS - (Date.now() - newest.createdAt)) / 1000,
       );
-      return this.fail(
-        problem(429, 'RATE_LIMITED', [], { retryAfterSeconds }),
-      );
+      return this.fail(problem(429, 'RATE_LIMITED', [], { retryAfterSeconds }));
     }
 
     const now = Date.now();
@@ -460,17 +471,14 @@ export class MockAuthGateway implements AuthGateway {
     this.persist();
 
     if (typeof window !== 'undefined') {
-      (window as unknown as { __orbitLastVerifyToken?: string }).__orbitLastVerifyToken =
-        rawToken;
+      (window as unknown as { __orbitLastVerifyToken?: string }).__orbitLastVerifyToken = rawToken;
       (window as unknown as { __orbitLastVerifyEmail?: string }).__orbitLastVerifyEmail = email;
     }
 
     return of(generic).pipe(delay(150));
   }
 
-  requestPasswordReset(
-    request: PasswordResetRequest,
-  ): Observable<PasswordResetRequestResponse> {
+  requestPasswordReset(request: PasswordResetRequest): Observable<PasswordResetRequestResponse> {
     const email = normalizeEmail(request.email ?? '');
     if (!isValidEmail(email)) {
       return this.fail(problem(400, 'EMAIL_INVALID', [{ field: 'email', code: 'EMAIL_INVALID' }]));
@@ -484,11 +492,7 @@ export class MockAuthGateway implements AuthGateway {
   confirmPasswordReset(
     request: PasswordResetConfirmRequest,
   ): Observable<PasswordResetConfirmResponse> {
-    if (
-      !request.token ||
-      !request.newPassword ||
-      !request.confirmNewPassword
-    ) {
+    if (!request.token || !request.newPassword || !request.confirmNewPassword) {
       return throwError(
         () =>
           new AuthApiError({
@@ -498,7 +502,7 @@ export class MockAuthGateway implements AuthGateway {
           }),
       );
     }
-  
+
     if (request.newPassword !== request.confirmNewPassword) {
       return throwError(
         () =>
@@ -509,7 +513,7 @@ export class MockAuthGateway implements AuthGateway {
           }),
       );
     }
-  
+
     return of({
       message: 'Password reset successfully.',
     });
@@ -603,6 +607,10 @@ export class MockAuthGateway implements AuthGateway {
     }).pipe(delay(150));
   }
 
+  logout(): Observable<void> {
+    return of(undefined).pipe(delay(80));
+  }
+
   private fail(error: AuthApiError): Observable<never> {
     return throwError(() => error).pipe(delay(80));
   }
@@ -610,5 +618,4 @@ export class MockAuthGateway implements AuthGateway {
   private persist(): void {
     saveState(this.state);
   }
-
 }
