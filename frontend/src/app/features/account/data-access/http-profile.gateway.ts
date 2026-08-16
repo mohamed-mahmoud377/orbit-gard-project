@@ -11,7 +11,9 @@ interface BackendProfileResponse {
   readonly firstName: string;
   readonly lastName: string;
   readonly username: string;
+  readonly email: string;
   readonly phoneNumber: string;
+  readonly nonRevokedSessionCount?: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -38,7 +40,11 @@ export class HttpProfileGateway implements ProfileGateway {
       firstName: body.firstName,
       lastName: body.lastName,
       username: body.username,
+      email: body.email,
       phoneNumber: body.phoneNumber,
+      ...(body.nonRevokedSessionCount !== undefined
+        ? { nonRevokedSessionCount: body.nonRevokedSessionCount }
+        : {}),
     };
   }
 

@@ -115,6 +115,13 @@ export class HttpAuthGateway implements AuthGateway {
     );
   }
 
+  logout(): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/auth/logout`, null).pipe(
+      map(() => undefined),
+      catchError((error) => this.mapError(error)),
+    );
+  }
+
   private mapError(error: unknown): Observable<never> {
     if (error instanceof AuthApiError) {
       return throwError(() => error);

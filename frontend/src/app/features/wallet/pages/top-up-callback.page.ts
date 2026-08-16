@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { last } from 'rxjs/operators';
 
 import { loginUrlWithReturn } from '../../../core/navigation/return-url';
+import { LoadingSpinner } from '../../../shared/ui/loading-spinner';
 import { StatusView } from '../../../shared/ui/status-view';
 import { formatMoney } from '../../../shared/utils/money';
 import { AuthFacade } from '../../auth/data-access/auth.facade';
@@ -29,16 +30,12 @@ const UUID_PATTERN =
 
 @Component({
   selector: 'app-top-up-callback-page',
-  imports: [StatusView],
+  imports: [StatusView, LoadingSpinner],
   template: `
     <section class="page stack callback-page">
       @switch (state()) {
         @case ('loading') {
-          <app-status-view
-            title="Confirming your top-up"
-            message="Please wait while we verify your payment with Orbit."
-            tone="pending"
-          />
+          <app-loading-spinner label="Verifying your payment with Orbit…" />
         }
         @case ('confirming') {
           <app-status-view

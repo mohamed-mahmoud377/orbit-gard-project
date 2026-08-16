@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
+import { LoadingSpinner } from '../../../shared/ui/loading-spinner';
 import { StatusView } from '../../../shared/ui/status-view';
 import { AuthFacade } from '../data-access/auth.facade';
 import { AuthApiError } from '../data-access/auth.models';
@@ -18,15 +19,11 @@ type ActivateState =
 
 @Component({
   selector: 'app-activate-page',
-  imports: [StatusView, RouterLink],
+  imports: [StatusView, LoadingSpinner, RouterLink],
   template: `
     @switch (state()) {
       @case ('loading') {
-        <app-status-view
-          title="Activating your wallet"
-          message="Please wait while we confirm your email address."
-          tone="pending"
-        />
+        <app-loading-spinner label="Confirming your email address…" />
       }
       @case ('success') {
         <app-status-view
@@ -52,6 +49,7 @@ type ActivateState =
             title="This link has expired"
             [message]="AUTH_MESSAGES.tokenExpired"
             tone="danger"
+            presentation="plain"
           />
           <div class="auth-actions">
             <button class="btn btn-primary" type="button" [disabled]="resending()" (click)="resend()">
@@ -70,6 +68,7 @@ type ActivateState =
             title="This link is no longer valid"
             [message]="AUTH_MESSAGES.tokenAlreadyUsed"
             tone="danger"
+            presentation="plain"
           />
           <div class="auth-actions">
             <button class="btn btn-primary" type="button" [disabled]="resending()" (click)="resend()">
@@ -88,6 +87,7 @@ type ActivateState =
             title="This confirmation link isn't valid"
             [message]="AUTH_MESSAGES.tokenInvalid"
             tone="danger"
+            presentation="plain"
           />
           <div class="auth-actions">
             <button class="btn btn-primary" type="button" [disabled]="resending()" (click)="resend()">

@@ -607,6 +607,10 @@ export class MockAuthGateway implements AuthGateway {
     }).pipe(delay(150));
   }
 
+  logout(): Observable<void> {
+    return of(undefined).pipe(delay(80));
+  }
+
   private fail(error: AuthApiError): Observable<never> {
     return throwError(() => error).pipe(delay(80));
   }

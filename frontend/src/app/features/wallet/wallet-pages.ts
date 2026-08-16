@@ -5,10 +5,17 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AssetUrlPipe } from '../../core/asset-url';
 import { DemoStore } from '../../data-access';
 import { Transaction, User, WalletSnapshot } from '../../shared/models';
+import { LoadingSpinner } from '../../shared/ui/loading-spinner';
 import { PageHeader } from '../../shared/ui/page-header';
 import { StatusView } from '../../shared/ui/status-view';
 import { TransactionList, TransactionListItem } from '../../shared/ui/transaction-list';
-import { formatMoney, parseMoney } from '../../shared/utils/money';
+import {
+  formatMoney,
+  parseMoney,
+  sanitizeTopUpAmountInput,
+  TOP_UP_MAX_MINOR,
+  TOP_UP_MIN_MINOR,
+} from '../../shared/utils/money';
 import {
   PaymentApiError,
   PaymentFacade,
@@ -54,13 +61,17 @@ function currentDate(): string {
 
 @Component({
   selector: 'app-dashboard-page',
-  imports: [RouterLink, PageHeader, TransactionList, StatusView, AssetUrlPipe],
+  imports: [RouterLink, PageHeader, TransactionList, StatusView, LoadingSpinner, AssetUrlPipe],
   template: `
     <section class="page stack wallet-background" data-node-id="3:2">
       @if (loading()) {
-        <app-status-view title="Loading dashboard" message="Fetching your wallet and activity…" tone="pending" />
+        <div class="page-center">
+          <app-loading-spinner label="Fetching your wallet and activity…" />
+        </div>
       } @else if (error()) {
-        <app-status-view title="Unable to load dashboard" [message]="error()" tone="danger" />
+        <div class="page-center">
+          <app-status-view title="Unable to load dashboard" [message]="error()" tone="danger" />
+        </div>
       } @else {
         <app-page-header
           [title]="greetingPrefix + ', ' + (user()?.firstName ?? 'there')"
@@ -179,19 +190,32 @@ type TopUpStage = 'form' | 'redirecting';
             <article class="card panel amount-entry">
               <div>
                 <h2>How much would you like to add?</h2>
-                <p class="muted">Minimum EGP 50.00 · Maximum EGP 20,000.00</p>
+                <p class="muted" id="top-up-amount-hint">Minimum EGP 50.00 · Maximum EGP 20,000.00</p>
               </div>
               <div class="amount-input-wrap">
                 <span>EGP</span>
                 <input
                   class="input amount-input"
-                  [ngModel]="amount()"
-                  (ngModelChange)="amount.set($event)"
-                  inputmode="decimal"
+                  id="top-up-amount"
+                  type="text"
+                  [value]="amount()"
+                  (input)="onAmountInput($event)"
+                  (keydown)="onAmountKeydown($event)"
+                  (paste)="onAmountPaste($event)"
+                  inputmode="numeric"
+                  pattern="[0-9]*"
+                  maxlength="5"
                   aria-label="Top-up amount"
+                  [attr.aria-invalid]="amountValidationError() !== null"
+                  aria-describedby="top-up-amount-hint top-up-amount-error"
                   [disabled]="submitting()"
                 />
               </div>
+              @if (amountValidationError(); as validationError) {
+                <p id="top-up-amount-error" class="amount-field-error" role="alert">
+                  {{ validationError }}
+                </p>
+              }
               <div class="amount-chips" aria-label="Quick amounts">
                 @for (quick of quickAmounts; track quick) {
                   <button
@@ -199,7 +223,7 @@ type TopUpStage = 'form' | 'redirecting';
                     [class.active]="amountMinor() === quick * 100"
                     type="button"
                     [disabled]="submitting()"
-                    (click)="amount.set(quick.toString())"
+                    (click)="selectQuickAmount(quick)"
                   >
                     {{ quick | number }}
                   </button>
@@ -218,19 +242,50 @@ type TopUpStage = 'form' | 'redirecting';
               <button
                 class="btn btn-primary"
                 type="button"
-                [disabled]="submitting()"
+                [disabled]="submitting() || amountValidationError() !== null"
                 (click)="continueToPaymob()"
               >
                 {{ submitting() ? 'Starting…' : 'Continue to Paymob' }}
               </button>
             </article>
-            <aside class="card panel stack">
+            <aside class="card panel how-it-works-card">
               <h2>How it works</h2>
               <ol class="how-list">
-                <li><span class="step">1</span><div><strong>You are sent to Paymob</strong><p class="muted">A secure checkout opens in your browser.</p></div></li>
-                <li><span class="step">2</span><div><strong>You pay by card or wallet</strong><p class="muted">Complete payment on Paymob's page.</p></div></li>
-                <li><span class="step">3</span><div><strong>Orbit confirms your payment</strong><p class="muted">You return here while we verify the result.</p></div></li>
+                <li>
+                  <span class="step">1</span>
+                  <div class="how-step-copy">
+                    <span class="how-step-title">You are sent to Paymob</span>
+                    <p class="how-step-desc">
+                      Orbit creates a payment intention and hands you to Paymob's secure checkout.
+                    </p>
+                  </div>
+                </li>
+                <li>
+                  <span class="step">2</span>
+                  <div class="how-step-copy">
+                    <span class="how-step-title">You pay by card or wallet</span>
+                    <p class="how-step-desc">
+                      Your card details are entered on Paymob's page and never touch Orbit.
+                    </p>
+                  </div>
+                </li>
+                <li>
+                  <span class="step">3</span>
+                  <div class="how-step-copy">
+                    <span class="how-step-title">Paymob tells Orbit</span>
+                    <p class="how-step-desc">
+                      We credit your wallet only when Paymob's signed callback confirms the payment.
+                    </p>
+                  </div>
+                </li>
               </ol>
+              <div class="how-it-works-test-banner">
+                <span class="how-it-works-test-dot" aria-hidden="true"></span>
+                <p>
+                  Paymob is running in test mode. No real money is charged and all balances are
+                  simulated.
+                </p>
+              </div>
             </aside>
           </div>
         }
@@ -248,15 +303,58 @@ export class TopUpPage {
   protected readonly money = formatMoney;
   protected readonly amount = signal('500');
   protected readonly amountMinor = computed(() => parseMoney(this.amount()));
+  protected readonly amountValidationError = computed(() => {
+    const value = this.amount().trim();
+    if (!value) return PAYMENT_MESSAGES.amountInvalid;
+    const minor = parseMoney(value);
+    if (minor <= 0) return PAYMENT_MESSAGES.amountInvalid;
+    if (minor < TOP_UP_MIN_MINOR) return PAYMENT_MESSAGES.amountBelowMinimum;
+    if (minor > TOP_UP_MAX_MINOR) return PAYMENT_MESSAGES.amountAboveMaximum;
+    return null;
+  });
   protected readonly PAYMENT_MESSAGES = PAYMENT_MESSAGES;
 
+  protected onAmountInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.setAmountValue(input, sanitizeTopUpAmountInput(input.value));
+  }
+
+  protected onAmountKeydown(event: KeyboardEvent): void {
+    if (event.ctrlKey || event.metaKey) return;
+    const allowedKeys = ['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'Home', 'End'];
+    if (allowedKeys.includes(event.key)) return;
+    if (/^\d$/.test(event.key)) return;
+    event.preventDefault();
+  }
+
+  protected onAmountPaste(event: ClipboardEvent): void {
+    event.preventDefault();
+    const input = event.target as HTMLInputElement;
+    const pasted = event.clipboardData?.getData('text') ?? '';
+    this.setAmountValue(input, sanitizeTopUpAmountInput(input.value + pasted));
+  }
+
+  private setAmountValue(input: HTMLInputElement, sanitized: string): void {
+    if (input.value !== sanitized) {
+      input.value = sanitized;
+    }
+    this.error.set('');
+    this.amount.set(sanitized);
+  }
+
+  protected selectQuickAmount(quick: number): void {
+    this.error.set('');
+    this.amount.set(quick.toString());
+  }
+
   protected continueToPaymob(): void {
-    const amountMinor = this.amountMinor();
-    if (amountMinor < 5000 || amountMinor > 2_000_000) {
-      this.error.set(PAYMENT_MESSAGES.amountBelowMinimum);
+    const validationError = this.amountValidationError();
+    if (validationError) {
+      this.error.set(validationError);
       return;
     }
 
+    const amountMinor = this.amountMinor();
     this.error.set('');
     this.submitting.set(true);
 

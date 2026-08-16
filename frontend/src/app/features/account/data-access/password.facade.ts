@@ -10,10 +10,6 @@ export class PasswordFacade {
   private readonly gateway = inject(PASSWORD_GATEWAY);
   private readonly auth = inject(AuthFacade);
 
-  getActiveSessionCount(): Observable<number> {
-    return this.gateway.getActiveSessionCount();
-  }
-
   changePassword(request: ChangePasswordRequest): Observable<ChangePasswordResponse> {
     return this.gateway.changePassword(request);
   }

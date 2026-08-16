@@ -22,6 +22,12 @@
   }
 }
 
+.status-card-plain {
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
 .status-icon {
   display: grid;
   width: 64px;

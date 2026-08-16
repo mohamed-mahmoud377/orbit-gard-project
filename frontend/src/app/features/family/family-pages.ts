@@ -43,10 +43,22 @@ function childActivityItem(transaction: Transaction): TransactionListItem {
         <a class="btn btn-primary" routerLink="/family/add">Add a child</a>
       </app-page-header>
       <div class="family-summary">
-        <div><span>Children</span><strong>{{ store.myChildren().length }}</strong></div>
-        <div><span>Allocated this month</span><strong>EGP 800.00</strong></div>
-        <div><span>Spent this month</span><strong>EGP 415.00</strong></div>
-        <div><span>Blocked by limits</span><strong>3 attempts</strong></div>
+        <div class="summary-stat">
+          <span>Children</span>
+          <strong>{{ store.myChildren().length }}</strong>
+        </div>
+        <div class="summary-stat summary-stat-allocated">
+          <span>Allocated this month</span>
+          <strong>EGP 800.00</strong>
+        </div>
+        <div class="summary-stat">
+          <span>Spent this month</span>
+          <strong>EGP 415.00</strong>
+        </div>
+        <div class="summary-stat summary-stat-blocked">
+          <span>Blocked by limits</span>
+          <strong>3 attempts</strong>
+        </div>
       </div>
       <div class="children-grid">
         @for (child of store.myChildren(); track child.id) {
@@ -62,23 +74,48 @@ function childActivityItem(transaction: Transaction): TransactionListItem {
             <div class="child-balance">
               <span class="overline">Available</span>
               <strong class="amount">{{ money(child.snapshot.availableMinor) }}</strong>
-              <small class="muted">
-                Balance {{ money(child.snapshot.totalMinor) }} · Held {{ money(child.snapshot.heldMinor) }}
-              </small>
+              <div class="child-balance-sub">
+                <span class="muted">Balance {{ money(child.snapshot.totalMinor) }}</span>
+                <span class="held-amount">Held {{ money(child.snapshot.heldMinor) }}</span>
+              </div>
             </div>
-            <div class="limits">
+            <div class="limits-panel">
               <div class="limit-row">
-                <div class="limit-copy"><span>Today</span><span>{{ child.nickname === 'Nour' ? 'EGP 90 of EGP 100' : 'EGP 60 of EGP 150' }}</span></div>
-                <div class="progress"><span [style.width.%]="child.nickname === 'Nour' ? 90 : 40" [style.background]="child.nickname === 'Nour' ? 'var(--danger)' : ''"></span></div>
+                <div class="limit-copy">
+                  <span>Today</span>
+                  <span [class.limit-danger]="child.nickname === 'Nour'">
+                    {{ child.nickname === 'Nour' ? 'EGP 90 of EGP 100' : 'EGP 60 of EGP 150' }}
+                  </span>
+                </div>
+                <div class="progress">
+                  <span
+                    [style.width.%]="child.nickname === 'Nour' ? 90 : 40"
+                    [style.background]="child.nickname === 'Nour' ? 'var(--danger)' : ''"
+                  ></span>
+                </div>
               </div>
               <div class="limit-row">
-                <div class="limit-copy"><span>This month</span><span>{{ child.nickname === 'Nour' ? 'EGP 160 of EGP 600' : 'EGP 255 of EGP 1,000' }}</span></div>
-                <div class="progress"><span [style.width.%]="child.nickname === 'Nour' ? 27 : 26"></span></div>
+                <div class="limit-copy">
+                  <span>This month</span>
+                  <span>{{ child.nickname === 'Nour' ? 'EGP 160 of EGP 600' : 'EGP 255 of EGP 1,000' }}</span>
+                </div>
+                <div class="progress">
+                  <span [style.width.%]="child.nickname === 'Nour' ? 27 : 26"></span>
+                </div>
               </div>
-              <small class="muted">Max {{ money(child.limits.singlePurchaseMinor) }} per purchase</small>
+              <div class="limit-copy limit-per-transaction">
+                <span>Per transaction</span>
+                <span>Max {{ money(child.limits.singlePurchaseMinor) }}</span>
+              </div>
             </div>
-            <div class="quick-actions">
-              <a class="btn btn-outline" [routerLink]="['/family', child.childId]" [queryParams]="{ action: 'fund' }">Add money</a>
+            <div class="child-actions">
+              <a
+                class="btn btn-primary"
+                [routerLink]="['/family', child.childId]"
+                [queryParams]="{ action: 'fund' }"
+              >
+                Add money
+              </a>
               <a class="btn btn-secondary" [routerLink]="['/family', child.childId]">View activity</a>
             </div>
           </article>

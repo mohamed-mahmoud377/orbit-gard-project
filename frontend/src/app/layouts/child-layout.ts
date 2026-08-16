@@ -32,7 +32,8 @@ export class ChildLayout {
   private readonly router = inject(Router);
 
   protected logout(): void {
-    this.auth.logoutLocal();
-    void this.router.navigateByUrl('/auth/login');
+    this.auth.logout().subscribe(() => {
+      void this.router.navigateByUrl('/auth/login');
+    });
   }
 }

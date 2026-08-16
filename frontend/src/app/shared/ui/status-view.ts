@@ -5,7 +5,12 @@ export type StatusTone = 'info' | 'success' | 'pending' | 'danger';
 @Component({
   selector: 'app-status-view',
   template: `
-    <section class="status-card card" [attr.data-tone]="tone()">
+    <section
+      class="status-card"
+      [class.card]="presentation() === 'card'"
+      [class.status-card-plain]="presentation() === 'plain'"
+      [attr.data-tone]="tone()"
+    >
       <div class="status-icon" aria-hidden="true">
         @switch (tone()) {
           @case ('success') { ✓ }
@@ -31,6 +36,7 @@ export class StatusView {
   readonly title = input.required<string>();
   readonly message = input.required<string>();
   readonly tone = input<StatusTone>('info');
+  readonly presentation = input<'card' | 'plain'>('card');
   readonly actionLabel = input('');
   readonly action = output<void>();
 }

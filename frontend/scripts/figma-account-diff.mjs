@@ -22,6 +22,7 @@ const EXPECTED_COPY = {
     'Username',
     'Cannot be changed',
     'Others use this to send you money, so it is fixed once your account is created',
+    'Email',
     'Phone number',
     'EG +20',
     'Egyptian mobile numbers only',
@@ -67,7 +68,6 @@ const EXPECTED_COPY = {
 
 const INTENTIONAL_FIGMA_ONLY = [
   'Last changed 12 June 2026. Changing it signs out every device.',
-  'Email',
 ];
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -177,7 +177,6 @@ async function main() {
   }
 
   console.log('Intentional app deviations (not bugs):');
-  console.log('  - Email field on Settings (no profile email API yet)');
   console.log('  - Password "Last changed …" omitted until backend exposes date');
 }
 

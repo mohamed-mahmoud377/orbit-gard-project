@@ -135,6 +135,16 @@ describe('authBearerInterceptor', () => {
     httpMock.expectNone('/api/v1/wallet');
   });
 
+  it('attaches the bearer token to logout requests', () => {
+    seedSession(900);
+
+    http.post('/api/v1/auth/logout', null).subscribe();
+    const req = httpMock.expectOne('/api/v1/auth/logout');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.headers.get('Authorization')).toBe('Bearer access-token');
+    req.flush(null);
+  });
+
   it('retries once after a 401 when refresh succeeds', () => {
     seedSession(900);
     mockRefreshSuccess('retry-access', 'retry-refresh');

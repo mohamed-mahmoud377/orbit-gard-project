@@ -8,6 +8,76 @@ async function clearAuthState(page: import('@playwright/test').Page): Promise<vo
   await page.reload();
 }
 
+async function seedAuthenticatedParent(page: import('@playwright/test').Page): Promise<void> {
+  await page.goto('/auth/login');
+  await page.evaluate(() => {
+    const session = {
+      accessToken: 'e2e-access-token',
+      refreshToken: 'e2e-refresh-token',
+      tokenType: 'Bearer',
+      expiresAt: Date.now() + 3_600_000,
+      rememberMe: false,
+      user: {
+        id: '1',
+        username: 'mohamed',
+        firstName: 'Mohamed',
+        lastName: 'Mahmoud',
+        accountType: 'USER',
+      },
+    };
+    window.localStorage.setItem('orbit.auth-session.v1', JSON.stringify(session));
+  });
+}
+
+async function mockAccountApis(page: import('@playwright/test').Page): Promise<void> {
+  await page.route('**/api/v1/profile', async (route) => {
+    if (route.request().method() === 'GET') {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          firstName: 'Mohamed',
+          lastName: 'Mahmoud',
+          username: 'mohamed',
+          email: 'mohamed@example.com',
+          phoneNumber: '01012345678',
+          nonRevokedSessionCount: 2,
+        }),
+      });
+      return;
+    }
+    await route.continue();
+  });
+
+  await page.route('**/api/v1/sessions**', async (route) => {
+    const request = route.request();
+    if (request.method() === 'GET') {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([
+          {
+            id: 'session-current',
+            deviceLabel: 'Chrome · MacBook Pro',
+            location: 'Cairo, Egypt · 41.35.28.114',
+            lastUsedAt: '2026-07-25T10:00:00Z',
+            currentDevice: true,
+          },
+          {
+            id: 'session-other',
+            deviceLabel: 'Safari · iPhone',
+            location: 'Alexandria, Egypt',
+            lastUsedAt: '2026-07-24T08:00:00Z',
+            currentDevice: false,
+          },
+        ]),
+      });
+      return;
+    }
+    await route.continue();
+  });
+}
+
 async function signIn(
   page: import('@playwright/test').Page,
   username: string,
@@ -129,6 +199,20 @@ test('child account sees the restricted wallet shell', async ({ page }) => {
   await signIn(page, 'youssef', 'Youssef@123');
   await expect(page.getByRole('heading', { name: 'Hi Youssef' })).toBeVisible();
   await expect(page.getByText(/Direct top-ups and transfers are not available/)).toBeVisible();
+});
+
+test('parent can view devices and sessions', async ({ page }) => {
+  await clearAuthState(page);
+  await mockAccountApis(page);
+  await seedAuthenticatedParent(page);
+
+  await page.goto('/settings');
+  await expect(page.getByText('2 active sessions.')).toBeVisible();
+  await page.getByRole('link', { name: 'Manage devices' }).click();
+  await expect(page.getByRole('heading', { name: 'Devices and sessions' })).toBeVisible();
+  await expect(page.getByText('THIS DEVICE')).toBeVisible();
+  await expect(page.getByText('Safari · iPhone')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Sign out all others' })).toBeVisible();
 });
 
 test('merchant payment requires an authenticated Orbit session', async ({ page }) => {

@@ -2,7 +2,9 @@ export interface ProfileDetails {
   readonly firstName: string;
   readonly lastName: string;
   readonly username: string;
+  readonly email: string;
   readonly phoneNumber: string;
+  readonly nonRevokedSessionCount?: number;
 }
 
 export interface UpdateProfileRequest {

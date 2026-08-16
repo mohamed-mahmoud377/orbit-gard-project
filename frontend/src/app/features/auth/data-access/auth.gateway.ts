@@ -31,6 +31,7 @@ export interface AuthGateway {
   confirmPasswordReset(
     request: PasswordResetConfirmRequest,
   ): Observable<PasswordResetConfirmResponse>;
+  logout(): Observable<void>;
 }
 
 export const AUTH_GATEWAY = new InjectionToken<AuthGateway>('AUTH_GATEWAY');

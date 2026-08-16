@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, map } from 'rxjs';
+import { Observable } from 'rxjs';
 
 import { SESSION_GATEWAY } from './session.gateway';
 import { SessionSummary } from './session.models';
@@ -10,10 +10,6 @@ export class SessionFacade {
 
   listActiveSessions(): Observable<SessionSummary[]> {
     return this.gateway.listActiveSessions();
-  }
-
-  getActiveSessionCount(): Observable<number> {
-    return this.listActiveSessions().pipe(map((sessions) => sessions.length));
   }
 
   signOutSession(sessionId: string): Observable<void> {

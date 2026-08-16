@@ -21,12 +21,6 @@ export class HttpPasswordGateway implements PasswordGateway {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = environment.apiBaseUrl.replace(/\/$/, '');
 
-  getActiveSessionCount(): Observable<number> {
-    return this.http.get<number>(`${this.baseUrl}/password/active-sessions-count`).pipe(
-      catchError((error) => this.mapError(error)),
-    );
-  }
-
   changePassword(request: ChangePasswordRequest): Observable<ChangePasswordResponse> {
     return this.http
       .post<BackendChangePasswordResponse>(`${this.baseUrl}/password/change`, request)

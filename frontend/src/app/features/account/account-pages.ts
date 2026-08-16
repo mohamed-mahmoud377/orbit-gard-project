@@ -1,7 +1,6 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { AuthFacade } from '../auth/data-access';
 import {
   PasswordApiError,
   PasswordFacade,
@@ -18,6 +17,7 @@ import {
   toApiPhone,
   toDisplayPhone,
 } from './account-session.utils';
+import { LoadingSpinner } from '../../shared/ui/loading-spinner';
 import { PageHeader } from '../../shared/ui/page-header';
 import { StatusView } from '../../shared/ui/status-view';
 
@@ -26,15 +26,19 @@ const FIGMA_JOURNEY_ACCOUNT_SECURITY = '32:156';
 
 @Component({
   selector: 'app-settings-page',
-  imports: [FormsModule, RouterLink, PageHeader, StatusView],
+  imports: [FormsModule, RouterLink, PageHeader, StatusView, LoadingSpinner],
   template: `
     <section class="page stack" [attr.data-figma-journey]="figmaJourney" data-node-id="30:129">
-      <app-page-header title="Settings" subtitle="Your personal details and security." />
       @if (loading()) {
-        <app-status-view title="Loading settings" message="Fetching your profile…" tone="pending" />
+        <div class="page-center">
+          <app-loading-spinner label="Fetching your profile…" />
+        </div>
       } @else if (loadError()) {
-        <app-status-view title="Unable to load settings" [message]="loadError()" tone="danger" />
+        <div class="page-center">
+          <app-status-view title="Unable to load settings" [message]="loadError()" tone="danger" />
+        </div>
       } @else {
+        <app-page-header title="Settings" subtitle="Your personal details and security." />
         <div class="settings-layout">
           <form class="card panel settings-form" (ngSubmit)="save()">
             <h2>Personal details</h2>
@@ -64,11 +68,17 @@ const FIGMA_JOURNEY_ACCOUNT_SECURITY = '32:156';
                 Others use this to send you money, so it is fixed once your account is created.
               </p>
             </div>
-            <!-- Figma 30:129 omits email; kept until profile API supports email updates. -->
+            <!-- Figma 30:129: email shown read-only; profile API does not support updates yet. -->
             <div class="field">
               <label for="settings-email">Email</label>
-              <input class="input" id="settings-email" [(ngModel)]="email" name="email" type="email" />
-              <small class="muted">Email changes are not available yet.</small>
+              <input
+                class="input input-readonly"
+                id="settings-email"
+                [value]="email"
+                type="email"
+                disabled
+                autocomplete="email"
+              />
             </div>
             <div class="field">
               <label for="settings-phone">Phone number</label>
@@ -101,7 +111,7 @@ const FIGMA_JOURNEY_ACCOUNT_SECURITY = '32:156';
           <aside class="card panel security-card">
             <h2>Security</h2>
             <div class="security-row">
-              <div>
+              <div class="security-row-copy">
                 <strong>Password</strong>
                 <!-- Figma includes "Last changed …"; omitted until backend exposes passwordLastChangedAt. -->
                 <p>Changing it signs out every device.</p>
@@ -109,7 +119,7 @@ const FIGMA_JOURNEY_ACCOUNT_SECURITY = '32:156';
               <a class="btn btn-secondary" routerLink="/settings/password">Change password</a>
             </div>
             <div class="security-row">
-              <div>
+              <div class="security-row-copy">
                 <strong>Devices and sessions</strong>
                 <p>{{ sessionLabel() }} Sign out any device remotely.</p>
               </div>
@@ -124,9 +134,7 @@ const FIGMA_JOURNEY_ACCOUNT_SECURITY = '32:156';
 })
 export default class SettingsPage implements OnInit {
   protected readonly figmaJourney = FIGMA_JOURNEY_ACCOUNT_SECURITY;
-  private readonly auth = inject(AuthFacade);
   private readonly profile = inject(ProfileFacade);
-  private readonly sessions = inject(SessionFacade);
   protected readonly loading = signal(true);
   protected readonly loadError = signal('');
   protected readonly saving = signal(false);
@@ -143,7 +151,8 @@ export default class SettingsPage implements OnInit {
   ngOnInit(): void {
     this.profile.getProfile().subscribe({
       next: (profile) => {
-        this.applyProfile(profile.firstName, profile.lastName, profile.username, profile.phoneNumber);
+        this.applyProfile(profile);
+        this.activeSessionCount.set(profile.nonRevokedSessionCount ?? null);
         this.loading.set(false);
       },
       error: (error: unknown) => {
@@ -154,11 +163,6 @@ export default class SettingsPage implements OnInit {
         );
         this.loading.set(false);
       },
-    });
-
-    this.sessions.getActiveSessionCount().subscribe({
-      next: (count) => this.activeSessionCount.set(count),
-      error: () => this.activeSessionCount.set(null),
     });
   }
 
@@ -183,7 +187,7 @@ export default class SettingsPage implements OnInit {
       })
       .subscribe({
         next: (profile) => {
-          this.applyProfile(profile.firstName, profile.lastName, profile.username, profile.phoneNumber);
+          this.applyProfile(profile);
           this.saving.set(false);
           this.saved.set(true);
         },
@@ -206,33 +210,40 @@ export default class SettingsPage implements OnInit {
     this.saveError.set('');
   }
 
-  private applyProfile(firstName: string, lastName: string, username: string, phone: string): void {
-    this.firstName = firstName;
-    this.lastName = lastName;
-    this.username = username;
-    this.phoneLocal = toDisplayPhone(phone);
-    this.snapshot = { firstName, lastName, phoneLocal: this.phoneLocal };
-    const currentEmail = this.auth.currentUser()?.username;
-    if (!this.email && currentEmail) {
-      this.email = `${currentEmail}@example.com`;
-    }
+  private applyProfile(profile: {
+    firstName: string;
+    lastName: string;
+    username: string;
+    email: string;
+    phoneNumber: string;
+  }): void {
+    this.firstName = profile.firstName;
+    this.lastName = profile.lastName;
+    this.username = profile.username;
+    this.email = profile.email;
+    this.phoneLocal = toDisplayPhone(profile.phoneNumber);
+    this.snapshot = { firstName: profile.firstName, lastName: profile.lastName, phoneLocal: this.phoneLocal };
   }
 }
 
 @Component({
   selector: 'app-devices-page',
-  imports: [PageHeader, StatusView],
+  imports: [PageHeader, StatusView, LoadingSpinner],
   template: `
     <section class="page stack" [attr.data-figma-journey]="figmaJourney" data-node-id="30:2">
-      <app-page-header
-        title="Devices and sessions"
-        subtitle="Everywhere you are signed in. Signing out a device ends its session immediately."
-      />
       @if (loading()) {
-        <app-status-view title="Loading sessions" message="Fetching your active devices…" tone="pending" />
+        <div class="page-center">
+          <app-loading-spinner label="Fetching your active devices…" />
+        </div>
       } @else if (loadError()) {
-        <app-status-view title="Unable to load sessions" [message]="loadError()" tone="danger" />
+        <div class="page-center">
+          <app-status-view title="Unable to load sessions" [message]="loadError()" tone="danger" />
+        </div>
       } @else {
+        <app-page-header
+          title="Devices and sessions"
+          subtitle="Everywhere you are signed in. Signing out a device ends its session immediately."
+        />
         @if (message()) { <div class="notice notice-info">{{ message() }}</div> }
         @if (currentSession(); as current) {
           <section class="card panel current-device-card">
@@ -490,7 +501,7 @@ export class DevicesPage implements OnInit {
 export class ChangePasswordPage implements OnInit {
   protected readonly figmaJourney = FIGMA_JOURNEY_ACCOUNT_SECURITY;
   private readonly password = inject(PasswordFacade);
-  private readonly sessions = inject(SessionFacade);
+  private readonly profile = inject(ProfileFacade);
   private readonly router = inject(Router);
   protected readonly error = signal('');
   protected readonly complete = signal(false);
@@ -505,8 +516,9 @@ export class ChangePasswordPage implements OnInit {
   protected confirmPassword = '';
 
   ngOnInit(): void {
-    this.sessions.getActiveSessionCount().subscribe({
-      next: (count) => this.activeSessionCount.set(count),
+    this.profile.getProfile().subscribe({
+      next: (profile) =>
+        this.activeSessionCount.set(profile.nonRevokedSessionCount ?? null),
       error: () => this.activeSessionCount.set(null),
     });
   }
