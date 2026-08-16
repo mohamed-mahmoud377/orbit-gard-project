@@ -43,6 +43,16 @@ export const routes: Routes = [
       { path: '', pathMatch: 'full', redirectTo: 'login' },
     ],
   },
+
+  {
+    path: 'reset-password',
+    title: 'Choose a new password · Orbit',
+    loadComponent: () =>
+      import('./features/auth/pages/reset-password.page').then(
+        (module) => module.ResetPasswordPage,
+      ),
+  },
+
   {
     path: 'activate',
     title: 'Activate wallet · Orbit',
