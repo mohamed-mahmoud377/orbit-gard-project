@@ -1,3 +1,0 @@
-$kind: collection
-description: Set accessToken from a verified adult user's login response and paymobHmacSecret from PAYMOB_HMAC_SECRET. Request 01 creates a payment and stores paymentId; complete payment at the returned redirectUrl before sending the signed webhook.
-order: 5000

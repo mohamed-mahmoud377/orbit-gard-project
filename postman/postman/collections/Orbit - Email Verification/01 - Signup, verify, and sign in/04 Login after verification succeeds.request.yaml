@@ -7,7 +7,7 @@ body:
   type: text
   content: |-
     {
-      "username": "{{email}}",
+      "username": "shapinam.abdelfattah",
       "password": "{{password}}",
       "rememberMe": false
     }
@@ -15,7 +15,19 @@ scripts:
   - type: afterResponse
     code: |-
       pm.test('returns 200', () => pm.response.to.have.status(200));
+
       const body = pm.response.json();
-      pm.test('returns authentication tokens', () => { pm.expect(body.accessToken).to.be.a('string').and.not.empty; pm.expect(body.refreshToken).to.be.a('string').and.not.empty; });
+
+      pm.test('returns authentication tokens', () => {
+          pm.expect(body.accessToken).to.be.a('string').and.not.empty;
+          pm.expect(body.refreshToken).to.be.a('string').and.not.empty;
+      });
+
+      // Save as Collection Variables
+      pm.collectionVariables.set("accessToken", body.accessToken);
+      pm.collectionVariables.set("refreshToken", body.refreshToken);
+
+      console.log("Access Token:", pm.collectionVariables.get("accessToken"));
+      console.log("Refresh Token:", pm.collectionVariables.get("refreshToken"));
     language: text/javascript
 order: 4000
