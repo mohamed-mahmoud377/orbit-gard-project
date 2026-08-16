@@ -9,6 +9,11 @@ import { loginUrlWithReturn } from '../navigation/return-url';
 
 let refreshInFlight: Observable<boolean> | null = null;
 
+/** @internal Test helper — clears the in-flight refresh queue between specs. */
+export function resetAuthBearerRefreshStateForTests(): void {
+  refreshInFlight = null;
+}
+
 function attachBearer(req: Parameters<HttpInterceptorFn>[0], accessToken: string) {
   return req.clone({
     setHeaders: {
@@ -96,7 +101,7 @@ export const authBearerInterceptor: HttpInterceptorFn = (req, next) => {
   if (tokens.canRefresh()) {
     return refreshOnce(auth, router).pipe(
       switchMap(() => send(tokens.accessToken())),
-      catchError(() => send(null)),
+      catchError((error) => throwError(() => error)),
     );
   }
 

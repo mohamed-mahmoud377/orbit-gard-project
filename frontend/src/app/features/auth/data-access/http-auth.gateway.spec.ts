@@ -116,6 +116,30 @@ describe('HttpAuthGateway', () => {
     });
   });
 
+  it('posts refresh payloads and normalizes the login-shaped response', () => {
+    gateway.refresh({ refreshToken: 'stale-refresh' }).subscribe((response) => {
+      expect(response.accessToken).toBe('new-access');
+      expect(response.refreshToken).toBe('new-refresh');
+      expect(response.user.id).toBe('82fb922f-1c0f-443d-9e02-245bb87d6139');
+    });
+    const req = http.expectOne('/api/v1/auth/refresh');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ refreshToken: 'stale-refresh' });
+    req.flush({
+      accessToken: 'new-access',
+      refreshToken: 'new-refresh',
+      tokenType: 'Bearer',
+      expiresIn: 900,
+      user: {
+        id: '82fb922f-1c0f-443d-9e02-245bb87d6139',
+        username: 'omar.hassan',
+        firstName: 'Omar',
+        lastName: 'Hassan',
+        accountType: 'USER',
+      },
+    });
+  });
+
   it('posts password reset request and confirm endpoints', () => {
     gateway.requestPasswordReset({ email: 'omar@example.com' }).subscribe((response) => {
       expect(response.message).toContain('reset link');
