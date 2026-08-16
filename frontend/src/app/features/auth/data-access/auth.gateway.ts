@@ -4,6 +4,10 @@ import { Observable } from 'rxjs';
 import {
   LoginRequest,
   LoginResponse,
+  PasswordResetRequest,
+  PasswordResetRequestResponse,
+  PasswordResetConfirmRequest,
+  PasswordResetConfirmResponse,
   RefreshTokenRequest,
   RegisterRequest,
   RegisterResponse,
@@ -19,8 +23,14 @@ export interface AuthGateway {
   register(request: RegisterRequest): Observable<RegisterResponse>;
   verify(request: VerifyRequest): Observable<VerifyResponse>;
   resendVerification(request: ResendVerifyRequest): Observable<ResendVerifyResponse>;
+  requestPasswordReset(
+    request: PasswordResetRequest,
+  ): Observable<PasswordResetRequestResponse>;
   login(request: LoginRequest): Observable<LoginResponse>;
   refresh(request: RefreshTokenRequest): Observable<LoginResponse>;
+  confirmPasswordReset(
+    request: PasswordResetConfirmRequest,
+  ): Observable<PasswordResetConfirmResponse>;
 }
 
 export const AUTH_GATEWAY = new InjectionToken<AuthGateway>('AUTH_GATEWAY');

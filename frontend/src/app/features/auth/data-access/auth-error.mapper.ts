@@ -25,6 +25,7 @@ const BANNER_MESSAGE: Partial<Record<AuthErrorCode, string>> = {
   TOKEN_ALREADY_USED: AUTH_MESSAGES.tokenAlreadyUsed,
   TOKEN_INVALID: AUTH_MESSAGES.tokenInvalid,
   ALREADY_VERIFIED: AUTH_MESSAGES.alreadyVerified,
+  INVALID_REFRESH_TOKEN: AUTH_MESSAGES.sessionExpired,
   NETWORK_ERROR: AUTH_MESSAGES.networkError,
   UNKNOWN: AUTH_MESSAGES.networkError,
 };

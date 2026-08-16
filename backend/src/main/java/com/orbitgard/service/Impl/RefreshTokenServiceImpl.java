@@ -48,8 +48,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         if (session.getRevokedAt() != null
                 || !now.isBefore(session.getIdleExpiresAt())
                 || !now.isBefore(session.getAbsoluteExpiresAt())
-                || session.getUser().getStatus() != UserStatus.ACTIVE
-                || session.getUser().getAccountType() != AccountType.USER) {
+                || session.getUser().getStatus() != UserStatus.ACTIVE) {
             throw new ApiException(ErrorCode.INVALID_REFRESH_TOKEN);
         }
 
@@ -58,8 +57,8 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         session.setRefreshTokenHash(refreshTokenGenerator.hash(replacementToken));
         session.setLastUsedAt(now);
         OffsetDateTime renewedIdleExpiry = session.isRememberMe()
-                ? now.plusMinutes(REMEMBER_ME_IDLE_TIMEOUT_DAYS) // Original: 7 days
-                : now.plusMinutes(STANDARD_IDLE_TIMEOUT_HOURS); // Original: 12 hours
+                ? now.plusDays(REMEMBER_ME_IDLE_TIMEOUT_DAYS) // Original: 7 days
+                : now.plusHours(STANDARD_IDLE_TIMEOUT_HOURS); // Original: 12 hours
         session.setIdleExpiresAt(renewedIdleExpiry.isBefore(session.getAbsoluteExpiresAt())
                 ? renewedIdleExpiry
                 : session.getAbsoluteExpiresAt());

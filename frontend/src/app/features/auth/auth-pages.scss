@@ -3,17 +3,29 @@
 :host {
   display: block;
   min-width: 0;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   width: 100%;
+
 }
 
 .auth-card {
+  background-color: white;
   display: grid;
   justify-items: stretch;
   width: min(100%, 420px);
   min-width: 0;
   max-width: 100%;
   margin-inline: auto;
-  gap: 20px;
+  gap: 10px;
+  padding: 2rem;
+  // border: 3px solid white;
+  border-radius: 20px;
+  transition: all 0.7s ease;
+  position: relative;
+  z-index: 2;
 
   h1 {
     margin: 0;
@@ -26,6 +38,11 @@
     margin: 6px 0 0;
     color: var(--text-muted);
   }
+}
+
+.auth-card:hover{
+  transform: perspective(3000px) translateZ(20px) scale(1.02);
+  box-shadow: 0 10px 15px rgba(37, 99, 235, 0.35);
 }
 
 .auth-card-wide {
@@ -41,7 +58,7 @@
 .auth-fields,
 .auth-actions {
   display: grid;
-  gap: 16px;
+  gap: 10px;
 }
 
 .auth-form .btn,

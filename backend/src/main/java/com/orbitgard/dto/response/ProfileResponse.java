@@ -8,6 +8,7 @@ public record ProfileResponse(
         String lastName,
         String username,
         String phoneNumber,
+        String email,
         Integer nonRevokedSessionCount
 ) {
 }
