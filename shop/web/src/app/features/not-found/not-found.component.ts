@@ -14,8 +14,8 @@ import { IconComponent } from '../../shared/icon.component';
     <div class="ob-container py-10">
       <ob-empty-state
         art="search"
-        title="This page has drifted out of orbit"
-        message="The link may be old, or the page may have moved. Here are some places to land instead."
+        title="This page has gone down a mouse hole"
+        message="The link may be old, or the page may have moved. Here are some better places to sniff around."
       >
         <a routerLink="/" class="ob-btn ob-btn-primary">Back to home</a>
         <a routerLink="/search" class="ob-btn ob-btn-ghost">Browse all products</a>

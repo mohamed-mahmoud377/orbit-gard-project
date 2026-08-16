@@ -427,8 +427,8 @@ export class ProductComponent {
       switchMap((slug) => this.api.product(slug).pipe(catchError(() => of(null)))),
       tap((res) => {
         this.loading.set(false);
-        if (res) this.title.setTitle(`${res.product.name} — Orbit Bazaar`);
-        else this.title.setTitle('Product not found — Orbit Bazaar');
+        if (res) this.title.setTitle(`${res.product.name} — Jerry's Shop`);
+        else this.title.setTitle("Product not found — Jerry's Shop");
       }),
     ),
     { initialValue: null as ProductDetailResponse | null },

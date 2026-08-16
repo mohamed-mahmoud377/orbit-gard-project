@@ -1,4 +1,4 @@
-# Local development stack for Orbit Bazaar.
+# Local development stack for Jerry's Shop.
 #
 #   docker compose -f shop/docker-compose.dev.yml up --build
 #
@@ -55,7 +55,7 @@ services:
       # Default targets the deployed Spring backend through its nginx, so
       # /shop/api/orders/:id/pay/orbit/* works with real Orbit accounts.
       ORBIT_API_BASE: ${ORBIT_API_BASE:-http://46.224.100.97/api/v1}
-      ORBIT_MERCHANT_NAME: ${ORBIT_MERCHANT_NAME:-Orbit Bazaar}
+      ORBIT_MERCHANT_NAME: ${ORBIT_MERCHANT_NAME:-Jerry's Shop}
       ORBIT_TIMEOUT_MS: ${ORBIT_TIMEOUT_MS:-15000}
       JWT_SECRET: ${SHOP_JWT_SECRET:-dev-only-insecure-shop-secret-change-me}
       SEED_ON_BOOT: ${SEED_ON_BOOT:-true}

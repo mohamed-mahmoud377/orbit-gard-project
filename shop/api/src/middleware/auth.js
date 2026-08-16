@@ -4,6 +4,11 @@ import { unauthorized } from '../lib/errors.js';
 import { query } from '../db/pool.js';
 
 /**
+ * The `orbit-bazaar` issuer deliberately survived the Jerry's Shop rebrand.
+ * It is an opaque internal identifier, never shown to anyone, and it is
+ * verified on every request — renaming it would invalidate every session token
+ * already in a customer's browser and sign the whole shop out mid-cart.
+ *
  * @param {{ id: string, email: string }} user
  * @returns {string}
  */

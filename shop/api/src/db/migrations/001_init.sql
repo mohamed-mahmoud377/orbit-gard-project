@@ -1,4 +1,4 @@
--- Orbit Bazaar — initial schema (CONTRACT §4).
+-- Jerry's Shop — initial schema (CONTRACT §4).
 -- Money is always integer minor units (piastres). Currency is EGP everywhere.
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;   -- gen_random_uuid()

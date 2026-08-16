@@ -6,7 +6,7 @@ Orbit is a digital-wallet graduation project organized as a small monorepo.
 
 - **Frontend:** [http://46.224.100.97/orbit/](http://46.224.100.97/orbit/)
 - **API health:** [http://46.224.100.97/api/ping](http://46.224.100.97/api/ping)
-- **Orbit Bazaar (shop):** [http://46.224.100.97/shop/](http://46.224.100.97/shop/)
+- **Jerry's Shop (shop):** [http://46.224.100.97/shop/](http://46.224.100.97/shop/)
 
 The production stack runs on `46.224.100.97` via Docker Compose (nginx + Angular + Spring Boot +
 Node + Postgres). Pushes to `main` build all three container images and deploy automatically. See
@@ -16,19 +16,19 @@ Node + Postgres). Pushes to `main` build all three container images and deploy a
 Browser → nginx (:80)
             ├─ /orbit/*  → Angular SPA
             ├─ /api/*    → Spring Boot (:8080, internal)
-            └─ /shop/*   → Orbit Bazaar (Node :4000, internal)
+            └─ /shop/*   → Jerry's Shop (Node :4000, internal)
 Spring Boot   → Postgres (:5432, database "orbit")
-Orbit Bazaar  → Postgres (:5432, database "shop") + Spring Boot /api/v1/external/*
+Jerry's Shop  → Postgres (:5432, database "shop") + Spring Boot /api/v1/external/*
 ```
 
 ## Projects
 
 - [`frontend/`](frontend/) — Angular web application and mock wallet flows.
 - [`backend/`](backend/) — existing Spring Boot service and PostgreSQL setup.
-- [`shop/`](shop/) — **Orbit Bazaar**, a storefront that pays with the Orbit wallet
+- [`shop/`](shop/) — **Jerry's Shop**, a storefront that pays with the Orbit wallet
   (Angular + Node/Express, one container serving both).
 
-## Orbit Bazaar
+## Jerry's Shop
 
 A 500-product storefront at [`/shop/`](http://46.224.100.97/shop/) with card and Orbit-wallet
 checkout. Every wallet call is server-to-server, so no credential or token ever reaches the

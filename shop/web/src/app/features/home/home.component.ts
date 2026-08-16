@@ -61,7 +61,8 @@ function endOfDay(): Date {
           <div>
             <h2 class="text-lg font-bold tracking-tight sm:text-xl">Shop by department</h2>
             <p class="mt-0.5 text-sm text-muted">
-              {{ catalog.categories().length || 30 }} departments, 500 products, all in one orbit.
+              {{ catalog.categories().length || 30 }} departments, 500 products, one very
+              determined mouse.
             </p>
           </div>
         </header>
@@ -308,7 +309,9 @@ export class HomeComponent {
     },
     {
       icon: 'wallet',
-      accent: 'violet',
+      // Orbit blue rather than the retired violet — it is the wallet's own colour
+      // and it reads as a deliberate nod rather than a leftover brand hue.
+      accent: 'blue',
       title: 'Pay with your Orbit wallet',
       body: 'Two taps at checkout. Your wallet credentials go straight to Orbit, never to us.',
       cta: 'How it works',

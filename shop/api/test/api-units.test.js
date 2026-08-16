@@ -36,14 +36,14 @@ test('every error serialises into the contract envelope', () => {
 // ------------------------------------------------------- order numbering ---
 
 test('order numbers are zero-padded and year-scoped', () => {
-  assert.equal(formatOrderNumber(123, 2026), 'OB-2026-000123');
-  assert.equal(formatOrderNumber(1, 2026), 'OB-2026-000001');
-  assert.equal(formatOrderNumber(1234567, 2026), 'OB-2026-1234567');
+  assert.equal(formatOrderNumber(123, 2026), 'JS-2026-000123');
+  assert.equal(formatOrderNumber(1, 2026), 'JS-2026-000001');
+  assert.equal(formatOrderNumber(1234567, 2026), 'JS-2026-1234567');
 });
 
 test('the Orbit productName describes the order and stays under 255', () => {
-  assert.equal(orderProductName({ order_number: 'OB-2026-000123' }, 3), 'Order OB-2026-000123 (3 items)');
-  assert.equal(orderProductName({ order_number: 'OB-2026-000123' }, 1), 'Order OB-2026-000123 (1 item)');
+  assert.equal(orderProductName({ order_number: 'JS-2026-000123' }, 3), 'Order JS-2026-000123 (3 items)');
+  assert.equal(orderProductName({ order_number: 'JS-2026-000123' }, 1), 'Order JS-2026-000123 (1 item)');
   assert.ok(orderProductName({ order_number: 'X'.repeat(400) }, 2).length <= 255);
 });
 

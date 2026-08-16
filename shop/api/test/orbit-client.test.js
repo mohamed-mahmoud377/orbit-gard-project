@@ -117,7 +117,7 @@ test('an Orbit problem body is turned into the mapped shop error', async () => {
     await assert.rejects(
       () =>
         pay(
-          { verificationToken: 't', productName: 'Order OB-1 (1 item)', totalCents: 1000 },
+          { verificationToken: 't', productName: 'Order JS-1 (1 item)', totalCents: 1000 },
           { ...BASE, fetchImpl: problemFetch(httpStatus, { code: orbitCode, title: orbitCode, status: httpStatus }) },
         ),
       (err) => {
@@ -214,15 +214,25 @@ test('an unparseable or unmapped 4xx degrades to ORBIT_UNAVAILABLE', async () =>
 
 test('a timeout on /external/pay is UNCERTAIN, never a plain failure', async () => {
   // A real AbortSignal.timeout firing against a fetch that never settles.
+  //
+  // The stub has to hold a ref'd handle for the same reason a real request does.
+  // AbortSignal.timeout's internal timer is unref'd, so it cannot keep the
+  // process alive on its own; a real in-flight fetch is held open by its socket.
+  // Without a stand-in for that socket the event loop drains before the deadline,
+  // the abort never fires, and node:test cancels this test and every one after it.
   const hangingFetch = (_url, init) =>
     new Promise((_resolve, reject) => {
-      init.signal.addEventListener('abort', () => reject(init.signal.reason));
+      const socket = setTimeout(() => {}, 30_000);
+      init.signal.addEventListener('abort', () => {
+        clearTimeout(socket);
+        reject(init.signal.reason);
+      });
     });
 
   const startedAt = Date.now();
   await assert.rejects(
     () =>
-      pay({ verificationToken: 'secret-token', productName: 'Order OB-2026-000123 (3 items)', totalCents: 10492772 }, {
+      pay({ verificationToken: 'secret-token', productName: 'Order JS-2026-000123 (3 items)', totalCents: 10492772 }, {
         baseUrl: 'http://orbit.test/api/v1',
         timeoutMs: 120,
         fetchImpl: hangingFetch,
@@ -270,19 +280,19 @@ test('AbortError is classified the same way as a timeout', () => {
 test('the pay payload matches the shape the Spring backend validates', () => {
   const payload = buildPayPayload({
     verificationToken: 'jwt-value',
-    merchantName: 'Orbit Bazaar',
-    productName: 'Order OB-2026-000123 (3 items)',
+    merchantName: "Jerry's Shop",
+    productName: 'Order JS-2026-000123 (3 items)',
     totalCents: 10492772,
   });
   assert.deepEqual(payload, {
     verificationToken: 'jwt-value',
-    merchantName: 'Orbit Bazaar',
-    productName: 'Order OB-2026-000123 (3 items)',
+    merchantName: "Jerry's Shop",
+    productName: 'Order JS-2026-000123 (3 items)',
     cashAmount: 104927.72,
   });
   assert.equal(
     JSON.stringify(payload),
-    '{"verificationToken":"jwt-value","merchantName":"Orbit Bazaar","productName":"Order OB-2026-000123 (3 items)","cashAmount":104927.72}',
+    '{"verificationToken":"jwt-value","merchantName":"Jerry\'s Shop","productName":"Order JS-2026-000123 (3 items)","cashAmount":104927.72}',
   );
 });
 
@@ -301,7 +311,7 @@ test('the request Orbit receives carries exactly two decimals', async () => {
   /** @type {any} */
   let seen;
   await pay(
-    { verificationToken: 't', merchantName: 'Orbit Bazaar', productName: 'Order OB-1 (1 item)', totalCents: 815 },
+    { verificationToken: 't', merchantName: "Jerry's Shop", productName: 'Order JS-1 (1 item)', totalCents: 815 },
     {
       ...BASE,
       fetchImpl: async (url, init) => {

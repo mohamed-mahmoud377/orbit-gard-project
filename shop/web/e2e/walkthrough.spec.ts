@@ -189,7 +189,7 @@ test('shopper can browse, filter, register and pay by card', async ({ page }) =>
   await expect(page.getByRole('heading', { name: 'Payment complete' })).toBeVisible({
     timeout: 25_000,
   });
-  await expect(page.locator('ob-confirmation')).toContainText(/OB-\d{4}-\d{6}/);
+  await expect(page.locator('ob-confirmation')).toContainText(/JS-\d{4}-\d{6}/);
   await expect(page.locator('ob-confirmation')).toContainText('Visa ending 4242');
   await settle(page);
   await page.screenshot({ path: `${SHOTS}/07-confirmation.png`, fullPage: true });
@@ -237,7 +237,7 @@ test('search suggestions, wishlist and not-found all work', async ({ page }) => 
 
   /* ---------------------------------------------------- not found --- */
   await page.goto('/shop/this-route-does-not-exist');
-  await expect(page.getByText('This page has drifted out of orbit')).toBeVisible();
+  await expect(page.getByText('This page has gone down a mouse hole')).toBeVisible();
   await page.screenshot({ path: `${SHOTS}/10-not-found.png` });
 });
 

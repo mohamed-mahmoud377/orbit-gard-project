@@ -69,7 +69,7 @@ test('pays a real order from a real Orbit wallet', async ({ page }) => {
   });
   const confirmation = page.locator('ob-confirmation');
   await expect(confirmation).toContainText('Orbit E-Wallet');
-  await expect(confirmation).toContainText(/OB-\d{4}-\d{6}/);
+  await expect(confirmation).toContainText(/JS-\d{4}-\d{6}/);
   // The real backend's reference format, not the stub's ORB-XXXXXXXX.
   await expect(confirmation).toContainText(/TXN-\d{17}-\d{6}/);
 

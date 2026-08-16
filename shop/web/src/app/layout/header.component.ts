@@ -137,7 +137,7 @@ import { SearchBarComponent } from './search-bar.component';
                       >Sign in</a
                     >
                     <p class="mt-3 text-center text-xs text-muted">
-                      New to Orbit Bazaar?
+                      New to Jerry&rsquo;s Shop?
                       <a
                         routerLink="/register"
                         class="ob-link"
@@ -204,7 +204,7 @@ import { SearchBarComponent } from './search-bar.component';
 
       <!-- mobile search row -->
       <div class="ob-container pb-2.5 lg:hidden">
-        <ob-search-bar placeholder="Search Orbit Bazaar…" />
+        <ob-search-bar placeholder="Search Jerry&rsquo;s Shop…" />
       </div>
     </div>
 

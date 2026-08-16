@@ -1,4 +1,4 @@
-# Orbit Bazaar — build contract
+# Jerry's Shop — build contract
 
 This file is the single source of truth shared by `shop/api` (Node/Express) and
 `shop/web` (Angular). Anything not written here is an implementation detail; anything
@@ -41,7 +41,7 @@ non-issue and keeps wallet credentials off the client after the initial POST.
 | `DATABASE_URL` | — | Postgres URL for the **`shop`** database |
 | `BOOTSTRAP_DATABASE_URL` | — | Optional. URL to the `postgres` maintenance DB; used once at boot to `CREATE DATABASE shop` if missing |
 | `ORBIT_API_BASE` | `http://app:8080/api/v1` | Base URL of the Spring backend |
-| `ORBIT_MERCHANT_NAME` | `Orbit Bazaar` | Sent as `merchantName`; max 255 chars |
+| `ORBIT_MERCHANT_NAME` | `Jerry's Shop` | Sent as `merchantName`; max 255 chars |
 | `ORBIT_TIMEOUT_MS` | `15000` | Per-request timeout for Orbit calls |
 | `JWT_SECRET` | dev fallback | Signs shop session tokens |
 | `SEED_ON_BOOT` | `true` | Seed catalog if the products table is empty |
@@ -124,6 +124,11 @@ Tables, all `id uuid primary key default gen_random_uuid()` unless noted:
 | `order_items` | `order_id`, `product_id`, `name`, `slug`, `image`, `unit_price_cents`, `qty`, `line_total_cents` — a **snapshot**, never joined for display |
 | `payments` | `order_id`, `method`, `status`, `amount_cents`, `card_last4`, `card_brand`, `auth_code`, `orbit_transaction_id`, `orbit_reference`, `failure_code`, `failure_message`, `created_at` |
 | `orbit_sessions` | `order_id`, `user_id`, `orbit_username`, `token` (server-only), `expires_at`, `state`, `attempted_at`, `created_at` |
+
+`orders.order_number` is `JS-<year>-<6-digit sequence>`, e.g. `JS-2026-000123`. It is a
+plain unique `text` column with **no** CHECK constraint and no shape-dependent index, on
+purpose: orders placed before the Jerry's Shop rename still carry the old `OB-` prefix and
+are never rewritten. Treat the prefix as opaque when parsing.
 
 `orders.status`: `PENDING` `PAID` `PROCESSING` `SHIPPED` `DELIVERED` `CANCELLED` `NEEDS_REVIEW`
 `orders.payment_status`: `UNPAID` `PAID` `FAILED` `UNCERTAIN`
@@ -256,8 +261,8 @@ Server calls `POST {ORBIT_API_BASE}/external/pay`:
 
 ```json
 { "verificationToken": "<from orbit_sessions>",
-  "merchantName": "Orbit Bazaar",
-  "productName": "Order OB-2026-000123 (3 items)",
+  "merchantName": "Jerry's Shop",
+  "productName": "Order JS-2026-000123 (3 items)",
   "cashAmount": 104927.72 }
 ```
 

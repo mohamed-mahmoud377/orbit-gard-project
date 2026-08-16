@@ -1,8 +1,9 @@
 @import 'tailwindcss';
 
 /* ==========================================================================
-   Orbit Bazaar — "night market" design system
-   Deep aubergine ink + orbit violet + marigold, on warm parchment.
+   Jerry's Shop — "cheese shop" design system
+   Cocoa ink + cinnamon + cheddar, on cream. Warm and cartoonish to match the
+   mouse mascot, while keeping every token name the components already use.
    No webfonts: the deployed CSP is `style-src 'self' 'unsafe-inline'`, so an
    external Google Fonts stylesheet would be blocked in production.
    ========================================================================== */
@@ -12,28 +13,28 @@
     ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
     'Noto Sans', sans-serif;
 
-  --color-ink: #1a1327;
-  --color-ink-soft: #2a2040;
-  --color-ink-line: #3a2f55;
+  --color-ink: #3b2314;
+  --color-ink-soft: #4e301c;
+  --color-ink-line: #6b4429;
 
-  --color-canvas: #f7f4ef;
+  --color-canvas: #fff7ea;
   --color-surface: #ffffff;
-  --color-line: #e8e1d6;
-  --color-line-soft: #f1ece3;
+  --color-line: #ead9c2;
+  --color-line-soft: #f8efe1;
 
-  --color-body: #241d33;
-  --color-muted: #6d6580;
+  --color-body: #2e1d10;
+  --color-muted: #7a6552;
 
-  --color-brand: #6c2bd9;
-  --color-brand-dark: #4c1d95;
-  --color-brand-soft: #f2ebfe;
+  --color-brand: #b0521c;
+  --color-brand-dark: #7e390f;
+  --color-brand-soft: #fbeade;
 
-  --color-accent: #ff9f1c;
-  --color-accent-dark: #b26400;
-  --color-accent-soft: #fff3df;
+  --color-accent: #f5b325;
+  --color-accent-dark: #9a6c07;
+  --color-accent-soft: #fff4da;
 
-  --color-pop: #e5385f;
-  --color-pop-soft: #ffe9ee;
+  --color-pop: #dc3b34;
+  --color-pop-soft: #ffe8e5;
 
   --color-teal: #0f9b8e;
   --color-teal-soft: #e2f7f4;
@@ -41,16 +42,16 @@
   --color-warn: #b8730c;
   --color-warn-soft: #fdf3e0;
 
-  --shadow-card: 0 1px 2px rgb(26 19 39 / 0.04), 0 8px 24px -12px rgb(26 19 39 / 0.16);
-  --shadow-lift: 0 2px 4px rgb(26 19 39 / 0.05), 0 18px 40px -16px rgb(26 19 39 / 0.28);
-  --shadow-pop: 0 24px 60px -20px rgb(26 19 39 / 0.35);
+  --shadow-card: 0 1px 2px rgb(59 35 20 / 0.05), 0 8px 24px -12px rgb(59 35 20 / 0.18);
+  --shadow-lift: 0 2px 4px rgb(59 35 20 / 0.06), 0 18px 40px -16px rgb(59 35 20 / 0.3);
+  --shadow-pop: 0 24px 60px -20px rgb(59 35 20 / 0.36);
 }
 
 /* Per-category accent, set at runtime from the catalog `accent` field. */
 :root {
-  --cat-accent: #6c2bd9;
-  --cat-accent-dark: #4c1d95;
-  --cat-accent-soft: #f2ebfe;
+  --cat-accent: #b0521c;
+  --cat-accent-dark: #7e390f;
+  --cat-accent-soft: #fbeade;
 }
 
 * {
@@ -115,13 +116,13 @@ body {
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
-  scrollbar-color: #d6cec1 transparent;
+  scrollbar-color: #dcc9ae transparent;
   &::-webkit-scrollbar {
     width: 6px;
   }
   &::-webkit-scrollbar-thumb {
     border-radius: 999px;
-    background-color: #d6cec1;
+    background-color: #dcc9ae;
   }
   &::-webkit-scrollbar-track {
     background: transparent;
@@ -180,7 +181,7 @@ body {
     color: #3a2200;
     box-shadow:
       inset 0 1px 0 rgb(255 255 255 / 0.5),
-      0 8px 18px -10px rgb(255 159 28 / 0.9);
+      0 8px 18px -10px rgb(245 179 37 / 0.85);
   }
   .ob-btn-primary:hover:not(:disabled) {
     background: linear-gradient(180deg, #ffbe61 0%, #ffa733 55%, #f59a12 100%);
@@ -189,7 +190,7 @@ body {
   .ob-btn-brand {
     background-color: var(--color-brand);
     color: #fff;
-    box-shadow: 0 8px 18px -12px rgb(108 43 217 / 0.9);
+    box-shadow: 0 8px 18px -12px rgb(176 82 28 / 0.9);
   }
   .ob-btn-brand:hover:not(:disabled) {
     background-color: var(--color-brand-dark);
@@ -202,7 +203,7 @@ body {
   }
   .ob-btn-ghost:hover:not(:disabled) {
     background-color: var(--color-line-soft);
-    border-color: #d9d0c2;
+    border-color: #dcc7a9;
   }
 
   .ob-btn-dark {
@@ -254,16 +255,16 @@ body {
       box-shadow 0.15s ease;
   }
   .ob-input::placeholder {
-    color: #a49bb4;
+    color: #a2907c;
   }
   .ob-input:focus {
     outline: none;
     border-color: var(--color-brand);
-    box-shadow: 0 0 0 3px rgb(108 43 217 / 0.14);
+    box-shadow: 0 0 0 3px rgb(176 82 28 / 0.16);
   }
   .ob-input[aria-invalid='true'] {
     border-color: var(--color-pop);
-    box-shadow: 0 0 0 3px rgb(229 56 95 / 0.12);
+    box-shadow: 0 0 0 3px rgb(220 59 52 / 0.14);
   }
 
   .ob-label {
@@ -320,7 +321,7 @@ body {
     text-decoration-line: underline;
     text-decoration-thickness: 1px;
     text-underline-offset: 3px;
-    text-decoration-color: rgb(108 43 217 / 0.35);
+    text-decoration-color: rgb(176 82 28 / 0.4);
   }
   .ob-link:hover {
     color: var(--color-brand-dark);
@@ -470,7 +471,7 @@ input[type='range'].ob-range::-webkit-slider-thumb {
   border-radius: 999px;
   background: #fff;
   border: 2px solid var(--color-brand);
-  box-shadow: 0 2px 6px rgb(26 19 39 / 0.25);
+  box-shadow: 0 2px 6px rgb(59 35 20 / 0.25);
 }
 input[type='range'].ob-range::-moz-range-thumb {
   height: 16px;
@@ -478,7 +479,7 @@ input[type='range'].ob-range::-moz-range-thumb {
   border-radius: 999px;
   background: #fff;
   border: 2px solid var(--color-brand);
-  box-shadow: 0 2px 6px rgb(26 19 39 / 0.25);
+  box-shadow: 0 2px 6px rgb(59 35 20 / 0.25);
 }
 
 /* Dual-thumb price slider: two overlaid range inputs. Only the thumbs take
@@ -504,4 +505,403 @@ input[type='range'].ob-range::-moz-range-thumb {
 input[type='checkbox'],
 input[type='radio'] {
   accent-color: var(--color-brand);
+}
+
+/* ==========================================================================
+   Orbit hosted-payment surface
+   --------------------------------------------------------------------------
+   The wallet step is not part of Jerry's Shop visually — it is Orbit's own
+   payment surface embedded in ours, the way a bank's hosted page looks nothing
+   like the merchant that redirected you to it. That contrast is deliberate:
+   cool Orbit blue on white, inside the warm cocoa/cheddar shop.
+
+   Values are transcribed from Orbit's own `frontend/src/styles/_tokens.scss`
+   (colours, 8/10/14/18px radii, `0 12px 30px rgb(21 34 59 / 0.07)` card
+   shadow). They live here as *local* custom properties rather than theme
+   tokens so nothing outside this component can accidentally inherit them.
+
+   Type is the system stack on purpose: Orbit's own app loads Inter from Google
+   Fonts, but the shop ships `style-src 'self' 'unsafe-inline'` and an external
+   stylesheet would be blocked in production. We match Orbit through colour,
+   radius, shadow and spacing instead of through the typeface.
+   ========================================================================== */
+
+.ob-orbit-surface {
+  --o-accent: #1a4fb0;
+  --o-accent-dim: #1668d9;
+  --o-accent-deep: #0e2c6b;
+  --o-accent-wash: #e7f0fd;
+  --o-bg-base: #f4f7fb;
+  --o-bg-surface: #ffffff;
+  --o-bg-raised: #eff3f9;
+  --o-border-subtle: #e4eaf2;
+  --o-border: #d2dbe8;
+  --o-border-strong: #a9b6cc;
+  --o-text: #15223b;
+  --o-text-2: #4a5875;
+  --o-text-muted: #7b89a4;
+  --o-success: #0e7c4a;
+  --o-success-wash: #e3f4ec;
+  --o-danger: #c4293a;
+  --o-danger-wash: #fcebee;
+  --o-held: #b8690a;
+  --o-held-wash: #fdf2e3;
+
+  overflow: hidden;
+  border-radius: 18px;
+  border: 1px solid var(--o-border);
+  background-color: var(--o-bg-base);
+  box-shadow: 0 12px 30px rgb(21 34 59 / 0.07);
+  color: var(--o-text);
+  font-family:
+    system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    sans-serif;
+}
+
+/* Focus rings inside the panel follow Orbit, not the shop's cinnamon. */
+.ob-orbit-surface :focus-visible {
+  outline: 2px solid var(--o-accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* ------------------------------------------------------------------ header */
+
+.ob-orbit-head {
+  background-color: var(--o-bg-surface);
+  border-bottom: 1px solid var(--o-border-subtle);
+  padding: 1rem 1.25rem 0.875rem;
+}
+
+.ob-orbit-wordmark {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--o-accent-deep);
+  line-height: 1;
+}
+
+.ob-orbit-rule {
+  width: 1px;
+  align-self: stretch;
+  background-color: var(--o-border-subtle);
+}
+
+.ob-orbit-eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--o-text-muted);
+}
+
+.ob-orbit-secure {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3125rem;
+  border-radius: 999px;
+  background-color: var(--o-success-wash);
+  color: var(--o-success);
+  padding: 0.25rem 0.625rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+.ob-orbit-head-note {
+  margin-top: 0.625rem;
+  font-size: 0.75rem;
+  line-height: 1.55;
+  color: var(--o-text-2);
+}
+
+/* Amount strip — the one number the customer is agreeing to. */
+.ob-orbit-amount {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  background-color: var(--o-bg-raised);
+  border-bottom: 1px solid var(--o-border-subtle);
+  padding: 0.6875rem 1.25rem;
+}
+.ob-orbit-amount > span {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--o-text-2);
+}
+.ob-orbit-amount > strong {
+  font-size: 1.0625rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--o-text);
+}
+
+/* -------------------------------------------------------------------- body */
+
+.ob-orbit-body {
+  background-color: var(--o-bg-surface);
+  padding: 1.25rem;
+}
+
+.ob-orbit-title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--o-text);
+}
+
+.ob-orbit-step {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--o-accent);
+}
+
+.ob-orbit-sub {
+  font-size: 0.75rem;
+  line-height: 1.6;
+  color: var(--o-text-2);
+}
+
+.ob-orbit-muted {
+  font-size: 0.6875rem;
+  line-height: 1.6;
+  color: var(--o-text-muted);
+}
+
+/* ------------------------------------------------------------------ fields */
+
+.ob-orbit-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--o-text-2);
+  margin-bottom: 0.375rem;
+}
+
+.ob-orbit-input {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid var(--o-border);
+  background-color: var(--o-bg-surface);
+  padding: 0.625rem 0.8125rem;
+  font-size: 0.9375rem;
+  color: var(--o-text);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.ob-orbit-input::placeholder {
+  color: var(--o-text-muted);
+}
+.ob-orbit-input:hover:not(:focus) {
+  border-color: var(--o-border-strong);
+}
+.ob-orbit-input:focus {
+  outline: none;
+  border-color: var(--o-accent);
+  box-shadow: 0 0 0 3px rgb(26 79 176 / 0.15);
+}
+/* Room for the show/hide-password toggle. Declared here rather than with a
+   `pr-*` utility: this block is unlayered, so the `padding` shorthand above
+   would win over any Tailwind padding utility on the same element. */
+.ob-orbit-input-pw {
+  padding-right: 2.75rem;
+}
+
+.ob-orbit-eye {
+  position: absolute;
+  inset-block: 0;
+  right: 0;
+  display: grid;
+  width: 2.75rem;
+  place-items: center;
+  color: var(--o-text-muted);
+  cursor: pointer;
+  background: none;
+  border: 0;
+}
+.ob-orbit-eye:hover {
+  color: var(--o-text-2);
+}
+
+/* ----------------------------------------------------------------- buttons */
+
+.ob-orbit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4375rem;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.15;
+  padding: 0.6875rem 1rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background-color 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease,
+    box-shadow 0.16s ease;
+}
+.ob-orbit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.ob-orbit-btn-lg {
+  padding: 0.8125rem 1.25rem;
+  font-size: 0.9375rem;
+  border-radius: 12px;
+}
+.ob-orbit-btn-sm {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+  border-radius: 8px;
+}
+
+.ob-orbit-btn-primary {
+  background-color: var(--o-accent);
+  color: #fff;
+  box-shadow: 0 6px 14px -8px rgb(14 44 107 / 0.85);
+}
+.ob-orbit-btn-primary:hover:not(:disabled) {
+  background-color: var(--o-accent-deep);
+}
+
+.ob-orbit-btn-quiet {
+  background-color: var(--o-bg-surface);
+  border-color: var(--o-border);
+  color: var(--o-text-2);
+}
+.ob-orbit-btn-quiet:hover:not(:disabled) {
+  background-color: var(--o-bg-raised);
+  border-color: var(--o-border-strong);
+  color: var(--o-text);
+}
+
+/* ------------------------------------------------------------------- rows */
+
+.ob-orbit-rows {
+  border: 1px solid var(--o-border-subtle);
+  border-radius: 14px;
+  background-color: var(--o-bg-surface);
+  overflow: hidden;
+}
+.ob-orbit-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.6875rem 0.875rem;
+}
+.ob-orbit-row + .ob-orbit-row {
+  border-top: 1px solid var(--o-border-subtle);
+}
+.ob-orbit-row > dt {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--o-text-2);
+}
+.ob-orbit-row > dd {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--o-text);
+  text-align: right;
+}
+.ob-orbit-row-total {
+  background-color: var(--o-accent-wash);
+}
+.ob-orbit-row-total > dd {
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: var(--o-accent-deep);
+}
+
+.ob-orbit-expiry {
+  margin-top: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border: 1px solid var(--o-border-subtle);
+  border-radius: 14px;
+  background-color: var(--o-bg-raised);
+  padding: 0.625rem 0.875rem;
+}
+.ob-orbit-expiry > p {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--o-text-2);
+}
+
+/* ------------------------------------------------------------------ alerts */
+
+.ob-orbit-alert {
+  border-radius: 14px;
+  border: 1px solid;
+  padding: 0.9375rem;
+}
+/* Amber "we don't know yet" — ORBIT_UNCERTAIN and friends. The
+   `bg-warn-soft` utility supplies the fill (the e2e suite asserts that exact
+   class) and it is within a hair of Orbit's own held-wash #fdf2e3. */
+.ob-orbit-alert-warn {
+  border-color: rgb(184 105 10 / 0.32);
+}
+.ob-orbit-alert-warn .ob-orbit-alert-title,
+.ob-orbit-alert-warn .ob-orbit-alert-icon {
+  color: var(--o-held);
+}
+/* Red "it definitely did not happen". */
+.ob-orbit-alert-danger {
+  border-color: rgb(196 41 58 / 0.28);
+  background-color: var(--o-danger-wash);
+}
+.ob-orbit-alert-danger .ob-orbit-alert-title,
+.ob-orbit-alert-danger .ob-orbit-alert-icon {
+  color: var(--o-danger);
+}
+.ob-orbit-alert-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+.ob-orbit-alert-body {
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--o-text);
+}
+.ob-orbit-alert-guidance {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  line-height: 1.6;
+  color: var(--o-text-2);
+}
+.ob-orbit-alert-fact {
+  margin-top: 0.625rem;
+  border-radius: 8px;
+  background-color: var(--o-bg-surface);
+  border: 1px solid var(--o-border-subtle);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--o-text);
+}
+
+/* ------------------------------------------------------------------ footer */
+
+.ob-orbit-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  background-color: var(--o-bg-base);
+  border-top: 1px solid var(--o-border-subtle);
+  padding: 0.625rem 1.25rem;
+  font-size: 0.6875rem;
+  color: var(--o-text-muted);
 }

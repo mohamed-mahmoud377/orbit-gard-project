@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Orbit Bazaar — catalog builder.
+ * Jerry's Shop — catalog builder.
  *
  * Generates `shop/api/src/catalog/catalog.json` per shop/CONTRACT.md §3.
  *
@@ -27,7 +27,7 @@ const OUT_FILE = path.join(ROOT, 'shop', 'api', 'src', 'catalog', 'catalog.json'
 
 const SEED = 0x0b17ba2a; // fixed — the catalog must be reproducible
 const BASE_DATE = Date.UTC(2026, 7, 16); // fixed "now" so createdAt is deterministic
-const USER_AGENT = 'orbit-bazaar-catalog/1.0';
+const USER_AGENT = 'jerrys-shop-catalog/1.0';
 const OPENVERSE = 'https://api.openverse.org/v1/images/';
 
 const TOTAL_PRODUCTS = 500;
@@ -4694,7 +4694,7 @@ function buildProducts(pools) {
  * ------------------------------------------------------------------ */
 
 async function build() {
-  log('Orbit Bazaar catalog builder');
+  log("Jerry's Shop catalog builder");
   log(`  categories: ${CATEGORIES.length}  products: ${TOTAL_PRODUCTS}  seed: 0x${SEED.toString(16)}`);
   log('');
   log('1/3  Sourcing and verifying images (Openverse → StockSnap)');

@@ -43,7 +43,7 @@ import { primaryImage, stockLabel } from '../../shared/product-utils';
           <ob-empty-state
             art="cart"
             title="Your cart is empty"
-            message="Nothing in orbit yet. Have a look at the deals — they change every day."
+            message="Not so much as a crumb in here. Have a look at the deals — they change every day."
           >
             <a routerLink="/" class="ob-btn ob-btn-primary">Start shopping</a>
             <a routerLink="/search" [queryParams]="{ badge: 'DEAL' }" class="ob-btn ob-btn-ghost">

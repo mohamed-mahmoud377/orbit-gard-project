@@ -45,8 +45,8 @@ interface FooterColumn {
         <div class="sm:col-span-2 lg:col-span-1">
           <ob-logo class="text-white" />
           <p class="mt-4 max-w-xs text-xs leading-relaxed">
-            A demonstration storefront for the Orbit platform. Every product, review and price on
-            this site is fictional.
+            Small mouse, big cart. A demonstration storefront for the Orbit platform — every
+            product, review and price on this site is fictional.
           </p>
           <div class="mt-5 flex gap-2">
             @for (social of socials; track social.label) {
@@ -85,7 +85,10 @@ interface FooterColumn {
         <div
           class="ob-container flex flex-col items-center justify-between gap-3 py-5 text-xs sm:flex-row"
         >
-          <p>© {{ year }} Orbit Bazaar · A fictional storefront for testing.</p>
+          <p>
+            © {{ year }} Jerry&rsquo;s Shop · A fictional storefront for testing. No cheese was
+            harmed.
+          </p>
           <p class="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
             <span class="inline-flex items-center gap-1.5">
               <ob-icon name="lock" [size]="13" /> Secure checkout

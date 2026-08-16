@@ -1,4 +1,4 @@
-# Orbit Bazaar
+# Jerry's Shop
 
 A storefront that pays with the Orbit wallet. One Node process serves both the
 Angular bundle at `/shop/` and the Express API at `/shop/api` — same origin, so
@@ -98,7 +98,7 @@ npm run seed      # re-seed the catalog (force)
 | `DATABASE_URL` | — | Postgres URL for the **`shop`** database |
 | `BOOTSTRAP_DATABASE_URL` | — | URL to the `postgres` maintenance DB. Used once at boot to `CREATE DATABASE shop`. Required on the server (see below) |
 | `ORBIT_API_BASE` | `http://app:8080/api/v1` | Base URL of the Spring backend |
-| `ORBIT_MERCHANT_NAME` | `Orbit Bazaar` | Sent as `merchantName`, truncated to 255 |
+| `ORBIT_MERCHANT_NAME` | `Jerry's Shop` | Sent as `merchantName`, truncated to 255 |
 | `ORBIT_TIMEOUT_MS` | `15000` | Per-request timeout for Orbit calls |
 | `JWT_SECRET` | insecure dev fallback | Signs **shop** session tokens |
 | `SEED_ON_BOOT` | `true` | Seed the catalog when `products` is empty |

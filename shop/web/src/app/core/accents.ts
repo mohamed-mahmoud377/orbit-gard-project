@@ -12,7 +12,8 @@ export interface Accent {
   soft: string;
 }
 
-const DEFAULT_ACCENT: Accent = { base: '#6c2bd9', dark: '#4c1d95', soft: '#f2ebfe' };
+/** Cinnamon — the Jerry's Shop brand colour, used when a category has no accent. */
+const DEFAULT_ACCENT: Accent = { base: '#b0521c', dark: '#7e390f', soft: '#fbeade' };
 
 const ACCENTS: Record<string, Accent> = {
   slate: { base: '#475569', dark: '#1e293b', soft: '#f1f5f9' },

@@ -5,12 +5,12 @@ import { authGuard } from './core/auth.guard';
 export const routes: Routes = [
   {
     path: '',
-    title: 'Orbit Bazaar — everything, in orbit',
+    title: "Jerry's Shop — small mouse, big cart",
     loadComponent: () => import('./features/home/home.component').then((m) => m.HomeComponent),
   },
   {
     path: 'search',
-    title: 'Search — Orbit Bazaar',
+    title: "Search — Jerry's Shop",
     loadComponent: () => import('./features/browse/browse.component').then((m) => m.BrowseComponent),
   },
   {
@@ -28,19 +28,19 @@ export const routes: Routes = [
   },
   {
     path: 'cart',
-    title: 'Your cart — Orbit Bazaar',
+    title: "Your cart — Jerry's Shop",
     loadComponent: () => import('./features/cart/cart.component').then((m) => m.CartComponent),
   },
   {
     path: 'checkout',
-    title: 'Checkout — Orbit Bazaar',
+    title: "Checkout — Jerry's Shop",
     canActivate: [authGuard],
     loadComponent: () =>
       import('./features/checkout/checkout.component').then((m) => m.CheckoutComponent),
   },
   {
     path: 'orders',
-    title: 'Your orders — Orbit Bazaar',
+    title: "Your orders — Jerry's Shop",
     canActivate: [authGuard],
     loadComponent: () => import('./features/orders/orders.component').then((m) => m.OrdersComponent),
   },
@@ -52,32 +52,32 @@ export const routes: Routes = [
   },
   {
     path: 'account',
-    title: 'Your account — Orbit Bazaar',
+    title: "Your account — Jerry's Shop",
     canActivate: [authGuard],
     loadComponent: () =>
       import('./features/account/account.component').then((m) => m.AccountComponent),
   },
   {
     path: 'wishlist',
-    title: 'Your wishlist — Orbit Bazaar',
+    title: "Your wishlist — Jerry's Shop",
     canActivate: [authGuard],
     loadComponent: () =>
       import('./features/wishlist/wishlist.component').then((m) => m.WishlistComponent),
   },
   {
     path: 'login',
-    title: 'Sign in — Orbit Bazaar',
+    title: "Sign in — Jerry's Shop",
     loadComponent: () => import('./features/auth/login.component').then((m) => m.LoginComponent),
   },
   {
     path: 'register',
-    title: 'Create an account — Orbit Bazaar',
+    title: "Create an account — Jerry's Shop",
     loadComponent: () =>
       import('./features/auth/register.component').then((m) => m.RegisterComponent),
   },
   {
     path: '**',
-    title: 'Page not found — Orbit Bazaar',
+    title: "Page not found — Jerry's Shop",
     loadComponent: () =>
       import('./features/not-found/not-found.component').then((m) => m.NotFoundComponent),
   },

@@ -1,5 +1,5 @@
 /**
- * Wire models for the Orbit Bazaar API (CONTRACT §3, §5, §6, §7, §8).
+ * Wire models for the Jerry's Shop API (CONTRACT §3, §5, §6, §7, §8).
  *
  * These mirror the DTOs produced by `shop/api/src/services/*.js` exactly.
  * Money is always integer minor units (piastres); anything ending in `Cents`

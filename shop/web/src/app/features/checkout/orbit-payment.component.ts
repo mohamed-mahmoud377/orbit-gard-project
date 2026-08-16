@@ -19,6 +19,22 @@ type Phase = 'credentials' | 'verifying' | 'session' | 'confirming' | 'failed';
  * returns, and the Orbit token never leaves the server.
  *
  * Step B sends only the `sessionId` to `.../confirm`.
+ *
+ * ---------------------------------------------------------------------------
+ * Why this panel looks nothing like the rest of the shop
+ * ---------------------------------------------------------------------------
+ * It is Orbit's surface, not ours. A hosted payment page from a bank never
+ * wears the merchant's skin, and the customer needs to see that they have
+ * stepped out of Jerry's Shop and are typing their wallet password into
+ * something that belongs to Orbit. So the whole panel switches to Orbit's own
+ * design language — cool blue on white, 10/14/18px radii, Orbit's card shadow —
+ * inside the warm cocoa-and-cheddar shop. The styles live in
+ * `styles.css` under `.ob-orbit-*` and the tokens are transcribed from
+ * `frontend/src/styles/_tokens.scss`.
+ *
+ * The Orbit mark (three concentric circles) is reproduced inline: the shop
+ * container has no access to the banking app's assets, and an inline SVG is a
+ * couple of hundred bytes with no extra request.
  */
 @Component({
   selector: 'ob-orbit-payment',
@@ -26,41 +42,50 @@ type Phase = 'credentials' | 'verifying' | 'session' | 'confirming' | 'failed';
   imports: [RouterLink, CountdownComponent, IconComponent, MoneyPipe],
   host: { class: 'block' },
   template: `
-    <div class="overflow-hidden rounded-2xl border border-brand/25">
-      <!-- Orbit-branded header, visually distinct from the shop chrome so it
-           reads as "you are handing this to your bank now". -->
-      <header class="relative overflow-hidden bg-ink px-5 py-4 text-white">
-        <span class="absolute -top-16 -right-10 size-40 rounded-full bg-brand opacity-40 blur-2xl"></span>
-        <div class="relative flex items-center gap-3">
-          <span class="grid size-10 place-items-center rounded-xl bg-white/10">
-            <ob-icon name="wallet" [size]="21" />
-          </span>
-          <div>
-            <p class="text-sm font-extrabold tracking-tight">Orbit E-Wallet</p>
-            <p class="text-xs text-white/60">Secure payment · {{ amountCents() | money }}</p>
-          </div>
-          <span class="ml-auto flex items-center gap-1.5 text-[11px] font-semibold text-white/70">
-            <ob-icon name="lock" [size]="13" />
-            Encrypted
+    <section class="ob-orbit-surface" aria-label="Orbit E-Wallet payment">
+      <!-- =================================================== Orbit header -->
+      <header class="ob-orbit-head">
+        <div class="flex items-center gap-2.5">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true" class="shrink-0">
+            <svg:circle cx="16" cy="16" r="15" stroke="#0E2C6B" stroke-width="2" />
+            <svg:circle cx="16" cy="16" r="9" stroke="#1A4FB0" stroke-width="2" />
+            <svg:circle cx="16" cy="16" r="4" fill="#1A4FB0" />
+          </svg>
+          <span class="ob-orbit-wordmark">Orbit</span>
+          <span class="ob-orbit-rule"></span>
+          <span class="ob-orbit-eyebrow">E-Wallet</span>
+          <span class="ob-orbit-secure ml-auto">
+            <ob-icon name="lock" [size]="12" />
+            Secure
           </span>
         </div>
+        <p class="ob-orbit-head-note">
+          You are signing in directly with Orbit. Jerry&rsquo;s Shop never sees your wallet
+          password — it is sent once, server-to-server, and the session token stays with Orbit.
+        </p>
       </header>
 
-      <div class="bg-surface p-5">
+      <div class="ob-orbit-amount">
+        <span>Amount to pay</span>
+        <strong>{{ amountCents() | money }}</strong>
+      </div>
+
+      <div class="ob-orbit-body">
         @switch (phase()) {
           <!-- ================================================== step A -->
           @case ('credentials') {
             <form (submit)="verify($event)" novalidate>
-              <h3 class="text-sm font-bold">Sign in to your wallet</h3>
-              <p class="mt-1 text-xs leading-relaxed text-muted">
-                Step 1 of 2 — we pass these straight to Orbit to open a payment session. Orbit
-                Bazaar never stores your wallet username, password or session token.
+              <p class="ob-orbit-step">Step 1 of 2</p>
+              <h3 class="ob-orbit-title mt-1">Sign in to your wallet</h3>
+              <p class="ob-orbit-sub mt-1.5">
+                Orbit checks these and opens a one-hour payment session. Nothing is debited at
+                this step.
               </p>
 
               <label class="mt-4 block">
-                <span class="ob-label">Orbit username</span>
+                <span class="ob-orbit-label">Orbit username</span>
                 <input
-                  class="ob-input"
+                  class="ob-orbit-input"
                   name="orbitUsername"
                   autocomplete="off"
                   autocapitalize="none"
@@ -72,10 +97,10 @@ type Phase = 'credentials' | 'verifying' | 'session' | 'confirming' | 'failed';
               </label>
 
               <label class="mt-3 block">
-                <span class="ob-label">Orbit password</span>
+                <span class="ob-orbit-label">Orbit password</span>
                 <span class="relative block">
                   <input
-                    class="ob-input pr-11"
+                    class="ob-orbit-input ob-orbit-input-pw"
                     [type]="showPassword() ? 'text' : 'password'"
                     name="orbitPassword"
                     autocomplete="off"
@@ -85,7 +110,7 @@ type Phase = 'credentials' | 'verifying' | 'session' | 'confirming' | 'failed';
                   />
                   <button
                     type="button"
-                    class="absolute inset-y-0 right-0 grid w-11 place-items-center text-muted transition hover:text-body"
+                    class="ob-orbit-eye"
                     [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
                     (click)="showPassword.set(!showPassword())"
                   >
@@ -96,17 +121,16 @@ type Phase = 'credentials' | 'verifying' | 'session' | 'confirming' | 'failed';
 
               <button
                 type="submit"
-                class="ob-btn ob-btn-brand ob-btn-lg mt-5 w-full"
+                class="ob-orbit-btn ob-orbit-btn-primary ob-orbit-btn-lg mt-5 w-full"
                 [disabled]="!canVerify()"
               >
-                <ob-icon name="lock" [size]="16" />
+                <ob-icon name="lock" [size]="15" />
                 Continue to confirm
               </button>
 
-              <p class="mt-3 flex items-start gap-2 text-[11px] leading-relaxed text-muted">
-                <ob-icon name="shield-check" [size]="14" class="mt-px shrink-0 text-teal" />
-                Your credentials are sent once, server-to-server, and are not written to this
-                device or to our database.
+              <p class="ob-orbit-muted mt-3 flex items-start gap-2">
+                <ob-icon name="shield-check" [size]="14" class="mt-px shrink-0 text-[#0e7c4a]" />
+                Your credentials are never written to this device or to the shop's database.
               </p>
             </form>
           }
@@ -114,45 +138,45 @@ type Phase = 'credentials' | 'verifying' | 'session' | 'confirming' | 'failed';
           <!-- ============================================== verifying -->
           @case ('verifying') {
             <div class="py-8 text-center">
-              <ob-icon name="loader" [size]="30" class="ob-spin mx-auto text-brand" />
-              <p class="mt-4 text-sm font-bold">Opening a session with Orbit…</p>
-              <p class="mt-1 text-xs text-muted">This usually takes a second or two.</p>
+              <ob-icon name="loader" [size]="30" class="ob-spin mx-auto text-[#1a4fb0]" />
+              <p class="ob-orbit-title mt-4">Opening a session with Orbit…</p>
+              <p class="ob-orbit-sub mt-1">This usually takes a second or two.</p>
             </div>
           }
 
           <!-- ================================================== step B -->
           @case ('session') {
             @if (session(); as s) {
-              <h3 class="text-sm font-bold">Confirm the payment</h3>
-              <p class="mt-1 text-xs leading-relaxed text-muted">
-                Step 2 of 2 — Orbit has authorised this session. Nothing has been debited yet.
+              <p class="ob-orbit-step">Step 2 of 2</p>
+              <h3 class="ob-orbit-title mt-1">Confirm the payment</h3>
+              <p class="ob-orbit-sub mt-1.5">
+                Orbit has authorised this session. Nothing has been debited yet — confirming
+                below is what moves the money.
               </p>
 
-              <dl class="mt-4 divide-y divide-line rounded-xl border border-line">
-                <div class="flex items-center justify-between px-4 py-3">
-                  <dt class="text-xs font-semibold text-muted">Wallet</dt>
-                  <dd class="font-mono text-sm font-bold">{{ s.maskedUsername }}</dd>
+              <dl class="ob-orbit-rows mt-4">
+                <div class="ob-orbit-row">
+                  <dt>Wallet</dt>
+                  <dd class="font-mono">{{ s.maskedUsername }}</dd>
                 </div>
-                <div class="flex items-center justify-between px-4 py-3">
-                  <dt class="text-xs font-semibold text-muted">Merchant</dt>
-                  <dd class="text-sm font-semibold">Orbit Bazaar</dd>
+                <div class="ob-orbit-row">
+                  <dt>Paying</dt>
+                  <dd>Jerry&rsquo;s Shop</dd>
                 </div>
-                <div class="flex items-center justify-between px-4 py-3">
-                  <dt class="text-xs font-semibold text-muted">Amount to debit</dt>
-                  <dd class="text-lg font-extrabold">{{ s.amountCents | money }}</dd>
+                <div class="ob-orbit-row ob-orbit-row-total">
+                  <dt>Amount to debit</dt>
+                  <dd>{{ s.amountCents | money }}</dd>
                 </div>
               </dl>
 
-              <div
-                class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-accent-soft px-4 py-3"
-              >
-                <p class="text-xs font-bold text-accent-dark">Session expires in</p>
-                <ob-countdown [until]="s.expiresAt" chipClass="bg-accent text-[#3a2200]" />
+              <div class="ob-orbit-expiry">
+                <p>Session expires in</p>
+                <ob-countdown [until]="s.expiresAt" chipClass="bg-[#0e2c6b] text-white" />
               </div>
 
               <button
                 type="button"
-                class="ob-btn ob-btn-primary ob-btn-lg mt-4 w-full"
+                class="ob-orbit-btn ob-orbit-btn-primary ob-orbit-btn-lg mt-4 w-full"
                 (click)="confirm()"
               >
                 <ob-icon name="check" [size]="17" />
@@ -161,7 +185,7 @@ type Phase = 'credentials' | 'verifying' | 'session' | 'confirming' | 'failed';
 
               <button
                 type="button"
-                class="ob-btn ob-btn-ghost mt-2 w-full"
+                class="ob-orbit-btn ob-orbit-btn-quiet mt-2 w-full"
                 (click)="restart()"
               >
                 Use a different wallet
@@ -172,9 +196,9 @@ type Phase = 'credentials' | 'verifying' | 'session' | 'confirming' | 'failed';
           <!-- ============================================= confirming -->
           @case ('confirming') {
             <div class="py-8 text-center">
-              <ob-icon name="loader" [size]="30" class="ob-spin mx-auto text-brand" />
-              <p class="mt-4 text-sm font-bold">Debiting your Orbit wallet…</p>
-              <p class="mt-1 text-xs leading-relaxed text-muted">
+              <ob-icon name="loader" [size]="30" class="ob-spin mx-auto text-[#1a4fb0]" />
+              <p class="ob-orbit-title mt-4">Debiting your Orbit wallet…</p>
+              <p class="ob-orbit-sub mt-1">
                 Please don't close this page or press back — we're waiting on Orbit.
               </p>
             </div>
@@ -183,34 +207,33 @@ type Phase = 'credentials' | 'verifying' | 'session' | 'confirming' | 'failed';
           <!-- ================================================= failed -->
           @case ('failed') {
             @if (fault(); as f) {
+              <!-- The bg-warn-soft class on the warning tone is load-bearing:
+                   the e2e suite asserts amber-not-red by class name, and the
+                   shop's warn-soft is within a hair of Orbit's held-wash
+                   #fdf2e3, so it also happens to be the right colour. -->
               <div
-                class="rounded-xl border p-4"
+                class="ob-orbit-alert"
                 [class]="
                   f.tone === 'warning'
-                    ? 'border-warn/35 bg-warn-soft'
-                    : 'border-pop/30 bg-pop-soft'
+                    ? 'ob-orbit-alert-warn bg-warn-soft'
+                    : 'ob-orbit-alert-danger'
                 "
                 role="alert"
               >
                 <div class="flex items-start gap-3">
-                  <ob-icon
-                    [name]="f.tone === 'warning' ? 'alert-triangle' : 'alert-circle'"
-                    [size]="20"
-                    class="mt-0.5 shrink-0"
-                    [class]="f.tone === 'warning' ? 'text-warn' : 'text-pop'"
-                  />
+                  <span class="ob-orbit-alert-icon mt-0.5 shrink-0">
+                    <ob-icon
+                      [name]="f.tone === 'warning' ? 'alert-triangle' : 'alert-circle'"
+                      [size]="20"
+                    />
+                  </span>
                   <div class="min-w-0">
-                    <p
-                      class="text-sm font-bold"
-                      [class]="f.tone === 'warning' ? 'text-warn' : 'text-pop'"
-                    >
-                      {{ f.title }}
-                    </p>
-                    <p class="mt-1 text-sm leading-relaxed text-body/85">{{ f.message }}</p>
-                    <p class="mt-2 text-xs leading-relaxed text-muted">{{ f.guidance }}</p>
+                    <p class="ob-orbit-alert-title">{{ f.title }}</p>
+                    <p class="ob-orbit-alert-body">{{ f.message }}</p>
+                    <p class="ob-orbit-alert-guidance">{{ f.guidance }}</p>
 
                     @if (f.recovery === 'confirm' && shortfallKnown()) {
-                      <p class="mt-2 rounded-lg bg-surface px-3 py-2 text-xs font-semibold">
+                      <p class="ob-orbit-alert-fact">
                         You need at least
                         <span class="font-extrabold">{{ requiredCents() | money }}</span>
                         available to complete this order.
@@ -222,29 +245,44 @@ type Phase = 'credentials' | 'verifying' | 'session' | 'confirming' | 'failed';
                 <div class="mt-4 flex flex-wrap gap-2">
                   @switch (f.recovery) {
                     @case ('restart') {
-                      <button type="button" class="ob-btn ob-btn-brand ob-btn-sm" (click)="restart()">
+                      <button
+                        type="button"
+                        class="ob-orbit-btn ob-orbit-btn-primary ob-orbit-btn-sm"
+                        (click)="restart()"
+                      >
                         <ob-icon name="refresh" [size]="14" /> Enter wallet details again
                       </button>
                     }
                     @case ('confirm') {
-                      <button type="button" class="ob-btn ob-btn-brand ob-btn-sm" (click)="backToSession()">
+                      <button
+                        type="button"
+                        class="ob-orbit-btn ob-orbit-btn-primary ob-orbit-btn-sm"
+                        (click)="backToSession()"
+                      >
                         <ob-icon name="refresh" [size]="14" /> Try the payment again
                       </button>
                     }
                     @case ('verify') {
-                      <button type="button" class="ob-btn ob-btn-brand ob-btn-sm" (click)="restart()">
+                      <button
+                        type="button"
+                        class="ob-orbit-btn ob-orbit-btn-primary ob-orbit-btn-sm"
+                        (click)="restart()"
+                      >
                         <ob-icon name="refresh" [size]="14" /> Retry
                       </button>
                     }
                     @case ('order') {
-                      <a [routerLink]="['/orders', orderId()]" class="ob-btn ob-btn-brand ob-btn-sm">
+                      <a
+                        [routerLink]="['/orders', orderId()]"
+                        class="ob-orbit-btn ob-orbit-btn-primary ob-orbit-btn-sm"
+                      >
                         <ob-icon name="package" [size]="14" /> Open the order
                       </a>
                     }
                     @case ('card') {
                       <button
                         type="button"
-                        class="ob-btn ob-btn-brand ob-btn-sm"
+                        class="ob-orbit-btn ob-orbit-btn-primary ob-orbit-btn-sm"
                         (click)="switchToCard.emit()"
                       >
                         <ob-icon name="credit-card" [size]="14" /> Pay by card instead
@@ -252,17 +290,22 @@ type Phase = 'credentials' | 'verifying' | 'session' | 'confirming' | 'failed';
                     }
                     @case ('none') {
                       <!-- CONTRACT §8: no one-click retry for this order. -->
-                      <a [routerLink]="['/orders', orderId()]" class="ob-btn ob-btn-ghost ob-btn-sm">
+                      <a
+                        [routerLink]="['/orders', orderId()]"
+                        class="ob-orbit-btn ob-orbit-btn-quiet ob-orbit-btn-sm"
+                      >
                         <ob-icon name="package" [size]="14" /> View this order
                       </a>
-                      <a routerLink="/" class="ob-btn ob-btn-ghost ob-btn-sm">Back to the shop</a>
+                      <a routerLink="/" class="ob-orbit-btn ob-orbit-btn-quiet ob-orbit-btn-sm"
+                        >Back to the shop</a
+                      >
                     }
                   }
 
                   @if (f.offerCard && f.recovery !== 'card') {
                     <button
                       type="button"
-                      class="ob-btn ob-btn-ghost ob-btn-sm"
+                      class="ob-orbit-btn ob-orbit-btn-quiet ob-orbit-btn-sm"
                       (click)="switchToCard.emit()"
                     >
                       <ob-icon name="credit-card" [size]="14" /> Pay by card instead
@@ -274,7 +317,15 @@ type Phase = 'credentials' | 'verifying' | 'session' | 'confirming' | 'failed';
           }
         }
       </div>
-    </div>
+
+      <footer class="ob-orbit-foot">
+        <span class="inline-flex items-center gap-1.5">
+          <ob-icon name="shield" [size]="12" />
+          Processed by Orbit · EGP
+        </span>
+        <span>Session token never reaches your browser</span>
+      </footer>
+    </section>
   `,
 })
 export class OrbitPaymentComponent {

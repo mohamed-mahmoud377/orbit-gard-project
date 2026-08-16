@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Orbit Bazaar shop API — Express 5 + Postgres, serves the Angular bundle too.",
+  "description": "Jerry's Shop API — Express 5 + Postgres, serves the Angular bundle too.",
   "engines": {
     "node": ">=22"
   },

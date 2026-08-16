@@ -87,7 +87,7 @@ import { AuthShellComponent } from './auth-shell.component';
         }
 
         <p class="mt-6 border-t border-line pt-5 text-center text-sm text-muted">
-          New to Orbit Bazaar?
+          New to Jerry&rsquo;s Shop?
           <a routerLink="/register" [queryParams]="{ returnUrl: returnUrl() }" class="ob-link"
             >Create an account</a
           >
@@ -129,7 +129,7 @@ export class LoginComponent {
     this.auth.login(this.email.trim(), this.password).subscribe({
       next: () => {
         this.busy.set(false);
-        this.toast.success('Signed in', 'Welcome back to Orbit Bazaar.');
+        this.toast.success('Signed in', "Welcome back to Jerry's Shop.");
         void this.router.navigateByUrl(this.returnUrl());
       },
       error: (err: ApiError) => {

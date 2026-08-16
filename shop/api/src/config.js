@@ -14,7 +14,7 @@ export const config = {
   databaseUrl: process.env.DATABASE_URL,
   bootstrapDatabaseUrl: process.env.BOOTSTRAP_DATABASE_URL,
   orbitApiBase: (process.env.ORBIT_API_BASE || 'http://app:8080/api/v1').replace(/\/+$/, ''),
-  orbitMerchantName: (process.env.ORBIT_MERCHANT_NAME || 'Orbit Bazaar').slice(0, 255),
+  orbitMerchantName: (process.env.ORBIT_MERCHANT_NAME || "Jerry's Shop").slice(0, 255),
   orbitTimeoutMs: num(process.env.ORBIT_TIMEOUT_MS, 15000),
   jwtSecret: process.env.JWT_SECRET || 'dev-only-insecure-shop-secret-change-me',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '30d',

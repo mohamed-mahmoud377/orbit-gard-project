@@ -4,9 +4,17 @@ import { computeTotals } from './pricing.js';
 
 const iso = (v) => (v instanceof Date ? v.toISOString() : v);
 
-/** `OB-2026-000123` */
+/**
+ * `JS-2026-000123`.
+ *
+ * The prefix changed with the Jerry's Shop rebrand (it used to be `OB-`).
+ * `orders.order_number` is a plain `text NOT NULL UNIQUE` column with no CHECK
+ * constraint or shape-dependent index, so both prefixes coexist happily and
+ * orders placed before the rename keep the numbers already printed on their
+ * receipts. Nothing here rewrites history.
+ */
 export function formatOrderNumber(seq, year = new Date().getUTCFullYear()) {
-  return `OB-${year}-${String(seq).padStart(6, '0')}`;
+  return `JS-${year}-${String(seq).padStart(6, '0')}`;
 }
 
 /**

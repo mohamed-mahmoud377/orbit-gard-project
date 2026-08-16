@@ -7,7 +7,7 @@ import { closePool } from './db/pool.js';
 import { createApp } from './app.js';
 
 async function main() {
-  logger.info('orbit bazaar api starting', {
+  logger.info("jerry's shop api starting", {
     port: config.port,
     orbitApiBase: config.orbitApiBase,
     seedOnBoot: config.seedOnBoot,

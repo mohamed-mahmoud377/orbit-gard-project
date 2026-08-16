@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-# Build context is `shop/` — it holds both halves of Orbit Bazaar:
+# Build context is `shop/` — it holds both halves of Jerry's Shop:
 #   web/  Angular storefront (baseHref /shop/, builds to dist/web/browser)
 #   api/  Express API that serves BOTH /shop/api/* and the Angular bundle
 # One process serves both, which is why there is no CORS anywhere in the shop

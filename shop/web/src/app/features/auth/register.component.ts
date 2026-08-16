@@ -197,7 +197,7 @@ export class RegisterComponent {
     this.auth.register(this.name.trim(), this.email.trim(), this.password).subscribe({
       next: () => {
         this.busy.set(false);
-        this.toast.success('Account created', 'Welcome to Orbit Bazaar.');
+        this.toast.success('Account created', "Welcome to Jerry's Shop.");
         void this.router.navigateByUrl(this.returnUrl());
       },
       error: (err: ApiError) => {

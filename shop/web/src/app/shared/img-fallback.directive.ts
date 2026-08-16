@@ -35,18 +35,24 @@ export class ImgFallbackDirective {
     if (this.swapped) return; // never loop on the placeholder itself
     this.swapped = true;
     const img = this.el.nativeElement;
-    img.src = placeholderDataUri(this.obImgFallback() || img.alt || 'Orbit Bazaar');
+    img.src = placeholderDataUri(this.obImgFallback() || img.alt || "Jerry's Shop");
     img.classList.add('ob-img-placeholder');
   }
 }
 
+/**
+ * Warm [background, foreground] pairs drawn from the Jerry's Shop palette —
+ * cinnamon, cheddar, cherry, cocoa — so a missing photo still sits inside the
+ * shop's colour world instead of the old violet/pink/grey set. Every pair
+ * clears 4.5:1 for the initials at the opacity used below.
+ */
 const PALETTE: [string, string][] = [
-  ['#efe7fb', '#6c2bd9'],
-  ['#fff1dc', '#b26400'],
-  ['#e6f6f4', '#0f9b8e'],
-  ['#ffe6ec', '#e5385f'],
-  ['#e7edfb', '#2f5bd0'],
-  ['#f2f0ea', '#6d6580'],
+  ['#fbeade', '#b0521c'], // cinnamon (brand)
+  ['#fff4da', '#8a5f04'], // cheddar
+  ['#ffe8e5', '#c02c26'], // cherry
+  ['#f5ece0', '#6b4429'], // cocoa
+  ['#e2f7f4', '#0c7d73'], // mint, for a little variety
+  ['#f8efe1', '#8a5a33'], // toast
 ];
 
 /** Deterministic 32-bit hash so one product always gets one placeholder. */
@@ -73,14 +79,16 @@ export function placeholderDataUri(seed: string): string {
   const svg =
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">` +
     `<rect width="400" height="400" fill="${bg}"/>` +
-    `<g transform="rotate(${rotate} 200 200)" opacity="0.35">` +
-    `<circle cx="200" cy="200" r="130" fill="none" stroke="${fg}" stroke-width="2"/>` +
-    `<ellipse cx="200" cy="200" rx="170" ry="66" fill="none" stroke="${fg}" stroke-width="2"/>` +
-    `<circle cx="370" cy="200" r="11" fill="${fg}"/>` +
+    // A wedge of cheese instead of the old orbit ring — same trick, on brand.
+    `<g transform="rotate(${rotate} 200 200)" opacity="0.32">` +
+    `<path d="M92 268h216L200 106z" fill="none" stroke="${fg}" stroke-width="4" stroke-linejoin="round"/>` +
+    `<circle cx="200" cy="228" r="15" fill="${fg}"/>` +
+    `<circle cx="152" cy="252" r="9" fill="${fg}"/>` +
+    `<circle cx="252" cy="248" r="11" fill="${fg}"/>` +
     `</g>` +
     `<text x="200" y="200" text-anchor="middle" dominant-baseline="central" ` +
     `font-family="ui-sans-serif,-apple-system,Segoe UI,Roboto,sans-serif" font-size="86" ` +
-    `font-weight="700" fill="${fg}" opacity="0.85">${escapeXml(initials || 'OB')}</text>` +
+    `font-weight="700" fill="${fg}" opacity="0.85">${escapeXml(initials || 'JS')}</text>` +
     `</svg>`;
 
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;

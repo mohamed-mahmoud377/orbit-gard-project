@@ -412,8 +412,8 @@ export class BrowseComponent {
     const state = this.state();
     const category = this.category();
     const name = this.subcategory()?.name ?? category?.name;
-    if (state.q) this.title.setTitle(`“${state.q}” — Orbit Bazaar`);
-    else if (name) this.title.setTitle(`${name} — Orbit Bazaar`);
-    else this.title.setTitle('All products — Orbit Bazaar');
+    if (state.q) this.title.setTitle(`“${state.q}” — Jerry's Shop`);
+    else if (name) this.title.setTitle(`${name} — Jerry's Shop`);
+    else this.title.setTitle("All products — Jerry's Shop");
   }
 }
