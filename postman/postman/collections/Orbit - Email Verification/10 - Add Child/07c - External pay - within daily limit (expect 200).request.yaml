@@ -1,0 +1,16 @@
+$kind: http-request
+description: Repeats test 04's boundary logic via /external/pay. Adjust cashAmount to match however much daily budget remains at the time you run this. Re-run 07a first for a fresh token.
+url: "{{baseUrl}}/api/v1/external/pay"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "verificationToken": "{{externalPaymentToken}}",
+      "merchantName": "Test Merchant",
+      "productName": "Test Product",
+      "cashAmount": 50.00
+    }
+order: 14000

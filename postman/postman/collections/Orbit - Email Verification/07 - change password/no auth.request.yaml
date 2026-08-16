@@ -1,0 +1,19 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/password/change"
+method: POST
+body:
+  type: json
+  content: ""
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Status 401\", () => pm.response.to.have.status(401));\r
+
+      pm.test(\"Unauthenticated error\", () => {\r
+
+      \    pm.expect(pm.response.json().type).to.include(\"unauthenticated\");\r
+
+      });"
+    language: text/javascript
+order: 9000

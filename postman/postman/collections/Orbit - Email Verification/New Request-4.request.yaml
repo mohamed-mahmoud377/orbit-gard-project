@@ -1,0 +1,21 @@
+$kind: http-request
+name: New Request
+url: "{{baseUrl}}/api/v1/wallet"
+method: GET
+body:
+  type: text
+  content: "{\r
+
+    \    \"username\": \"{{email}}\",\r
+
+    \    \"password\": \"FreshPass1\",\r
+
+    \    \"rememberMe\": false\r
+
+    }"
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+settings: {}
+order: 15000

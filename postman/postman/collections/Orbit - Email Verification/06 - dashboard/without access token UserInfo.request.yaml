@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/users/me"
+method: GET
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "token": "{{verificationToken}}"
+    }
+settings: {}
+order: 1000

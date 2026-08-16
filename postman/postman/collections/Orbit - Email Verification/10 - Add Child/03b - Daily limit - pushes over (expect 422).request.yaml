@@ -1,0 +1,18 @@
+$kind: http-request
+description: 150.00 alone is under the 200.00 per-transaction max, but running total would become 550.00 > dailyLimit=500.00. Expect 422, code daily-limit-exceeded. Proves the running-total logic works, not just the per-transaction ceiling.
+url: "{{baseUrl}}/api/v1/wallet/internal/transfer"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "receiverUsername": "{{receiverUsername}}",
+      "amount": 100.00
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{childAccessToken}}"
+order: 8000

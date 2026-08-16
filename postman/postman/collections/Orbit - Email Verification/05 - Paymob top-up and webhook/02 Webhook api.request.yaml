@@ -1,0 +1,477 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/payments/webhook/paymob"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: "{\r
+
+    \    \"type\": \"TRANSACTION\",\r
+
+    \    \"obj\": {\r
+
+    \        \"id\": 513739507,\r
+
+    \        \"pending\": false,\r
+
+    \        \"amount_cents\": 50000,\r
+
+    \        \"success\": true,\r
+
+    \        \"is_auth\": false,\r
+
+    \        \"is_capture\": false,\r
+
+    \        \"is_standalone_payment\": true,\r
+
+    \        \"is_voided\": false,\r
+
+    \        \"is_refunded\": false,\r
+
+    \        \"is_3d_secure\": true,\r
+
+    \        \"integration_id\": 5185166,\r
+
+    \        \"profile_id\": 1059524,\r
+
+    \        \"has_parent_transaction\": false,\r
+
+    \        \"order\": {\r
+
+    \            \"id\": 585601332,\r
+
+    \            \"created_at\": \"2026-08-11T23:02:53.088521\",\r
+
+    \            \"delivery_needed\": false,\r
+
+    \            \"merchant\": {\r
+
+    \                \"id\": 1059524,\r
+
+    \                \"created_at\": \"2025-07-11T19:23:12.053772\",\r
+
+    \                \"phones\": [\r
+
+    \                    \"+201508766687\"\r
+
+    \                ],\r
+
+    \                \"company_emails\": [\r
+
+    \                    \"pcissp4@gmail.com\"\r
+
+    \                ],\r
+
+    \                \"company_name\": \"Easy Orders\",\r
+
+    \                \"state\": \"\",\r
+
+    \                \"country\": \"EGY\",\r
+
+    \                \"city\": \"Cairo\",\r
+
+    \                \"postal_code\": \"\",\r
+
+    \                \"street\": \"\"\r
+
+    \            },\r
+
+    \            \"collector\": null,\r
+
+    \            \"amount_cents\": 50000,\r
+
+    \            \"shipping_data\": {\r
+
+    \                \"id\": 281421190,\r
+
+    \                \"first_name\": \"Shapinam\",\r
+
+    \                \"last_name\": \"Abdelfattah\",\r
+
+    \                \"street\": \"NA\",\r
+
+    \                \"building\": \"NA\",\r
+
+    \                \"floor\": \"NA\",\r
+
+    \                \"apartment\": \"NA\",\r
+
+    \                \"city\": \"NA\",\r
+
+    \                \"state\": \"NA\",\r
+
+    \                \"country\": \"NA\",\r
+
+    \                \"email\": \"shapy175@gmail.com\",\r
+
+    \                \"phone_number\": \"201063993179\",\r
+
+    \                \"postal_code\": \"NA\",\r
+
+    \                \"extra_description\": \"\",\r
+
+    \                \"shipping_method\": \"UNK\",\r
+
+    \                \"order_id\": 585601332,\r
+
+    \                \"order\": 585601332\r
+
+    \            },\r
+
+    \            \"currency\": \"EGP\",\r
+
+    \            \"is_payment_locked\": false,\r
+
+    \            \"is_return\": false,\r
+
+    \            \"is_cancel\": false,\r
+
+    \            \"is_returned\": false,\r
+
+    \            \"is_canceled\": false,\r
+
+    \            \"merchant_order_id\": \"7612da59-5140-441e-8aae-52e61be5cc5e\",\r
+
+    \            \"wallet_notification\": null,\r
+
+    \            \"paid_amount_cents\": 50000,\r
+
+    \            \"notify_user_with_email\": false,\r
+
+    \            \"items\": [],\r
+
+    \            \"order_url\": \"NA\",\r
+
+    \            \"commission_fees\": 0,\r
+
+    \            \"delivery_fees_cents\": 0,\r
+
+    \            \"delivery_vat_cents\": 0,\r
+
+    \            \"payment_method\": \"tbc\",\r
+
+    \            \"merchant_staff_tag\": null,\r
+
+    \            \"api_source\": \"OTHER\",\r
+
+    \            \"data\": {\r
+
+    \                \"notification_url\": \"https://webhook.site/b96afe05-bbd9-419d-9a29-2be4e6920e72\"\r
+
+    \            },\r
+
+    \            \"payment_status\": \"PAID\",\r
+
+    \            \"terminal_version\": null,\r
+
+    \            \"payme_details\": null\r
+
+    \        },\r
+
+    \        \"created_at\": \"2026-08-11T23:03:01.106055\",\r
+
+    \        \"transaction_processed_callback_responses\": [],\r
+
+    \        \"currency\": \"EGP\",\r
+
+    \        \"source_data\": {\r
+
+    \            \"pan\": \"0007\",\r
+
+    \            \"type\": \"card\",\r
+
+    \            \"tenure\": null,\r
+
+    \            \"sub_type\": \"MasterCard\"\r
+
+    \        },\r
+
+    \        \"api_source\": \"IFRAME\",\r
+
+    \        \"terminal_id\": null,\r
+
+    \        \"merchant_commission\": 0,\r
+
+    \        \"accept_fees\": 0,\r
+
+    \        \"installment\": null,\r
+
+    \        \"discount_details\": [],\r
+
+    \        \"amount_cents_int\": 50000,\r
+
+    \        \"is_void\": false,\r
+
+    \        \"is_refund\": false,\r
+
+    \        \"data\": {\r
+
+    \            \"gateway_integration_pk\": 5185166,\r
+
+    \            \"klass\": \"MigsPayment\",\r
+
+    \            \"created_at\": \"2026-08-11T20:04:59.967009\",\r
+
+    \            \"amount\": 50000.0,\r
+
+    \            \"currency\": \"EGP\",\r
+
+    \            \"migs_order\": {\r
+
+    \                \"acceptPartialAmount\": false,\r
+
+    \                \"amount\": 500.0,\r
+
+    \                \"authenticationStatus\": \"AUTHENTICATION_SUCCESSFUL\",\r
+
+    \                \"chargeback\": {\r
+
+    \                    \"amount\": 0,\r
+
+    \                    \"currency\": \"EGP\"\r
+
+    \                },\r
+
+    \                \"creationTime\": \"2026-08-11T20:03:16.996Z\",\r
+
+    \                \"currency\": \"EGP\",\r
+
+    \                \"description\": \"PAYMOB EasyOrders for Busin\",\r
+
+    \                \"id\": \"585601332\",\r
+
+    \                \"lastUpdatedTime\": \"2026-08-11T20:04:59.799Z\",\r
+
+    \                \"merchantAmount\": 500.0,\r
+
+    \                \"merchantCategoryCode\": \"7299\",\r
+
+    \                \"merchantCurrency\": \"EGP\",\r
+
+    \                \"reference\": \"_513739507_585\",\r
+
+    \                \"status\": \"CAPTURED\",\r
+
+    \                \"totalAuthorizedAmount\": 500.0,\r
+
+    \                \"totalCapturedAmount\": 500.0,\r
+
+    \                \"totalRefundedAmount\": 0.0\r
+
+    \            },\r
+
+    \            \"merchant\": \"TESTMERCH_C_25P\",\r
+
+    \            \"migs_result\": \"SUCCESS\",\r
+
+    \            \"migs_transaction\": {\r
+
+    \                \"acquirer\": {\r
+
+    \                    \"batch\": 20260811,\r
+
+    \                    \"date\": \"0811\",\r
+
+    \                    \"id\": \"BMNF_S2I\",\r
+
+    \                    \"merchantId\": \"MERCH_C_25P\",\r
+
+    \                    \"settlementDate\": \"2026-08-11\",\r
+
+    \                    \"timeZone\": \"+0300\",\r
+
+    \                    \"transactionId\": \"123456789\"\r
+
+    \                },\r
+
+    \                \"amount\": 500.0,\r
+
+    \                \"authenticationStatus\": \"AUTHENTICATION_SUCCESSFUL\",\r
+
+    \                \"authorizationCode\": \"182839\",\r
+
+    \                \"currency\": \"EGP\",\r
+
+    \                \"id\": \"513739507\",\r
+
+    \                \"receipt\": \"622320182839\",\r
+
+    \                \"reference\": \"_513739507\",\r
+
+    \                \"source\": \"INTERNET\",\r
+
+    \                \"stan\": \"182839\",\r
+
+    \                \"terminal\": \"BMNF0502\",\r
+
+    \                \"type\": \"PAYMENT\"\r
+
+    \            },\r
+
+    \            \"txn_response_code\": \"APPROVED\",\r
+
+    \            \"acq_response_code\": \"00\",\r
+
+    \            \"message\": \"Approved\",\r
+
+    \            \"merchant_txn_ref\": \"513739507\",\r
+
+    \            \"order_info\": \"585601332\",\r
+
+    \            \"receipt_no\": \"622320182839\",\r
+
+    \            \"transaction_no\": \"123456789\",\r
+
+    \            \"batch_no\": 20260811,\r
+
+    \            \"authorize_id\": \"182839\",\r
+
+    \            \"card_type\": \"MASTERCARD\",\r
+
+    \            \"card_num\": \"222300xxxxxx0007\",\r
+
+    \            \"secure_hash\": \"\",\r
+
+    \            \"avs_result_code\": \"\",\r
+
+    \            \"avs_acq_response_code\": \"00\",\r
+
+    \            \"captured_amount\": 500.0,\r
+
+    \            \"authorised_amount\": 500.0,\r
+
+    \            \"refunded_amount\": 0.0,\r
+
+    \            \"acs_eci\": \"02\"\r
+
+    \        },\r
+
+    \        \"is_hidden\": false,\r
+
+    \        \"payment_key_claims\": {\r
+
+    \            \"extra\": {\r
+
+    \                \"merchant_order_id\": \"7612da59-5140-441e-8aae-52e61be5cc5e\"\r
+
+    \            },\r
+
+    \            \"user_id\": 2000002,\r
+
+    \            \"currency\": \"EGP\",\r
+
+    \            \"order_id\": 585601332,\r
+
+    \            \"created_by\": 2000002,\r
+
+    \            \"is_partner\": false,\r
+
+    \            \"amount_cents\": 50000,\r
+
+    \            \"billing_data\": {\r
+
+    \                \"city\": \"NA\",\r
+
+    \                \"email\": \"shapy175@gmail.com\",\r
+
+    \                \"floor\": \"NA\",\r
+
+    \                \"state\": \"NA\",\r
+
+    \                \"street\": \"NA\",\r
+
+    \                \"country\": \"NA\",\r
+
+    \                \"building\": \"NA\",\r
+
+    \                \"apartment\": \"NA\",\r
+
+    \                \"last_name\": \"Abdelfattah\",\r
+
+    \                \"first_name\": \"Shapinam\",\r
+
+    \                \"postal_code\": \"NA\",\r
+
+    \                \"phone_number\": \"+201063993179\",\r
+
+    \                \"extra_description\": \"NA\"\r
+
+    \            },\r
+
+    \            \"redirect_url\": \"https://accept.paymob.com/unifiedcheckout/payment-status?payment_token=ZXlKaGJHY2lPaUpJVXpVeE1pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SjFjMlZ5WDJsa0lqb3lNREF3TURBeUxDSmhiVzkxYm5SZlkyVnVkSE1pT2pVd01EQXdMQ0pqZFhKeVpXNWplU0k2SWtWSFVDSXNJbWx1ZEdWbmNtRjBhVzl1WDJsa0lqbzFNVGcxTVRZMkxDSnZjbVJsY2w5cFpDSTZOVGcxTmpBeE16TXlMQ0ppYVd4c2FXNW5YMlJoZEdFaU9uc2labWx5YzNSZmJtRnRaU0k2SWxOb1lYQnBibUZ0SWl3aWJHRnpkRjl1WVcxbElqb2lRV0prWld4bVlYUjBZV2dpTENKemRISmxaWFFpT2lKT1FTSXNJbUoxYVd4a2FXNW5Jam9pVGtFaUxDSm1iRzl2Y2lJNklrNUJJaXdpWVhCaGNuUnRaVzUwSWpvaVRrRWlMQ0pqYVhSNUlqb2lUa0VpTENKemRHRjBaU0k2SWs1Qklpd2lZMjkxYm5SeWVTSTZJazVCSWl3aVpXMWhhV3dpT2lKemFHRndlVEUzTlVCbmJXRnBiQzVqYjIwaUxDSndhRzl1WlY5dWRXMWlaWElpT2lJck1qQXhNRFl6T1Rrek1UYzVJaXdpY0c5emRHRnNYMk52WkdVaU9pSk9RU0lzSW1WNGRISmhYMlJsYzJOeWFYQjBhVzl1SWpvaVRrRWlmU3dpYkc5amExOXZjbVJsY2w5M2FHVnVYM0JoYVdRaU9tWmhiSE5sTENKbGVIUnlZU0k2ZXlKdFpYSmphR0Z1ZEY5dmNtUmxjbDlwWkNJNklqYzJNVEprWVRVNUxUVXhOREF0TkRReFpTMDRZV0ZsTFRVeVpUWXhZbVUxWTJNMVpTSjlMQ0p1YjNScFptbGpZWFJwYjI1ZmRYSnNJam9pYUhSMGNITTZMeTkzWldKb2IyOXJMbk5wZEdVdllqazJZV1psTURVdFltSmtPUzAwTVRsa0xUbGhNamt0TW1KbE5HVTJPVEl3WlRjeUlpd2ljbVZrYVhKbFkzUnBiMjVmZFhKc0lqb2lhSFIwY0RvdkwyeHZZMkZzYUc5emREbzBNakF3TDNCaGVXMWxiblF2WTJGc2JHSmhZMnNpTENKemFXNW5iR1ZmY0dGNWJXVnVkRjloZEhSbGJYQjBJanBtWVd4elpTd2lZM0psWVhSbFpGOWllU0k2TWpBd01EQXdNaXdpYVhOZmNHRnlkRzVsY2lJNlptRnNjMlVzSW01bGVIUmZjR0Y1YldWdWRGOXBiblJsYm5ScGIyNGlPaUp3YVY5MFpYTjBYMlJtWmprME9URTNOalJpTWpSa01ESmhNbVkyTURrM05UazBNRE0wTXpnMUluMC5ydVhMWGl0Q05MZ2d3ek52NTYzVzYxVUx1TXc2ck9jQ2ZhVE5LQnZteXJNaW45M0NfSjhjSHpESllWSmJHZEdnb1ZQeElGWU9BMWljRVNWelNHSkJFUQ==&trx_id=513739507\",\r
+
+    \            \"integration_id\": 5185166,\r
+
+    \            \"redirection_url\": \"http://localhost:4200/payment/callback\",\r
+
+    \            \"notification_url\": \"https://webhook.site/b96afe05-bbd9-419d-9a29-2be4e6920e72\",\r
+
+    \            \"lock_order_when_paid\": false,\r
+
+    \            \"next_payment_intention\": \"pi_test_dff9491764b24d02a2f6097594034385\",\r
+
+    \            \"single_payment_attempt\": false\r
+
+    \        },\r
+
+    \        \"error_occured\": false,\r
+
+    \        \"is_live\": false,\r
+
+    \        \"other_endpoint_reference\": null,\r
+
+    \        \"refunded_amount_cents\": 0,\r
+
+    \        \"refunded_amount_cents_int\": 0,\r
+
+    \        \"source_id\": -1,\r
+
+    \        \"is_captured\": false,\r
+
+    \        \"captured_amount\": 0,\r
+
+    \        \"captured_amount_int\": 0,\r
+
+    \        \"settlement_amount_cents_int\": 0,\r
+
+    \        \"merchant_staff_tag\": null,\r
+
+    \        \"accept_fees_cents_int\": 0,\r
+
+    \        \"vat_cents_int\": 0,\r
+
+    \        \"vat_cents_float\": null,\r
+
+    \        \"updated_at\": \"2026-08-11T23:05:00.000838\",\r
+
+    \        \"is_settled\": false,\r
+
+    \        \"bill_balanced\": false,\r
+
+    \        \"is_bill\": false,\r
+
+    \        \"owner\": 2000002,\r
+
+    \        \"parent_transaction\": null\r
+
+    \    },\r
+
+    \    \"accept_fees\": 0,\r
+
+    \    \"issuer_bank\": null,\r
+
+    \    \"transaction_processed_callback_responses\": \"\"\r
+
+    }"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('accepts webhook without HMAC check (dev mode)', () => {
+          pm.response.to.have.status(200);
+      });
+      pm.test('response body is OK', () => {
+          pm.expect(pm.response.text()).to.eql('OK');
+      });
+    language: text/javascript
+order: 2000

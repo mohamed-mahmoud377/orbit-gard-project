@@ -1,0 +1,18 @@
+$kind: http-request
+description: "Limit assumed: maxPerTransaction=200.00. Expect 422, code max-per-transaction-exceeded. Confirm via GET /wallet/transactions afterward that no debit was written."
+url: "{{baseUrl}}/api/v1/wallet/internal/transfer"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "receiverUsername": "{{receiverUsername}}",
+      "amount": 250.00
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{childAccessToken}}"
+order: 5000

@@ -1,0 +1,26 @@
+$kind: http-request
+name: "MANUAL: Request reset link (registered email)"
+description: After sending, copy the raw token from the reset link in the received email and paste it into the collection variable resetToken before continuing.
+url: "{{baseUrl}}/api/v1/password/reset/request"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "email": "{{email}}"
+    }
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status 200", () => pm.response.to.have.status(200));
+      const json = pm.response.json();
+      pm.test("Generic message returned", () => {
+          pm.expect(json.message).to.eql("If an account exists for that address, a reset link is on its way.");
+      });
+      pm.collectionVariables.set("registeredResetResponseTime", pm.response.responseTime);
+    language: text/javascript
+order: 4000

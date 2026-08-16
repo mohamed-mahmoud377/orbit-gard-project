@@ -1,0 +1,18 @@
+$kind: http-request
+description: Adjust the amount so today's total lands exactly on dailyLimit=500.00 (running total was 400.00 after request 03a — request 03b failed and wrote nothing). Expect 200 success — confirms the comparison is strictly greater-than (>), not (>=).
+url: "{{baseUrl}}/api/v1/wallet/internal/transfer"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "receiverUsername": "{{receiverUsername}}",
+      "amount": 100.00
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{childAccessToken}}"
+order: 9000

@@ -1,0 +1,26 @@
+$kind: http-request
+name: "MANUAL: Confirm with expired token"
+description: "Before sending: capture a real reset token, then in pgAdmin run UPDATE verification_token SET expires_at = now() - interval '1 minute' WHERE token_hash = <sha256 hex of that raw token>. Paste the original raw token (not the hash) into expiredResetToken."
+url: "{{baseUrl}}/api/v1/password/reset/confirm"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "token": "{{expiredResetToken}}",
+      "newPassword": "ValidPass1",
+      "confirmNewPassword": "ValidPass1"
+    }
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status 410", () => pm.response.to.have.status(410));
+      pm.test("Token expired error", () => {
+          pm.expect(pm.response.json().code).to.eql("TOKEN_EXPIRED");
+      });
+    language: text/javascript
+order: 12000

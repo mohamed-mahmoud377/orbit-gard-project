@@ -1,0 +1,22 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/password/active-sessions-count"
+method: GET
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: ""
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Old refresh token rejected", () => pm.response.to.have.status(401));
+      pm.test("Invalid refresh token error", () => {
+          pm.expect(pm.response.json().code).to.eql("INVALID_REFRESH_TOKEN");
+      });
+    language: text/javascript
+settings: {}
+order: 20000
