@@ -21,6 +21,14 @@ public interface WalletTransactionRepository extends JpaRepository<WalletTransac
 
     Page<WalletTransaction> findByWalletIdOrderByCreatedAtAsc(UUID walletId, Pageable pageable);
 
+    /**
+     * Newest first, for the parent's child-activity feed. The ascending
+     * variant above is left exactly as it is — it backs the ledger-chain
+     * view, where balanceBefore/balanceAfter only read correctly in
+     * chronological order.
+     */
+    Page<WalletTransaction> findByWalletIdOrderByCreatedAtDesc(UUID walletId, Pageable pageable);
+
     List<WalletTransaction> findByStatus(TransactionStatus status);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)

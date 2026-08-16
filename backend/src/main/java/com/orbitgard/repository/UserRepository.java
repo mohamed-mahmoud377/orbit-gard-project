@@ -34,4 +34,12 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     /** Children of one parent, oldest first — backs the Family tab card list. */
     List<User> findByParent_IdOrderByCreatedAtAsc(UUID parentId);
+
+    /**
+     * One child, scoped to its parent. Ownership is part of the query rather
+     * than a check after loading: a parent asking for someone else's child
+     * gets an empty Optional, which the caller turns into a 404. That leaks
+     * nothing about whether the id exists at all.
+     */
+    Optional<User> findByIdAndParent_Id(UUID id, UUID parentId);
 }
