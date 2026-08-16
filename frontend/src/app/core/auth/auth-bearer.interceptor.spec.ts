@@ -5,20 +5,17 @@ import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 
-import { AuthFacade } from '../../features/auth/data-access/auth.facade';
+import { AuthFacade, resetAuthRefreshStateForTests } from '../../features/auth/data-access/auth.facade';
 import { AuthTokenStore } from '../../features/auth/data-access/auth-token.store';
 import { LoginResponse } from '../../features/auth/data-access/auth.models';
-import {
-  authBearerInterceptor,
-  resetAuthBearerRefreshStateForTests,
-} from './auth-bearer.interceptor';
+import { authBearerInterceptor } from './auth-bearer.interceptor';
 
 describe('authBearerInterceptor', () => {
   let http: HttpClient;
   let httpMock: HttpTestingController;
   let tokens: AuthTokenStore;
   let auth: {
-    refreshSession: ReturnType<typeof vi.fn>;
+    refreshSessionOnce: ReturnType<typeof vi.fn>;
     logoutLocal: ReturnType<typeof vi.fn>;
   };
   let router: { url: string; navigateByUrl: ReturnType<typeof vi.fn> };
@@ -38,11 +35,11 @@ describe('authBearerInterceptor', () => {
   });
 
   beforeEach(() => {
-    resetAuthBearerRefreshStateForTests();
+    resetAuthRefreshStateForTests();
     localStorage.clear();
 
     auth = {
-      refreshSession: vi.fn(),
+      refreshSessionOnce: vi.fn(),
       logoutLocal: vi.fn(),
     };
     router = {
@@ -67,7 +64,7 @@ describe('authBearerInterceptor', () => {
 
   afterEach(() => {
     httpMock.verify();
-    resetAuthBearerRefreshStateForTests();
+    resetAuthRefreshStateForTests();
     localStorage.clear();
   });
 
@@ -92,7 +89,7 @@ describe('authBearerInterceptor', () => {
 
   function mockRefreshSuccess(accessToken: string, refreshToken: string): void {
     const response = refreshedSession(accessToken, refreshToken);
-    auth.refreshSession.mockImplementation(() => {
+    auth.refreshSessionOnce.mockImplementation(() => {
       tokens.hydrateFromLogin(response);
       return of(response);
     });
@@ -112,7 +109,7 @@ describe('authBearerInterceptor', () => {
     mockRefreshSuccess('renewed-access', 'renewed-refresh');
 
     http.get('/api/v1/wallet').subscribe();
-    expect(auth.refreshSession).toHaveBeenCalledTimes(1);
+    expect(auth.refreshSessionOnce).toHaveBeenCalledTimes(1);
 
     const req = httpMock.expectOne('/api/v1/wallet');
     expect(req.request.headers.get('Authorization')).toBe('Bearer renewed-access');
@@ -121,13 +118,13 @@ describe('authBearerInterceptor', () => {
 
   it('logs out and redirects when proactive refresh fails', () => {
     seedSession(-1);
-    auth.refreshSession.mockReturnValue(throwError(() => new Error('refresh failed')));
+    auth.refreshSessionOnce.mockReturnValue(throwError(() => new Error('refresh failed')));
 
     http.get('/api/v1/wallet').subscribe({
       error: () => undefined,
     });
 
-    expect(auth.refreshSession).toHaveBeenCalledTimes(1);
+    expect(auth.refreshSessionOnce).toHaveBeenCalledTimes(1);
     expect(auth.logoutLocal).toHaveBeenCalledTimes(1);
     expect(router.navigateByUrl).toHaveBeenCalledWith(
       '/auth/login?returnUrl=%2Fdashboard',

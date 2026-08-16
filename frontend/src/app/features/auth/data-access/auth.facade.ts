@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, catchError, of, tap, throwError } from 'rxjs';
+import { Observable, catchError, finalize, of, shareReplay, take, tap, throwError } from 'rxjs';
 
 import { DemoStore } from '../../../data-access';
 import { AUTH_GATEWAY } from './auth.gateway';
@@ -21,6 +21,13 @@ import {
   VerifyRequest,
   VerifyResponse,
 } from './auth.models';
+
+let refreshInFlight: Observable<LoginResponse> | null = null;
+
+/** @internal Clears the shared refresh queue between specs. */
+export function resetAuthRefreshStateForTests(): void {
+  refreshInFlight = null;
+}
 
 @Injectable({ providedIn: 'root' })
 export class AuthFacade {
@@ -96,6 +103,22 @@ export class AuthFacade {
       return throwError(() => new Error('No refresh token available'));
     }
     return this.refreshWithToken({ refreshToken });
+  }
+
+  /**
+   * Queues concurrent refresh attempts so only one POST /auth/refresh runs.
+   * Required when the backend rotates refresh tokens on each call.
+   */
+  refreshSessionOnce(): Observable<LoginResponse> {
+    if (!refreshInFlight) {
+      refreshInFlight = this.refreshSession().pipe(
+        finalize(() => {
+          refreshInFlight = null;
+        }),
+        shareReplay({ bufferSize: 1, refCount: false }),
+      );
+    }
+    return refreshInFlight.pipe(take(1));
   }
 
   refreshWithToken(request: RefreshTokenRequest): Observable<LoginResponse> {

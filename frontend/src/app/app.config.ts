@@ -7,6 +7,7 @@ import { routes } from './app.routes';
 import { authBearerInterceptor } from './core/auth/auth-bearer.interceptor';
 import { provideAuthGateway } from './features/auth/data-access';
 import { providePasswordGateway, provideProfileGateway, provideSessionGateway } from './features/account/data-access';
+import { provideFamilyGateway } from './features/family/data-access';
 import { providePaymentGateway, provideWalletGateway } from './features/wallet/data-access';
 
 export const appConfig: ApplicationConfig = {
@@ -18,6 +19,7 @@ export const appConfig: ApplicationConfig = {
     provideAuthGateway(),
     providePaymentGateway(),
     provideWalletGateway(),
+    provideFamilyGateway(),
     provideProfileGateway(),
     providePasswordGateway(),
     provideSessionGateway(),

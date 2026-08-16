@@ -1,13 +1,11 @@
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable, catchError, finalize, map, of, shareReplay, switchMap, take, throwError } from 'rxjs';
+import { catchError, map, switchMap, throwError } from 'rxjs';
 
 import { AuthFacade } from '../../features/auth/data-access/auth.facade';
 import { AuthTokenStore } from '../../features/auth/data-access/auth-token.store';
 import { loginUrlWithReturn } from '../navigation/return-url';
-
-let refreshInFlight: Observable<boolean> | null = null;
 
 const PUBLIC_AUTH_PATHS = [
   '/auth/login',
@@ -21,11 +19,6 @@ const PUBLIC_AUTH_PATHS = [
 
 function isPublicAuthRequest(url: string): boolean {
   return PUBLIC_AUTH_PATHS.some((path) => url.includes(path));
-}
-
-/** @internal Test helper — clears the in-flight refresh queue between specs. */
-export function resetAuthBearerRefreshStateForTests(): void {
-  refreshInFlight = null;
 }
 
 function attachBearer(req: Parameters<HttpInterceptorFn>[0], accessToken: string) {
@@ -42,23 +35,16 @@ function forceReauth(auth: AuthFacade, router: Router): void {
   void router.navigateByUrl(loginUrlWithReturn(router.url));
 }
 
-function refreshOnce(auth: AuthFacade, router: Router): Observable<boolean> {
-  if (!refreshInFlight) {
-    refreshInFlight = auth.refreshSession().pipe(
-      map(() => true),
-      catchError((error) => {
-        // Refresh token is invalid/expired (or missing) — the session can't be
-        // salvaged, so clear it and send the user back to login.
-        forceReauth(auth, router);
-        return throwError(() => error);
-      }),
-      finalize(() => {
-        refreshInFlight = null;
-      }),
-      shareReplay({ bufferSize: 1, refCount: false }),
-    );
-  }
-  return refreshInFlight.pipe(take(1));
+function refreshOnce(auth: AuthFacade, router: Router) {
+  return auth.refreshSessionOnce().pipe(
+    map(() => true),
+    catchError((error) => {
+      // Refresh token is invalid/expired (or missing) — the session can't be
+      // salvaged, so clear it and send the user back to login.
+      forceReauth(auth, router);
+      return throwError(() => error);
+    }),
+  );
 }
 
 /** Attaches the access token and transparently refreshes once on 401. */

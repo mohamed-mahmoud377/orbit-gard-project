@@ -9,13 +9,23 @@ import {
   normalizeUserProfile,
 } from './user-api.adapter';
 import {
+  BackendInternalTransferResponse,
   BackendWalletBalanceResponse,
   BackendWalletTransactionPageResponse,
+  BackendWalletTransactionSummaryResponse,
+  normalizeInternalTransfer,
+  normalizeTransactionSummary,
   normalizeWalletBalance,
   normalizeWalletTransactionPage,
 } from './wallet-api.adapter';
 import { WALLET_GATEWAY, WalletGateway } from './wallet.gateway';
-import { WalletApiError, WalletTransactionPage } from './wallet.models';
+import {
+  InternalTransferRequest,
+  InternalTransferResult,
+  WalletApiError,
+  WalletTransactionPage,
+  WalletTransactionSummary,
+} from './wallet.models';
 
 @Injectable({ providedIn: 'root' })
 export class HttpWalletGateway implements WalletGateway {
@@ -52,6 +62,29 @@ export class HttpWalletGateway implements WalletGateway {
           totalElements: body.totalElements,
           last: body.last,
         })),
+        catchError((error) => this.mapError(error)),
+      );
+  }
+
+  getTransactionSummary(): Observable<WalletTransactionSummary> {
+    return this.http
+      .get<BackendWalletTransactionSummaryResponse>(
+        `${this.baseUrl}/wallet/transactions/summary`,
+      )
+      .pipe(
+        map((body) => normalizeTransactionSummary(body)),
+        catchError((error) => this.mapError(error)),
+      );
+  }
+
+  internalTransfer(request: InternalTransferRequest): Observable<InternalTransferResult> {
+    return this.http
+      .post<BackendInternalTransferResponse>(`${this.baseUrl}/wallet/internal/transfer`, {
+        receiverUsername: request.receiverUsername,
+        amount: request.amountMajor,
+      })
+      .pipe(
+        map((body) => normalizeInternalTransfer(body)),
         catchError((error) => this.mapError(error)),
       );
   }

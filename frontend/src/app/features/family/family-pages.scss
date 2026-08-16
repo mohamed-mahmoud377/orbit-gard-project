@@ -92,7 +92,8 @@
   padding-top: 14px;
 }
 
-.child-heading {
+.child-heading,
+.child-detail-identity {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -105,6 +106,26 @@
   small {
     color: var(--text-muted);
   }
+}
+
+.child-detail-allocated {
+  margin: -6px 0 0;
+  color: var(--text-muted);
+  font-size: 13px;
+
+  strong {
+    color: var(--family-primary);
+    font-weight: 600;
+  }
+}
+
+.child-detail-limits {
+  margin-top: 0;
+}
+
+.limit-remaining {
+  font-size: 11px;
+  line-height: 16px;
 }
 
 .child-avatar {

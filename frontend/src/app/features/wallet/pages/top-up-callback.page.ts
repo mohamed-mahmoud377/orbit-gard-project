@@ -155,7 +155,7 @@ export class TopUpCallbackPage implements OnInit {
 
     if (this.auth.canRefresh()) {
       this.state.set('loading');
-      this.auth.refreshSession().subscribe({
+      this.auth.refreshSessionOnce().subscribe({
         next: () => this.confirmPayment(),
         error: () => {
           void this.router.navigateByUrl(loginUrlWithReturn(this.router.url));
