@@ -1,6 +1,6 @@
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, catchError, map, throwError } from 'rxjs';
+import { Observable, catchError, map, throwError} from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
 import {
@@ -18,6 +18,10 @@ import {
   AuthApiError,
   LoginRequest,
   LoginResponse,
+  PasswordResetRequest,
+  PasswordResetRequestResponse,
+  PasswordResetConfirmRequest,
+  PasswordResetConfirmResponse,
   ProblemDetails,
   RegisterRequest,
   RefreshTokenRequest,
@@ -65,6 +69,29 @@ export class HttpAuthGateway implements AuthGateway {
       .post<ResendVerifyResponse>(`${this.baseUrl}/auth/verify/resend`, request)
       .pipe(catchError((error) => this.mapError(error)));
   }
+
+  requestPasswordReset(
+    request: PasswordResetRequest,
+  ): Observable<PasswordResetRequestResponse> {
+    return this.http
+      .post<PasswordResetRequestResponse>(
+        `${this.baseUrl}/password/reset/request`,
+        request,
+      )
+      .pipe(catchError((error) => this.mapError(error)));
+  }
+
+  confirmPasswordReset(
+    request: PasswordResetConfirmRequest,
+  ): Observable<PasswordResetConfirmResponse> {
+    return this.http
+      .post<PasswordResetConfirmResponse>(
+        `${this.baseUrl}/password/reset/confirm`,
+        request,
+      )
+      .pipe(catchError((error) => this.mapError(error)));
+  }
+
 
   login(request: LoginRequest): Observable<LoginResponse> {
     return this.http.post<BackendLoginResponse>(`${this.baseUrl}/auth/login`, request).pipe(
