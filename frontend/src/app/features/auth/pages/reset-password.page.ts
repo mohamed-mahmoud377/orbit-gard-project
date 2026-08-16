@@ -206,7 +206,21 @@ export class ResetPasswordPage {
                 break;
 
               case 'PASSWORD_MISMATCH':
+              case 'PASSWORD_CONFIRMATION_MISMATCH':
                 this.errorMessage.set('Passwords do not match.');
+                break;
+
+              case 'PASSWORD_REUSE':
+                this.errorMessage.set(
+                  'Choose a password you have not used before.',
+                );
+                break;
+
+              case 'PASSWORD_TOO_WEAK':
+              case 'PASSWORD_INVALID':
+                this.errorMessage.set(
+                  'Password must be 8 to 64 characters and contain at least one letter and one number.',
+                );
                 break;
 
               default:

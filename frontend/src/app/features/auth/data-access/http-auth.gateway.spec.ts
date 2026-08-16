@@ -116,6 +116,33 @@ describe('HttpAuthGateway', () => {
     });
   });
 
+  it('posts password reset request and confirm endpoints', () => {
+    gateway.requestPasswordReset({ email: 'omar@example.com' }).subscribe((response) => {
+      expect(response.message).toContain('reset link');
+    });
+    const request = http.expectOne('/api/v1/password/reset/request');
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({ email: 'omar@example.com' });
+    request.flush({
+      message: 'If an account exists for that address, a reset link is on its way.',
+    });
+
+    gateway
+      .confirmPasswordReset({
+        token: 'reset-token',
+        newPassword: 'NewPass1',
+        confirmNewPassword: 'NewPass1',
+      })
+      .subscribe((response) => {
+        expect(response.message).toContain('password');
+      });
+    const confirm = http.expectOne('/api/v1/password/reset/confirm');
+    expect(confirm.request.method).toBe('POST');
+    confirm.flush({
+      message: 'Your password is updated. You can now sign in with your new password.',
+    });
+  });
+
   it('posts verify and resend endpoints', () => {
     gateway.verify({ token: 'abc' }).subscribe((response) => {
       expect(response.status).toBe('ACTIVE');
