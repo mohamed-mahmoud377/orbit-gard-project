@@ -1,0 +1,17 @@
+$kind: http-request
+description: Guard rail. Later folders move real money; without this the failures surface as confusing INSUFFICIENT_BALANCE errors mid-run.
+url: "{{baseUrl}}/wallet"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      // Money arrives as JSON numbers; compare in integer cents so 0.1+0.2 never bites.
+      const cents = (v) => Math.round(Number(v) * 100);
+      pm.test('Wallet readable', () => pm.response.to.have.status(200));
+      const need = cents(pm.collectionVariables.get('allocationAmount')) * 2;
+      const have = cents(pm.response.json().available);
+      pm.test(`Parent has at least ${need / 100} EGP available to allocate`, () => {
+          pm.expect(have, 'top the parent wallet up before running this collection').to.be.at.least(need);
+      });
+    language: text/javascript
+order: 2000

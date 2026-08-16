@@ -7,12 +7,17 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 public interface WalletRepository extends JpaRepository<Wallet, UUID> {
 
     Optional<Wallet> findByUserId(UUID userId);
+
+    /** Bulk variant of findByUserId — one query for a whole set of children. */
+    List<Wallet> findByUserIdIn(Collection<UUID> userIds);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT w FROM Wallet w WHERE w.id = :id")

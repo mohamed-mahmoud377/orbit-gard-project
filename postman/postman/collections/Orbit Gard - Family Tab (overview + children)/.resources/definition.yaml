@@ -1,0 +1,41 @@
+$kind: collection
+name: Orbit Gard - Family Tab (overview + children)
+description: |-
+  Tests GET /family/overview and GET /family/children.
+
+  PREREQUISITES
+    1. Set parentUsername / parentPassword to an existing, email-verified USER account. This collection does not run the activation flow.
+    2. That parent's wallet needs at least 2x allocationAmount available. Folder 0 checks this and fails early with a clear message.
+    3. Run the folders in order — each depends on variables the previous ones set.
+
+  WHAT IT COVERS
+    Response shape and field sets, money invariants (available = balance - held), limit ordering, cross-endpoint agreement on the monthly spend figure, allocation and spending deltas, limit enforcement, and access control.
+
+  KNOWN GAP ASSERTED, NOT HIDDEN
+    blockedAttempts currently always returns 0. Limit violations throw without persisting anything, and no code path ever writes TransactionStatus.REJECTED. Folder 4 asserts the counter stays flat after a genuine block, so the test documents the gap rather than passing silently. When blocked-attempt recording is added, that one assertion flips to expect an increment.
+
+  SIDE EFFECTS
+    Creates two child accounts per run (unique usernames) and moves real money between wallets. Point it at a dev database.
+variables:
+  baseUrl: http://localhost:8081/api/v1
+  parentUsername: mohsen
+  parentPassword: Password123
+  childPassword: Testpass123
+  allocationAmount: "300.00"
+  spendAmount: "60.00"
+  accessToken: eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiI2NTUzNmIyZi0zNjY4LTQ2MmUtOTYyMC00ZDgxMGYxNzJmODgiLCJzaWQiOiIyMDY0ZTExMC1iM2ZhLTRhY2QtYWEwOS1jOWM5OWZiNmNlOGYiLCJ0eXBlIjoiYWNjZXNzIiwiaWF0IjoxNzg2ODkxNTAxLCJleHAiOjE3ODY4OTE4MDEsInVzZXJuYW1lIjoibW9oc2VuIiwiYWNjb3VudFR5cGUiOiJVU0VSIn0.0ldpfvySsm3c9JHulxA8LdIh-6O03GXfcVHF38k-aTfIjH_CmJFJEa3d_tCPL-wr
+  childToken: ""
+  childAId: ""
+  childAUsername: ""
+  childBId: ""
+  childBUsername: ""
+  snapAllocated: ""
+  snapSpent: ""
+  snapBlocked: ""
+  snapChildATodaySpent: ""
+auth:
+  - id: 84fca5cf-6a6a-4050-a8f4-8c31b78dd294
+    type: bearer
+    name: bearer auth
+    credentials:
+      token: "{{accessToken}}"

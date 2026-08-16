@@ -1,5 +1,12 @@
 $kind: http-request
-name: New Request
-url: ""
+url: "{{baseUrl}}/api/v1/sessions"
 method: GET
-order: 1738857944976381
+body:
+  type: json
+  content: ""
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+settings: {}
+order: 11000

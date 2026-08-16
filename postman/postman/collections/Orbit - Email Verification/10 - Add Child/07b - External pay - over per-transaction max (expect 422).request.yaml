@@ -1,0 +1,16 @@
+$kind: http-request
+description: Repeats test 01 via /external/pay instead of internal transfer. Expect 422, code max-per-transaction-exceeded. Re-run 07a first for a fresh token, since tokens are one-time use.
+url: "{{baseUrl}}/api/v1/external/pay"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "verificationToken": "{{externalPaymentToken}}",
+      "merchantName": "Test Merchant",
+      "productName": "Test Product",
+      "cashAmount": 250.00
+    }
+order: 13000

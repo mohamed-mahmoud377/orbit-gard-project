@@ -1,5 +1,9 @@
 $kind: http-request
 name: New Request
-url: ""
-method: GET
-order: 2465097013388583
+url: "{{baseUrl}}/api/v1/sessions/sign-out-others"
+method: POST
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 12000

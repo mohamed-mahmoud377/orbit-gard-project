@@ -1,0 +1,18 @@
+$kind: http-request
+description: Only meaningful once this month's accumulated spend is close to monthlyLimit=2000.00 — either run several days of daily-limit-respecting transfers first, or seed prior COMPLETED DEBIT rows directly via SQL for this child's wallet, dated earlier this month. The amount here should be individually fine (under per-transaction max and under today's remaining daily budget) but push the monthly total over the cap. Expect 422, code monthly-limit-exceeded.
+url: "{{baseUrl}}/api/v1/wallet/internal/transfer"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "receiverUsername": "{{receiverUsername}}",
+      "amount": 50.00
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{childAccessToken}}"
+order: 10000

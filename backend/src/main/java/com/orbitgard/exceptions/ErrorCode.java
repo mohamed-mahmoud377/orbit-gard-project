@@ -47,10 +47,15 @@ public enum ErrorCode {
     PAYMOB_UNREACHABLE(HttpStatus.SERVICE_UNAVAILABLE, "paymob-unreachable", "Payment provider unavailable"),
     PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "payment-not-found", "Payment not found"),
     ALREADY_VERIFIED(HttpStatus.OK, "already-verified", "Account already verified"),
+    PARENT_CANNOT_BE_CHILD(HttpStatus.FORBIDDEN, "parent-cannot-be-child", "Child accounts cannot add a child"),
+    LIMIT_ORDER_INVALID(HttpStatus.BAD_REQUEST, "limit-order-invalid", "Limit must not be less than the lower limit"),
     CANNOT_SIGN_OUT_CURRENT_DEVICE(HttpStatus.CONFLICT, "cannot-sign-out-current-device", "Cannot sign out the device you're using"),
     INVALID_CURRENT_PASSWORD(HttpStatus.BAD_REQUEST, "invalid-current-password", "That is not your current password"),
     PASSWORD_REUSE(HttpStatus.CONFLICT, "password-reuse", "Choose a password you have not used before"),
     RECEIVER_NOT_FOUND(HttpStatus.NOT_FOUND, "receiver-not-found", "Receiver not found"),
+    MAX_PER_TRANSACTION_EXCEEDED(HttpStatus.UNPROCESSABLE_ENTITY, "max-per-transaction-exceeded", "Amount exceeds the per-transaction limit"),
+    DAILY_LIMIT_EXCEEDED(HttpStatus.UNPROCESSABLE_ENTITY, "daily-limit-exceeded", "This would exceed the daily spending limit"),
+    MONTHLY_LIMIT_EXCEEDED(HttpStatus.UNPROCESSABLE_ENTITY, "monthly-limit-exceeded", "This would exceed the monthly spending limit"),
     SELF_TRANSFER_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "self-transfer-not-allowed", "You cannot send money to yourself");
     private final HttpStatus httpStatus;
     private final String typeSlug;

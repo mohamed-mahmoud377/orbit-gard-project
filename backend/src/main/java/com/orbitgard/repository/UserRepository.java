@@ -3,6 +3,7 @@ package com.orbitgard.repository;
 import com.orbitgard.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -28,4 +29,17 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByUsernameOrEmail(String username, String email);
 
     boolean existsByPhoneNumberAndIdNot(String phoneNumber, UUID id);
+
+    long countByParent_Id(UUID parentId);
+
+    /** Children of one parent, oldest first — backs the Family tab card list. */
+    List<User> findByParent_IdOrderByCreatedAtAsc(UUID parentId);
+
+    /**
+     * One child, scoped to its parent. Ownership is part of the query rather
+     * than a check after loading: a parent asking for someone else's child
+     * gets an empty Optional, which the caller turns into a 404. That leaks
+     * nothing about whether the id exists at all.
+     */
+    Optional<User> findByIdAndParent_Id(UUID id, UUID parentId);
 }

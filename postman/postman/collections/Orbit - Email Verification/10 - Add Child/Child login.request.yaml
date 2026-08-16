@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/auth/login"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"username\": \"ahmed.wael\",\r
+
+    \  \"password\": \"ahmed@123\",\r
+
+    \  \"rememberMe\": false\r
+
+    }"
+auth:
+  type: noauth
+order: 4000

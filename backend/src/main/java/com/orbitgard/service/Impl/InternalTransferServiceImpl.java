@@ -14,6 +14,7 @@ import com.orbitgard.exceptions.ErrorCode;
 import com.orbitgard.repository.UserRepository;
 import com.orbitgard.repository.WalletRepository;
 import com.orbitgard.service.AuthenticatedUserService;
+import com.orbitgard.service.ChildSpendingLimitService;
 import com.orbitgard.service.InternalTransferService;
 import com.orbitgard.service.WalletTransactionService;
 import org.springframework.stereotype.Service;
@@ -34,15 +35,18 @@ public class InternalTransferServiceImpl implements InternalTransferService {
     private final WalletRepository walletRepository;
     private final WalletTransactionService walletTransactionService;
     private final AuthenticatedUserService authenticatedUserService;
+    private final ChildSpendingLimitService childSpendingLimitService;
 
     public InternalTransferServiceImpl(UserRepository userRepository,
                                        WalletRepository walletRepository,
                                        WalletTransactionService walletTransactionService,
-                                       AuthenticatedUserService authenticatedUserService) {
+                                       AuthenticatedUserService authenticatedUserService,
+                                       ChildSpendingLimitService childSpendingLimitService) {
         this.userRepository = userRepository;
         this.walletRepository = walletRepository;
         this.walletTransactionService = walletTransactionService;
         this.authenticatedUserService = authenticatedUserService;
+        this.childSpendingLimitService = childSpendingLimitService;
     }
 
     @Override
@@ -68,6 +72,7 @@ public class InternalTransferServiceImpl implements InternalTransferService {
         UUID senderId = authenticatedUserService.currentPrincipal().userId();
         User sender = userRepository.findById(senderId)
                 .orElseThrow(() -> new NoSuchElementException("Sender not found: " + senderId));
+
         User receiver = userRepository.findByUsername(receiverUsername)
                 .orElseThrow(() -> new ApiException(ErrorCode.RECEIVER_NOT_FOUND, "receiverUsername"));
 
@@ -87,6 +92,8 @@ public class InternalTransferServiceImpl implements InternalTransferService {
                 .orElseThrow(() -> new NoSuchElementException("Receiver wallet not found: " + receiver.getId()))
                 .getId();
 
+        childSpendingLimitService.enforceIfChild(sender, senderWalletId, amountCents);
+
         UUID firstId = senderWalletId.compareTo(receiverWalletId) <= 0 ? senderWalletId : receiverWalletId;
         UUID secondId = firstId.equals(senderWalletId) ? receiverWalletId : senderWalletId;
 
@@ -99,6 +106,7 @@ public class InternalTransferServiceImpl implements InternalTransferService {
         if (senderWallet.getAvailableCents() < amountCents) {
             throw new ApiException(ErrorCode.INSUFFICIENT_BALANCE);
         }
+
         UUID debitId = UUID.randomUUID();
         UUID creditId = UUID.randomUUID();
 
@@ -114,7 +122,6 @@ public class InternalTransferServiceImpl implements InternalTransferService {
                 .relatedTransactionId(creditId)
                 .build());
 
-
         WalletTransaction credit = walletTransactionService.record(RecordTransactionRequest.builder()
                 .id(creditId)
                 .walletId(receiverWallet.getId())
@@ -127,11 +134,10 @@ public class InternalTransferServiceImpl implements InternalTransferService {
                 .relatedTransactionId(debitId)
                 .build());
 
-
         return new InternalTransferResponse(
                 debit.getId(), debit.getReference(),
                 credit.getId(), credit.getReference(),
-                debit.getStatus().name());
+                credit.getStatus().name());
     }
 
     private long toMinorUnits(BigDecimal amount) {

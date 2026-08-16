@@ -1,0 +1,31 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/auth/add-child"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \    \"firstName\": \"orchid\",\r
+
+    \    \"lastName\": \"Abdelfattah\",\r
+
+    \    \"username\": \"orchid.abdelfattah\",\r
+
+    \    \"password\": \"orchid@123\",\r
+
+    \    \"confirmPassword\": \"orchid@123\",\r
+
+    \    \"maxPerTransaction\": 100.00,\r
+
+    \    \"dailyLimit\": 300.00,\r
+
+    \    \"monthlyLimit\": 1000.00,\r
+
+    \    \"startingAllocation\": 5000.00\r
+
+    }"
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 3000

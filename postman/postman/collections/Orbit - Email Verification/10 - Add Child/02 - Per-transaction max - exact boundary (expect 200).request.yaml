@@ -1,0 +1,18 @@
+$kind: http-request
+description: Amount exactly at maxPerTransaction=200.00. Expect 200 success — confirms the boundary is inclusive (<=), not exclusive (<).
+url: "{{baseUrl}}/api/v1/wallet/internal/transfer"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "receiverUsername": "{{receiverUsername}}",
+      "amount": 100.00
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{childAccessToken}}"
+order: 6000

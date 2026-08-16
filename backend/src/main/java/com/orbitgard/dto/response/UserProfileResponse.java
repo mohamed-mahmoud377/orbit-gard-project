@@ -4,6 +4,7 @@ public record UserProfileResponse(
         String firstname,
         String lastname,
         String username,
-        String role
+        String role,
+        Integer childrenCount
 ) {
 }

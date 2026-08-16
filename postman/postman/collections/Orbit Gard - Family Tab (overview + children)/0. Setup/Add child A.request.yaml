@@ -1,0 +1,38 @@
+$kind: http-request
+description: "No startingAllocation: that would run a transfer inside the add-child transaction, so an underfunded parent would roll back the child too. Money is moved explicitly in folder 3 instead."
+url: "{{baseUrl}}/auth/add-child"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "firstName": "Youssef",
+      "lastName": "Mahmoud",
+      "username": "{{childAUsername}}",
+      "password": "{{childPassword}}",
+      "confirmPassword": "{{childPassword}}",
+      "maxPerTransaction": 100.0,
+      "dailyLimit": 150.0,
+      "monthlyLimit": 1000.0
+    }
+scripts:
+  - type: beforeRequest
+    code: |-
+      // Unique username per run so the collection is re-runnable.
+      const suffix = Date.now().toString().slice(-8);
+      pm.collectionVariables.set('childAUsername', 'test.child.a' + suffix);
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      pm.test('Child A created', () => pm.response.to.have.status(200));
+      const b = pm.response.json();
+      pm.collectionVariables.set('childAId', b.id);
+      pm.test('Limits stored as sent', () => {
+          pm.expect(Number(b.maxPerTransaction)).to.eql(100);
+          pm.expect(Number(b.dailyLimit)).to.eql(150);
+          pm.expect(Number(b.monthlyLimit)).to.eql(1000);
+      });
+    language: text/javascript
+order: 3000
