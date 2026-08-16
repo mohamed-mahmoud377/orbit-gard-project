@@ -1,10 +1,10 @@
-import { Component, computed, inject, signal } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AssetUrlPipe } from '../../core/asset-url';
 import { DemoStore } from '../../data-access';
-import { Transaction, User } from '../../shared/models';
+import { Transaction, User, WalletSnapshot } from '../../shared/models';
 import { PageHeader } from '../../shared/ui/page-header';
 import { StatusView } from '../../shared/ui/status-view';
 import { TransactionList, TransactionListItem } from '../../shared/ui/transaction-list';
@@ -13,6 +13,8 @@ import {
   PaymentApiError,
   PaymentFacade,
   PAYMENT_MESSAGES,
+  UserAccountSummary,
+  WalletFacade,
   bannerMessageFromPaymentError,
 } from './data-access';
 
@@ -35,71 +37,102 @@ function listItem(transaction: Transaction): TransactionListItem {
 
 @Component({
   selector: 'app-dashboard-page',
-  imports: [RouterLink, PageHeader, TransactionList, AssetUrlPipe],
+  imports: [RouterLink, PageHeader, TransactionList, StatusView, AssetUrlPipe],
   template: `
     <section class="page stack" data-node-id="3:2">
-      <app-page-header
-        [title]="'Good evening, ' + (store.currentUser()?.fullName?.split(' ')?.[0] ?? 'Mohamed')"
-        subtitle="Saturday, 25 July 2026"
-      >
-        <img [src]="'assets/notifications.svg' | assetUrl" width="40" height="40" alt="Notifications" />
-      </app-page-header>
+      @if (loading()) {
+        <app-status-view title="Loading dashboard" message="Fetching your wallet and activity…" tone="pending" />
+      } @else if (error()) {
+        <app-status-view title="Unable to load dashboard" [message]="error()" tone="danger" />
+      } @else {
+        <app-page-header
+          [title]="'Good evening, ' + (user()?.firstName ?? 'there')"
+          [subtitle]="today"
+        >
+          <img [src]="'assets/notifications.svg' | assetUrl" width="40" height="40" alt="Notifications" />
+        </app-page-header>
 
-      <div class="balance-card">
-        <div>
-          <span class="overline">Available to spend</span>
-          <h2 class="amount">{{ money(store.wallet()?.availableMinor ?? 0) }}</h2>
-          <div class="balance-stats">
-            <div>
-              <span>Total balance</span>
-              <strong class="amount">{{ money(store.wallet()?.totalMinor ?? 0) }}</strong>
-            </div>
-            <div>
-              <span>Held / pending</span>
-              <strong class="amount" style="color: var(--held)">
-                {{ money(store.wallet()?.heldMinor ?? 0) }}
-              </strong>
+        <div class="balance-card">
+          <div>
+            <span class="overline">Available to spend</span>
+            <h2 class="amount">{{ money(walletSnapshot()?.availableMinor ?? 0) }}</h2>
+            <div class="balance-stats">
+              <div>
+                <span>Total balance</span>
+                <strong class="amount">{{ money(walletSnapshot()?.totalMinor ?? 0) }}</strong>
+              </div>
+              <div>
+                <span>Held / pending</span>
+                <strong class="amount" style="color: var(--held)">
+                  {{ money(walletSnapshot()?.heldMinor ?? 0) }}
+                </strong>
+              </div>
             </div>
           </div>
+          <img class="balance-graphic" [src]="'assets/orbit-graphic.svg' | assetUrl" alt="" aria-hidden="true" />
         </div>
-        <img class="balance-graphic" [src]="'assets/orbit-graphic.svg' | assetUrl" alt="" aria-hidden="true" />
-      </div>
 
-      <div class="quick-actions">
-        <a class="btn btn-primary" routerLink="/top-up">● Top up wallet</a>
-        <a class="btn btn-secondary" routerLink="/send">● Send money</a>
-        <a class="btn btn-outline" routerLink="/family/add">● Add a child</a>
-      </div>
-
-      @if ((store.wallet()?.heldMinor ?? 0) > 0) {
-        <div class="notice notice-held">
-          <span aria-hidden="true">●</span>
-          <span>
-            {{ money(store.wallet()?.heldMinor ?? 0) }} is held for pending payments. These settle
-            automatically — no action is needed from you.
-          </span>
+        <div class="quick-actions">
+          <a class="btn btn-primary" routerLink="/top-up">● Top up wallet</a>
+          <a class="btn btn-secondary" routerLink="/send">● Send money</a>
+          <a class="btn btn-outline" routerLink="/family/add">● Add a child</a>
         </div>
+
+        @if ((walletSnapshot()?.heldMinor ?? 0) > 0) {
+          <div class="notice notice-held">
+            <span aria-hidden="true">●</span>
+            <span>
+              {{ money(walletSnapshot()?.heldMinor ?? 0) }} is held for pending payments. These settle
+              automatically — no action is needed from you.
+            </span>
+          </div>
+        }
+
+        <section class="card activity-card">
+          <header class="activity-header">
+            <h2>Recent activity</h2>
+            <a routerLink="/transactions">View all</a>
+          </header>
+          <app-transaction-list
+            [transactions]="recent()"
+            (selected)="openTransaction($event)"
+          />
+        </section>
       }
-
-      <section class="card activity-card">
-        <header class="activity-header">
-          <h2>Recent activity</h2>
-          <a routerLink="/transactions">View all</a>
-        </header>
-        <app-transaction-list
-          [transactions]="recent()"
-          (selected)="openTransaction($event)"
-        />
-      </section>
     </section>
   `,
   styleUrl: './wallet-pages.scss',
 })
-export default class DashboardPage {
-  protected readonly store = inject(DemoStore);
+export default class DashboardPage implements OnInit {
+  private readonly wallet = inject(WalletFacade);
   private readonly router = inject(Router);
+  protected readonly loading = signal(true);
+  protected readonly error = signal('');
+  protected readonly user = signal<UserAccountSummary | null>(null);
+  protected readonly walletSnapshot = signal<WalletSnapshot | null>(null);
+  protected readonly recent = signal<TransactionListItem[]>([]);
   protected readonly money = formatMoney;
-  protected readonly recent = computed(() => this.store.recentActivity().slice(0, 8).map(listItem));
+  protected readonly today = new Date().toLocaleDateString('en-GB', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+
+  ngOnInit(): void {
+    this.wallet.loadDashboard().subscribe({
+      next: (data) => {
+        this.user.set(data.user);
+        this.walletSnapshot.set(data.wallet);
+        this.recent.set(data.recentTransactions.map(listItem));
+        this.loading.set(false);
+      },
+      error: () => {
+        this.error.set('We could not load your wallet right now. Please try again shortly.');
+        this.loading.set(false);
+      },
+    });
+  }
 
   protected openTransaction(id: string): void {
     void this.router.navigate(['/transactions', id]);

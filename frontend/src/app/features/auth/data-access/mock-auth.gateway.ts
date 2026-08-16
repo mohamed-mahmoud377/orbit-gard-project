@@ -16,6 +16,7 @@ import {
   AuthApiError,
   LoginRequest,
   LoginResponse,
+  PromoCodeValidationResponse,
   ProblemDetails,
   ProblemFieldError,
   RefreshTokenRequest,
@@ -233,6 +234,20 @@ export class MockAuthGateway implements AuthGateway {
       available: !taken,
       reason: taken ? ('TAKEN' as const) : null,
     }).pipe(delay(120));
+  }
+
+  validatePromoCode(code: string): Observable<PromoCodeValidationResponse> {
+    const normalized = code.trim().toUpperCase();
+    if (!normalized) {
+      return of({ status: 'INVALID' as const, amount: null }).pipe(delay(120));
+    }
+    if (normalized === 'EXPIRED') {
+      return of({ status: 'EXPIRED' as const, amount: null }).pipe(delay(120));
+    }
+    if (normalized === 'WELCOME50' || normalized === 'ORBIT500') {
+      return of({ status: 'VALID' as const, amount: 50 }).pipe(delay(120));
+    }
+    return of({ status: 'INVALID' as const, amount: null }).pipe(delay(120));
   }
 
   register(request: RegisterRequest): Observable<RegisterResponse> {

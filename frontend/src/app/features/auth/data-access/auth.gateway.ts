@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import {
   LoginRequest,
   LoginResponse,
+  PromoCodeValidationResponse,
   RefreshTokenRequest,
   RegisterRequest,
   RegisterResponse,
@@ -16,6 +17,7 @@ import {
 
 export interface AuthGateway {
   checkUsername(username: string): Observable<UsernameAvailabilityResponse>;
+  validatePromoCode(code: string): Observable<PromoCodeValidationResponse>;
   register(request: RegisterRequest): Observable<RegisterResponse>;
   verify(request: VerifyRequest): Observable<VerifyResponse>;
   resendVerification(request: ResendVerifyRequest): Observable<ResendVerifyResponse>;

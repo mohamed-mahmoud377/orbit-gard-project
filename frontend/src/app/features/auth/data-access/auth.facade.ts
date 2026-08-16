@@ -7,6 +7,7 @@ import { AuthTokenStore } from './auth-token.store';
 import {
   LoginRequest,
   LoginResponse,
+  PromoCodeValidationResponse,
   RefreshTokenRequest,
   RegisterRequest,
   RegisterResponse,
@@ -43,6 +44,10 @@ export class AuthFacade {
 
   checkUsername(username: string): Observable<UsernameAvailabilityResponse> {
     return this.gateway.checkUsername(username);
+  }
+
+  validatePromoCode(code: string): Observable<PromoCodeValidationResponse> {
+    return this.gateway.validatePromoCode(code);
   }
 
   register(request: RegisterRequest): Observable<RegisterResponse> {

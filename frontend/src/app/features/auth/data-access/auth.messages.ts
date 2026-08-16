@@ -38,6 +38,10 @@ export const AUTH_MESSAGES = {
     `We sent one recently. Check your inbox, or try again in ${formatCountdown(seconds)}.`,
   resendSent: (email: string) =>
     `We sent a new link to ${email}. The link in the first email no longer works.`,
+  promoValid: (amount: number) =>
+    `This code adds EGP ${amount.toFixed(2)} to your wallet after activation.`,
+  promoInvalid: 'This promotional code is not valid.',
+  promoExpired: 'This promotional code has expired.',
 } as const;
 
 export function formatCountdown(totalSeconds: number): string {

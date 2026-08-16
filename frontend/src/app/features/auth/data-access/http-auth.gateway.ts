@@ -20,6 +20,7 @@ import {
   LoginResponse,
   ProblemDetails,
   RegisterRequest,
+  PromoCodeValidationResponse,
   RefreshTokenRequest,
   RegisterResponse,
   ResendVerifyRequest,
@@ -44,6 +45,13 @@ export class HttpAuthGateway implements AuthGateway {
         ),
         catchError((error) => this.mapError(error)),
       );
+  }
+
+  validatePromoCode(code: string): Observable<PromoCodeValidationResponse> {
+    const params = new HttpParams().set('code', code);
+    return this.http
+      .get<PromoCodeValidationResponse>(`${this.baseUrl}/auth/promo-code`, { params })
+      .pipe(catchError((error) => this.mapError(error)));
   }
 
   register(request: RegisterRequest): Observable<RegisterResponse> {
