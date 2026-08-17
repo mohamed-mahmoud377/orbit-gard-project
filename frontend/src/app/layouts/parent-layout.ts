@@ -72,10 +72,6 @@ interface NavigationItem {
           <span>Settings</span>
         </a>
 
-        <div class="settlement-card">
-          <span class="settlement-ring" aria-hidden="true"></span>
-          <div><strong>Next settlement</strong><span>in 24 minutes</span></div>
-        </div>
 
             <button class="nav-item" type="button" (click)="logout()">
               <span aria-hidden="true">↪</span>
@@ -149,7 +145,6 @@ export class ParentLayout {
       label: 'Transactions',
       route: '/transactions',
       icon: assetUrl('assets/nav-transactions.svg'),
-      badge: '2',
     },
   ];
 
