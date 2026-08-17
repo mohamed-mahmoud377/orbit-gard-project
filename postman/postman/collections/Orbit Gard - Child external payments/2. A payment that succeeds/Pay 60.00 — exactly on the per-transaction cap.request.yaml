@@ -1,0 +1,52 @@
+$kind: http-request
+description: No Authorization header is sent. /external/pay is open by design — the verification token is the credential.
+url: "{{baseUrl}}/external/pay"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "verificationToken": "{{payToken}}",
+      "merchantName": "School canteen",
+      "productName": "Chicken sandwich",
+      "cashAmount": 60.0
+    }
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      const cents = (v) => Math.round(Number(v) * 100);
+      // The cap is 60.00 and the check is strictly greater-than, so paying
+      // exactly the cap must be allowed.
+      pm.test('201 Created', () => pm.response.to.have.status(201));
+      const b = pm.response.json();
+
+      pm.test('Documented field set', () => {
+          pm.expect(Object.keys(b).sort()).to.eql(['cashAmount', 'createdAt',
+              'description', 'merchantName', 'productName', 'reference',
+              'status', 'transactionId']);
+      });
+
+      pm.test('Posted as COMPLETED', () => pm.expect(b.status).to.eql('COMPLETED'));
+      pm.test('Amount echoed exactly', () => pm.expect(cents(b.cashAmount)).to.eql(6000));
+      pm.test('Merchant and product echoed', () => {
+          pm.expect(b.merchantName).to.eql('School canteen');
+          pm.expect(b.productName).to.eql('Chicken sandwich');
+      });
+      pm.test('Ledger reference issued', () => pm.expect(b.reference).to.match(/^TXN-/));
+
+      // The description is the only place the merchant name is persisted.
+      pm.test('Description carries product and merchant in the parseable form', () => {
+          pm.expect(b.description).to.eql(
+              'External payment: Bought Chicken sandwich From: School canteen');
+      });
+      pm.test('A successful payment carries no blocked suffix', () => {
+          pm.expect(b.description).to.not.include('BLOCKED');
+      });
+
+      pm.collectionVariables.set('firstPaymentId', b.transactionId);
+    language: text/javascript
+order: 1000

@@ -1,0 +1,27 @@
+$kind: http-request
+description: Money is stored in cents; a third decimal has nowhere to go and must be refused rather than silently rounded.
+url: "{{baseUrl}}/external/pay"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "verificationToken": "placeholder",
+      "merchantName": "School canteen",
+      "productName": "Sandwich",
+      "cashAmount": 10.555
+    }
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('400 Bad Request', () => pm.response.to.have.status(400));
+      pm.test('AMOUNT_INVALID on cashAmount', () => {
+          const fields = (pm.response.json().fieldErrors || []).map(e => e.field);
+          pm.expect(fields).to.include('cashAmount');
+      });
+    language: text/javascript
+order: 3000

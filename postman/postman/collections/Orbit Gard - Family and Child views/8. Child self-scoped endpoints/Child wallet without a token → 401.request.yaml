@@ -1,0 +1,12 @@
+$kind: http-request
+url: "{{baseUrl}}/child/wallet"
+method: GET
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('401 Unauthorized', () => pm.response.to.have.status(401));
+      pm.test('UNAUTHENTICATED', () => pm.expect(pm.response.json().code).to.eql('UNAUTHENTICATED'));
+    language: text/javascript
+order: 10000

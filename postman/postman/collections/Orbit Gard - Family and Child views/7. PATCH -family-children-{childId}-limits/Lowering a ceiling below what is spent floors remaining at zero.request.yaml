@@ -1,0 +1,31 @@
+$kind: http-request
+url: "{{baseUrl}}/family/children/{{childAId}}/limits"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "maxPerTransaction": 10.0,
+      "dailyLimit": 10.0
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      // Money arrives as JSON numbers; compare in integer cents so 0.1+0.2 never bites.
+      const cents = (v) => Math.round(Number(v) * 100);
+      // Child A already spent spendAmount today. Dropping the daily ceiling
+      // under that is allowed — it stops further spending without rewriting
+      // history — and must not surface as a negative remaining.
+      pm.test('200 OK — lowering below spend is allowed', () => pm.response.to.have.status(200));
+      const c = pm.response.json();
+
+      pm.test('today.spent now exceeds today.max', () => {
+          pm.expect(cents(c.limits.today.spent)).to.be.above(cents(c.limits.today.max));
+      });
+      pm.test('remaining floored at 0, not negative', () => {
+          pm.expect(cents(c.limits.today.remaining)).to.eql(0);
+      });
+    language: text/javascript
+order: 6000

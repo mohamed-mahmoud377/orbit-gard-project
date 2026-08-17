@@ -1,0 +1,13 @@
+$kind: http-request
+description: Path variable type mismatch must be a clean 400, not a 500.
+url: "{{baseUrl}}/family/children/not-a-uuid"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('400 Bad Request', () => pm.response.to.have.status(400));
+      pm.test('INVALID_REQUEST_PARAMETER', () => {
+          pm.expect(pm.response.json().code).to.eql('INVALID_REQUEST_PARAMETER');
+      });
+    language: text/javascript
+order: 6000

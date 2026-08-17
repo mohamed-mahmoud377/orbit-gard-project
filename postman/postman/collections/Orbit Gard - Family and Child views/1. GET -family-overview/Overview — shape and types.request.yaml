@@ -1,0 +1,45 @@
+$kind: http-request
+description: Baseline snapshot. Folders 3 and 4 assert deltas against these values.
+url: "{{baseUrl}}/family/overview"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      // Money arrives as JSON numbers; compare in integer cents so 0.1+0.2 never bites.
+      const cents = (v) => Math.round(Number(v) * 100);
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+      const b = pm.response.json();
+
+      pm.test('Exactly the four documented fields', () => {
+          pm.expect(Object.keys(b).sort()).to.eql(
+              ['allocatedThisMonth', 'blockedAttempts', 'childrenCount', 'spentThisMonth']);
+      });
+
+      pm.test('childrenCount counts both children just created', () => {
+          pm.expect(b.childrenCount).to.be.a('number');
+          pm.expect(b.childrenCount).to.be.at.least(2);
+      });
+
+      pm.test('blockedAttempts is a non-negative integer', () => {
+          pm.expect(b.blockedAttempts).to.be.a('number');
+          pm.expect(b.blockedAttempts % 1).to.eql(0);
+          pm.expect(b.blockedAttempts).to.be.at.least(0);
+      });
+
+      pm.test('Money fields are non-negative', () => {
+          pm.expect(cents(b.allocatedThisMonth)).to.be.at.least(0);
+          pm.expect(cents(b.spentThisMonth)).to.be.at.least(0);
+      });
+
+      // Scale is only visible in the raw body — JSON.parse turns 800.00 into 800.
+      pm.test('Money serialised at 2 decimal places', () => {
+          const raw = pm.response.text();
+          pm.expect(raw).to.match(/"allocatedThisMonth":\s*-?\d+\.\d{2}/);
+          pm.expect(raw).to.match(/"spentThisMonth":\s*-?\d+\.\d{2}/);
+      });
+
+      pm.collectionVariables.set('snapAllocated', b.allocatedThisMonth);
+      pm.collectionVariables.set('snapSpent', b.spentThisMonth);
+      pm.collectionVariables.set('snapBlocked', b.blockedAttempts);
+    language: text/javascript
+order: 1000

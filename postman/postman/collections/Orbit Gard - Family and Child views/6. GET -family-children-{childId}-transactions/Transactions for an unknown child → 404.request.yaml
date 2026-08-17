@@ -1,0 +1,10 @@
+$kind: http-request
+url: "{{baseUrl}}/family/children/{{$randomUUID}}/transactions"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('404 Not Found', () => pm.response.to.have.status(404));
+      pm.test('RESOURCE_NOT_FOUND', () => pm.expect(pm.response.json().code).to.eql('RESOURCE_NOT_FOUND'));
+    language: text/javascript
+order: 10000

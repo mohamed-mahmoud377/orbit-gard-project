@@ -1,0 +1,31 @@
+$kind: http-request
+description: "Worth knowing either way: if you would rather a refusal invalidate the token, that is a deliberate change, not a bug fix."
+url: "{{baseUrl}}/external/pay"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "verificationToken": "{{payToken}}",
+      "merchantName": "School canteen",
+      "productName": "Juice",
+      "cashAmount": 50.0
+    }
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      const cents = (v) => Math.round(Number(v) * 100);
+      // The refusal throws before consumedAt is stamped, and the whole
+      // request rolls back, so the same token is still spendable. A child
+      // who overshoots does not have to re-enter their password.
+      pm.test('201 Created — the token from the refused attempt still works',
+          () => pm.response.to.have.status(201));
+      pm.test('Charged the smaller amount', () => {
+          pm.expect(cents(pm.response.json().cashAmount)).to.eql(5000);
+      });
+    language: text/javascript
+order: 3000

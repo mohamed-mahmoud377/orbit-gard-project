@@ -1,0 +1,47 @@
+$kind: http-request
+description: Step 1 of the two-step flow. The child hands their credentials to the merchant terminal once; everything after that runs on the token.
+url: "{{baseUrl}}/external/verify"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "username": "{{childAUsername}}",
+      "password": "{{childPassword}}"
+    }
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      // If this returns 500 INTERNAL_ERROR, the cause is a schema conflict,
+      // not the credentials: verification_token.target_email is NOT NULL,
+      // verify() sets it from user.getEmail(), and addChild stores a CHILD
+      // with email = null. A child therefore cannot mint a payment token at
+      // all, and every folder below this one will fail as a consequence.
+      pm.test('200 OK — a child can mint a payment token', () => {
+          if (pm.response.code === 500) {
+              pm.expect.fail('500 INTERNAL_ERROR — likely verification_token.target_email '
+                  + 'NOT NULL vs child email null. See the collection description.');
+          }
+          pm.response.to.have.status(200);
+      });
+
+      const b = pm.response.json();
+      pm.collectionVariables.set('payToken', b.verificationToken);
+
+      pm.test('Returns exactly a token and an expiry', () => {
+          pm.expect(Object.keys(b).sort()).to.eql(['expiresAt', 'verificationToken']);
+      });
+      pm.test('Token is a three-part JWT', () => {
+          pm.expect(b.verificationToken.split('.').length).to.eql(3);
+      });
+      pm.test('Expiry is in the future and within a couple of hours', () => {
+          const ms = new Date(b.expiresAt).getTime() - Date.now();
+          pm.expect(ms).to.be.above(0);
+          pm.expect(ms).to.be.below(2 * 60 * 60 * 1000);
+      });
+    language: text/javascript
+order: 1000

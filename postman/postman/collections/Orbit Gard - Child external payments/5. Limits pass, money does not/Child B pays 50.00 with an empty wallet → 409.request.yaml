@@ -1,0 +1,32 @@
+$kind: http-request
+url: "{{baseUrl}}/external/pay"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "verificationToken": "{{payTokenB}}",
+      "merchantName": "School canteen",
+      "productName": "Sandwich",
+      "cashAmount": 50.0
+    }
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      // Child B's ceilings are 1000.00, so every limit passes and the
+      // request reaches the balance check. This is the one refusal that is
+      // not a limit violation.
+      pm.test('409 Conflict', () => pm.response.to.have.status(409));
+      pm.test('INSUFFICIENT_BALANCE', () => {
+          pm.expect(pm.response.json().code).to.eql('INSUFFICIENT_BALANCE');
+      });
+      pm.test('Attributed to cashAmount', () => {
+          const fields = (pm.response.json().fieldErrors || []).map(e => e.field);
+          pm.expect(fields).to.include('cashAmount');
+      });
+    language: text/javascript
+order: 2000

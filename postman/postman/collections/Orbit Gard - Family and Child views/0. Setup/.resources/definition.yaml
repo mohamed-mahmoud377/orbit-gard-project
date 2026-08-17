@@ -1,0 +1,3 @@
+$kind: collection
+description: Logs in and creates two children. Run this folder first — everything downstream depends on the variables it sets.
+order: 1000

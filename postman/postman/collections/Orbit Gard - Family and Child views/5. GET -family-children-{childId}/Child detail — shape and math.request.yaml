@@ -1,0 +1,59 @@
+$kind: http-request
+url: "{{baseUrl}}/family/children/{{childAId}}"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      // Money arrives as JSON numbers; compare in integer cents so 0.1+0.2 never bites.
+      const cents = (v) => Math.round(Number(v) * 100);
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+      const c = pm.response.json();
+
+      pm.test('Documented field set', () => {
+          pm.expect(Object.keys(c).sort()).to.eql(['allocatedThisMonth', 'available',
+              'balance', 'handle', 'held', 'id', 'limits', 'name', 'status', 'walletOpenedAt']);
+          pm.expect(Object.keys(c.limits).sort()).to.eql(['month', 'perTransaction', 'today']);
+          pm.expect(Object.keys(c.limits.today).sort()).to.eql(['max', 'remaining', 'spent']);
+          pm.expect(Object.keys(c.limits.month).sort()).to.eql(['max', 'remaining', 'spent']);
+      });
+
+      pm.test('Identity matches the child we asked for', () => {
+          pm.expect(c.id).to.eql(pm.collectionVariables.get('childAId'));
+          pm.expect(c.handle).to.eql('@' + pm.collectionVariables.get('childAUsername'));
+      });
+
+      // LocalDate, not a timestamp — the UI renders this as a plain date.
+      pm.test('walletOpenedAt is a bare ISO date', () => {
+          pm.expect(c.walletOpenedAt).to.match(/^\d{4}-\d{2}-\d{2}$/);
+      });
+
+      pm.test('available === balance - held', () => {
+          pm.expect(cents(c.available)).to.eql(cents(c.balance) - cents(c.held));
+      });
+
+      pm.test('today.remaining === max(0, max - spent)', () => {
+          const expected = Math.max(0, cents(c.limits.today.max) - cents(c.limits.today.spent));
+          pm.expect(cents(c.limits.today.remaining)).to.eql(expected);
+      });
+      pm.test('month.remaining === max(0, max - spent)', () => {
+          const expected = Math.max(0, cents(c.limits.month.max) - cents(c.limits.month.spent));
+          pm.expect(cents(c.limits.month.remaining)).to.eql(expected);
+      });
+
+      pm.test('remaining is never negative', () => {
+          pm.expect(cents(c.limits.today.remaining)).to.be.at.least(0);
+          pm.expect(cents(c.limits.month.remaining)).to.be.at.least(0);
+      });
+
+      pm.test('allocatedThisMonth covers what the parent sent', () => {
+          pm.expect(cents(c.allocatedThisMonth))
+              .to.be.at.least(cents(pm.collectionVariables.get('allocationAmount')));
+      });
+
+      pm.test('Money serialised at 2 decimal places', () => {
+          const raw = pm.response.text();
+          pm.expect(raw).to.match(/"allocatedThisMonth":\s*-?\d+\.\d{2}/);
+          pm.expect(raw).to.match(/"remaining":\s*-?\d+\.\d{2}/);
+      });
+    language: text/javascript
+order: 1000

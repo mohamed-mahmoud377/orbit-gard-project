@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{baseUrl}}/wallet"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      const cents = (v) => Math.round(Number(v) * 100);
+      pm.test('Wallet readable', () => pm.response.to.have.status(200));
+      const need = cents(pm.collectionVariables.get('allocationAmount'));
+      pm.test(`Parent has at least ${need / 100} EGP available`, () => {
+          pm.expect(cents(pm.response.json().available),
+              'top the parent wallet up before running this collection').to.be.at.least(need);
+      });
+    language: text/javascript
+order: 2000

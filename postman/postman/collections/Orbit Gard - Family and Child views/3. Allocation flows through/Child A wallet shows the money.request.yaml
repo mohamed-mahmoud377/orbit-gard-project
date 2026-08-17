@@ -1,0 +1,18 @@
+$kind: http-request
+url: "{{baseUrl}}/family/children"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      // Money arrives as JSON numbers; compare in integer cents so 0.1+0.2 never bites.
+      const cents = (v) => Math.round(Number(v) * 100);
+      const a = pm.response.json().find(r => r.id === pm.collectionVariables.get('childAId'));
+      pm.test('Child A balance is at least the allocation', () => {
+          pm.expect(cents(a.balance)).to.be.at.least(cents(pm.collectionVariables.get('allocationAmount')));
+      });
+      pm.test('Nothing held — transfer was under the 5,000 pending threshold', () => {
+          pm.expect(cents(a.held)).to.eql(0);
+          pm.expect(cents(a.available)).to.eql(cents(a.balance));
+      });
+    language: text/javascript
+order: 3000

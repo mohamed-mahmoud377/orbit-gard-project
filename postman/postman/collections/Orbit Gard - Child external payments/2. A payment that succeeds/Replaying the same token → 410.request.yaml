@@ -1,0 +1,28 @@
+$kind: http-request
+description: The single most important safety property of this flow.
+url: "{{baseUrl}}/external/pay"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "verificationToken": "{{payToken}}",
+      "merchantName": "School canteen",
+      "productName": "Second sandwich",
+      "cashAmount": 10.0
+    }
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      // consumedAt is stamped once the debit posts, so a terminal that
+      // retries cannot double-charge the child.
+      pm.test('410 Gone', () => pm.response.to.have.status(410));
+      pm.test('TOKEN_ALREADY_USED', () => {
+          pm.expect(pm.response.json().code).to.eql('TOKEN_ALREADY_USED');
+      });
+    language: text/javascript
+order: 2000

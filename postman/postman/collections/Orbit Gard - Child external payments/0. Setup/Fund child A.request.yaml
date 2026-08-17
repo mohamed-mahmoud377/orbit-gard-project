@@ -1,0 +1,18 @@
+$kind: http-request
+description: Without this every payment would fail on balance rather than on limits.
+url: "{{baseUrl}}/wallet/internal/transfer"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "receiverUsername": "{{childAUsername}}",
+      "amount": "{{allocationAmount}}"
+    }
+scripts:
+  - type: afterResponse
+    code: pm.test('Allocation sent', () => pm.response.to.have.status(200));
+    language: text/javascript
+order: 4000

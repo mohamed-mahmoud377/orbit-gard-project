@@ -1,0 +1,29 @@
+$kind: http-request
+description: 1.00 is far under the 60.00 per-transaction cap, so only the daily window can be refusing it.
+url: "{{baseUrl}}/external/pay"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "verificationToken": "{{payToken}}",
+      "merchantName": "Late night shop",
+      "productName": "Chocolate bar",
+      "cashAmount": 1.0
+    }
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));
+      pm.test('DAILY_LIMIT_EXCEEDED', () => {
+          pm.expect(pm.response.json().code).to.eql('DAILY_LIMIT_EXCEEDED');
+      });
+      pm.test('Not reported as a per-transaction problem', () => {
+          pm.expect(pm.response.json().code).to.not.eql('MAX_PER_TRANSACTION_EXCEEDED');
+      });
+    language: text/javascript
+order: 5000

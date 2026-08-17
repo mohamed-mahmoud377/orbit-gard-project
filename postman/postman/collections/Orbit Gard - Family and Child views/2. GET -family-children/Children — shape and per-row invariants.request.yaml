@@ -1,0 +1,77 @@
+$kind: http-request
+url: "{{baseUrl}}/family/children"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      // Money arrives as JSON numbers; compare in integer cents so 0.1+0.2 never bites.
+      const cents = (v) => Math.round(Number(v) * 100);
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+      const rows = pm.response.json();
+      pm.test('Returns an array', () => pm.expect(rows).to.be.an('array'));
+      pm.test('Both children present', () => pm.expect(rows.length).to.be.at.least(2));
+
+      const ids = rows.map(r => r.id);
+      pm.test('Child A is in the list', () => {
+          pm.expect(ids).to.include(pm.collectionVariables.get('childAId'));
+      });
+      pm.test('Child B is in the list', () => {
+          pm.expect(ids).to.include(pm.collectionVariables.get('childBId'));
+      });
+
+      rows.forEach((c, i) => {
+          const at = `child[${i}] ${c.name}`;
+
+          pm.test(`${at} — documented field set`, () => {
+              pm.expect(Object.keys(c).sort()).to.eql(
+                  ['available', 'balance', 'handle', 'held', 'id', 'limits', 'name', 'status']);
+              pm.expect(Object.keys(c.limits).sort()).to.eql(['month', 'perTransaction', 'today']);
+          });
+
+          pm.test(`${at} — handle is @-prefixed and lowercase`, () => {
+              pm.expect(c.handle).to.match(/^@/);
+              pm.expect(c.handle).to.eql(c.handle.toLowerCase());
+          });
+
+          pm.test(`${at} — status is a known UserStatus`, () => {
+              pm.expect(['ACTIVE', 'PENDING_VERIFICATION', 'SUSPENDED']).to.include(c.status);
+          });
+
+          // The invariant Wallet.getAvailableCents() encodes.
+          pm.test(`${at} — available === balance - held`, () => {
+              pm.expect(cents(c.available)).to.eql(cents(c.balance) - cents(c.held));
+          });
+
+          pm.test(`${at} — no negative money`, () => {
+              pm.expect(cents(c.balance)).to.be.at.least(0);
+              pm.expect(cents(c.held)).to.be.at.least(0);
+              pm.expect(cents(c.available)).to.be.at.least(0);
+          });
+
+          // Today's window sits inside this month's, so its spend cannot exceed it.
+          pm.test(`${at} — today.spent <= month.spent`, () => {
+              pm.expect(cents(c.limits.today.spent)).to.be.at.most(cents(c.limits.month.spent));
+          });
+
+          // Mirrors chk_spending_limit_order in V12.
+          pm.test(`${at} — perTransaction <= daily <= monthly`, () => {
+              pm.expect(cents(c.limits.perTransaction)).to.be.at.most(cents(c.limits.today.max));
+              pm.expect(cents(c.limits.today.max)).to.be.at.most(cents(c.limits.month.max));
+          });
+
+          pm.test(`${at} — ceilings are positive`, () => {
+              pm.expect(cents(c.limits.perTransaction)).to.be.above(0);
+              pm.expect(cents(c.limits.today.max)).to.be.above(0);
+              pm.expect(cents(c.limits.month.max)).to.be.above(0);
+          });
+      });
+
+      const a = rows.find(r => r.id === pm.collectionVariables.get('childAId'));
+      pm.test('Child A carries the limits it was created with', () => {
+          pm.expect(cents(a.limits.perTransaction)).to.eql(10000);
+          pm.expect(cents(a.limits.today.max)).to.eql(15000);
+          pm.expect(cents(a.limits.month.max)).to.eql(100000);
+      });
+      pm.collectionVariables.set('snapChildATodaySpent', a.limits.today.spent);
+    language: text/javascript
+order: 1000

@@ -131,7 +131,7 @@ public class ExternalPaymentServiceImpl implements ExternalPaymentService {
         // one (only CHILD accounts have a null email), and it is never used
         // for outbound mail here -- it just satisfies the column, same as
         // every other verification-token purpose.
-        token.setTargetEmail(user.getEmail());
+        token.setTargetEmail(user.getEmail()!=null?user.getEmail():user.getUsername());
         token.setExpiresAt(expiresAt);
         verificationTokenRepository.saveAndFlush(token);
 

@@ -1,5 +1,7 @@
 package com.orbitgard.dto.response;
 
+import com.orbitgard.enums.AccountType;
+import com.orbitgard.enums.TransactionDirection;
 import com.orbitgard.enums.TransactionStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -19,6 +21,8 @@ public record ChildTransactionResponse(
 
         @Schema(description = "Which flow wrote this row: /pay, /transfer, /topup, or /promo.", example = "/pay")
         String channel,
+        @Schema(description="transaction direction (debit - credit)")
+        TransactionDirection  transactionDirection,
 
         @Schema(description = "Signed EGP amount — negative for debits, positive for credits. The stored amount is always positive; the sign is derived from direction.", example = "-50.00")
         BigDecimal amount,

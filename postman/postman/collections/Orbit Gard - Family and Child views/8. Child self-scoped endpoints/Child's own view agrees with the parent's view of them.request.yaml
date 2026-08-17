@@ -1,0 +1,43 @@
+$kind: http-request
+description: Both views read the same repository queries over the same windows. Drift here means one of them is cutting the month differently.
+url: "{{baseUrl}}/child/wallet"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{childToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      // Money arrives as JSON numbers; compare in integer cents so 0.1+0.2 never bites.
+      const cents = (v) => Math.round(Number(v) * 100);
+      const w = pm.response.json();
+
+      pm.sendRequest({
+          url: pm.collectionVariables.get('baseUrl') + '/family/children/'
+               + pm.collectionVariables.get('childAId'),
+          method: 'GET',
+          header: { Authorization: 'Bearer ' + pm.collectionVariables.get('accessToken') }
+      }, (err, res) => {
+          pm.test('Parent detail fetch succeeded', () => pm.expect(res.code).to.eql(200));
+          const d = res.json();
+
+          // A child and their parent must never see different numbers for
+          // the same wallet over the same UTC windows.
+          pm.test('Balances identical across both views', () => {
+              pm.expect(cents(w.balance)).to.eql(cents(d.balance));
+              pm.expect(cents(w.held)).to.eql(cents(d.held));
+              pm.expect(cents(w.available)).to.eql(cents(d.available));
+          });
+
+          pm.test('Limit figures identical across both views', () => {
+              pm.expect(cents(w.today.spent)).to.eql(cents(d.limits.today.spent));
+              pm.expect(cents(w.today.max)).to.eql(cents(d.limits.today.max));
+              pm.expect(cents(w.today.remaining)).to.eql(cents(d.limits.today.remaining));
+              pm.expect(cents(w.month.spent)).to.eql(cents(d.limits.month.spent));
+              pm.expect(cents(w.month.max)).to.eql(cents(d.limits.month.max));
+              pm.expect(cents(w.perTransaction)).to.eql(cents(d.limits.perTransaction));
+          });
+      });
+    language: text/javascript
+order: 2000

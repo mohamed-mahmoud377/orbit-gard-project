@@ -1,0 +1,3 @@
+$kind: collection
+description: Self-scoped views for a CHILD account. Runs after folder 7 so the limits it asserts are the post-PATCH values.
+order: 9000

@@ -1,0 +1,29 @@
+$kind: http-request
+url: "{{baseUrl}}/external/pay"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "verificationToken": "placeholder",
+      "merchantName": "School canteen",
+      "productName": "Sandwich",
+      "cashAmount": 0
+    }
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      // Bean validation runs before the service, so the placeholder token
+      // never gets looked up — the amount is rejected first.
+      pm.test('400 Bad Request', () => pm.response.to.have.status(400));
+      pm.test('AMOUNT_INVALID on cashAmount', () => {
+          const e = (pm.response.json().fieldErrors || []).find(x => x.field === 'cashAmount');
+          pm.expect(e).to.not.be.undefined;
+          pm.expect(e.code).to.eql('AMOUNT_INVALID');
+      });
+    language: text/javascript
+order: 1000

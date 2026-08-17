@@ -1,0 +1,42 @@
+$kind: http-request
+description: The ledger stores every amount positive and carries direction separately; this endpoint passes both through unchanged.
+url: "{{baseUrl}}/family/children/{{childAId}}/transactions?page=0&size=50"
+method: GET
+queryParams:
+  page: "0"
+  size: "50"
+scripts:
+  - type: afterResponse
+    code: |-
+      // Money arrives as JSON numbers; compare in integer cents so 0.1+0.2 never bites.
+      const cents = (v) => Math.round(Number(v) * 100);
+      const rows = pm.response.json().content;
+      const spend = cents(pm.collectionVariables.get('spendAmount'));
+      const alloc = cents(pm.collectionVariables.get('allocationAmount'));
+
+      const debit = rows.find(t => t.direction === 'DEBIT' && cents(t.amount) === spend);
+      pm.test('The spend appears as a positive DEBIT', () => {
+          pm.expect(debit, 'no DEBIT row of ' + spend / 100).to.not.be.undefined;
+          pm.expect(debit.channel).to.eql('/transfer');
+          pm.expect(debit.status).to.eql('COMPLETED');
+      });
+      pm.test('Debit names the sibling it went to', () => {
+          pm.expect(debit.merchant).to.eql('@' + pm.collectionVariables.get('childBUsername'));
+      });
+
+      const credit = rows.find(t => t.direction === 'CREDIT' && cents(t.amount) === alloc);
+      pm.test('The allocation appears as a positive CREDIT', () => {
+          pm.expect(credit, 'no CREDIT row of ' + alloc / 100).to.not.be.undefined;
+          pm.expect(credit.channel).to.eql('/transfer');
+      });
+
+      pm.test('Same amount, opposite directions — the sign is never in amount', () => {
+          pm.expect(cents(debit.amount)).to.be.above(0);
+          pm.expect(cents(credit.amount)).to.be.above(0);
+          pm.expect(debit.direction).to.not.eql(credit.direction);
+      });
+      pm.test('Credit names the parent it came from', () => {
+          pm.expect(credit.merchant).to.eql('@' + pm.collectionVariables.get('parentUsername'));
+      });
+    language: text/javascript
+order: 2000

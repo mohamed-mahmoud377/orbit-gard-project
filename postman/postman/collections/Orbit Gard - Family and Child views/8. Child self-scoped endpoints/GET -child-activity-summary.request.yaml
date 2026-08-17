@@ -1,0 +1,54 @@
+$kind: http-request
+name: GET /child/activity/summary
+url: "{{baseUrl}}/child/activity/summary"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{childToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      // Money arrives as JSON numbers; compare in integer cents so 0.1+0.2 never bites.
+      const cents = (v) => Math.round(Number(v) * 100);
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+      const s = pm.response.json();
+
+      pm.test('Exactly the four documented fields', () => {
+          pm.expect(Object.keys(s).sort()).to.eql(['blockedCount', 'receivedThisMonth',
+              'spentThisMonth', 'spentToday']);
+      });
+
+      pm.test('spentToday <= spentThisMonth', () => {
+          pm.expect(cents(s.spentToday)).to.be.at.most(cents(s.spentThisMonth));
+      });
+
+      pm.test('receivedThisMonth covers the parent allocation', () => {
+          pm.expect(cents(s.receivedThisMonth))
+              .to.be.at.least(cents(pm.collectionVariables.get('allocationAmount')));
+      });
+
+      pm.test('blockedCount is a non-negative integer', () => {
+          pm.expect(s.blockedCount).to.be.a('number');
+          pm.expect(s.blockedCount % 1).to.eql(0);
+          pm.expect(s.blockedCount).to.be.at.least(0);
+      });
+
+      // Folder 4 produced one genuine limit block for this child.
+      pm.test('blockedCount counts the block from folder 4', () => {
+          pm.expect(s.blockedCount).to.eql(1);
+      });
+
+      pm.sendRequest({
+          url: pm.collectionVariables.get('baseUrl') + '/child/wallet',
+          method: 'GET',
+          header: { Authorization: 'Bearer ' + pm.collectionVariables.get('childToken') }
+      }, (err, res) => {
+          const w = res.json();
+          pm.test('Summary agrees with the wallet screen', () => {
+              pm.expect(cents(s.spentToday)).to.eql(cents(w.today.spent));
+              pm.expect(cents(s.spentThisMonth)).to.eql(cents(w.month.spent));
+          });
+      });
+    language: text/javascript
+order: 3000

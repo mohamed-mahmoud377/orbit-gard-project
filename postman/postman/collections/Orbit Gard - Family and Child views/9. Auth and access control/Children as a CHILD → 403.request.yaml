@@ -1,0 +1,18 @@
+$kind: http-request
+description: Also guards against a child enumerating siblings' balances.
+url: "{{baseUrl}}/family/children"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{childToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('403 Forbidden', () => pm.response.to.have.status(403));
+      pm.test('ACCESS_DENIED', () => pm.expect(pm.response.json().code).to.eql('ACCESS_DENIED'));
+      pm.test('No sibling data leaked in the error body', () => {
+          pm.expect(pm.response.text()).to.not.include('handle');
+      });
+    language: text/javascript
+order: 4000

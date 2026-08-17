@@ -1,0 +1,31 @@
+$kind: http-request
+description: "Limits chosen so both boundaries are reachable in one run: a 60.00 payment sits exactly on the per-transaction cap, and 60+50+40 lands exactly on the 150.00 daily cap."
+url: "{{baseUrl}}/auth/add-child"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "firstName": "Youssef",
+      "lastName": "Mahmoud",
+      "username": "{{childAUsername}}",
+      "password": "{{childPassword}}",
+      "confirmPassword": "{{childPassword}}",
+      "maxPerTransaction": 60.0,
+      "dailyLimit": 150.0,
+      "monthlyLimit": 1000.0
+    }
+scripts:
+  - type: beforeRequest
+    code: |-
+      const suffix = Date.now().toString().slice(-8);
+      pm.collectionVariables.set('childAUsername', 'ext.child.a' + suffix);
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      pm.test('Child A created', () => pm.response.to.have.status(200));
+      pm.collectionVariables.set('childAId', pm.response.json().id);
+    language: text/javascript
+order: 3000

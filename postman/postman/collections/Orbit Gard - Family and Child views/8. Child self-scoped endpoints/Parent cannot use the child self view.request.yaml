@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{baseUrl}}/child/wallet"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      // Inherits the collection-level parent token. A parent has no
+      // SpendingLimit row, so these screens have nothing to show them —
+      // their equivalents live under /family.
+      pm.test('403 Forbidden', () => pm.response.to.have.status(403));
+      pm.test('ACCESS_DENIED', () => pm.expect(pm.response.json().code).to.eql('ACCESS_DENIED'));
+    language: text/javascript
+order: 8000

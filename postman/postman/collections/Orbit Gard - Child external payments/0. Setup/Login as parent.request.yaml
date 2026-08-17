@@ -1,0 +1,25 @@
+$kind: http-request
+description: Setup only. The /external endpoints themselves need no bearer token — the verification token IS the authentication.
+url: "{{baseUrl}}/auth/login"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "username": "{{parentUsername}}",
+      "password": "{{parentPassword}}",
+      "rememberMe": false
+    }
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Parent login succeeded', () => pm.response.to.have.status(200));
+      const b = pm.response.json();
+      pm.collectionVariables.set('accessToken', b.accessToken);
+      pm.test('Account is a parent (USER)', () => pm.expect(b.user.accountType).to.eql('USER'));
+    language: text/javascript
+order: 1000

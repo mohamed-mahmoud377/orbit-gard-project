@@ -1,0 +1,27 @@
+$kind: http-request
+description: "Whitespace-only must be caught: the merchant name is the only human-readable label the parent will see on the transaction."
+url: "{{baseUrl}}/external/pay"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "verificationToken": "placeholder",
+      "merchantName": "  ",
+      "productName": "Sandwich",
+      "cashAmount": 10.0
+    }
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('400 Bad Request', () => pm.response.to.have.status(400));
+      pm.test('FIELD_REQUIRED on merchantName', () => {
+          const fields = (pm.response.json().fieldErrors || []).map(e => e.field);
+          pm.expect(fields).to.include('merchantName');
+      });
+    language: text/javascript
+order: 6000

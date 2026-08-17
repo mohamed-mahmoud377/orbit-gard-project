@@ -1,0 +1,3 @@
+$kind: collection
+name: 1. POST /external/verify
+order: 2000

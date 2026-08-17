@@ -29,6 +29,15 @@ public interface WalletTransactionRepository extends JpaRepository<WalletTransac
      */
     Page<WalletTransaction> findByWalletIdOrderByCreatedAtDesc(UUID walletId, Pageable pageable);
 
+    /**
+     * Every transaction on one wallet in a given status, newest first —
+     * backs the child's "being checked" list with TransactionStatus.PENDING.
+     * Unpaged because a wallet only ever holds a handful of pending rows;
+     * TransactionRules only parks large incoming credits.
+     */
+    List<WalletTransaction> findByWalletIdAndStatusOrderByCreatedAtDesc(UUID walletId,
+                                                                        TransactionStatus status);
+
     List<WalletTransaction> findByStatus(TransactionStatus status);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)

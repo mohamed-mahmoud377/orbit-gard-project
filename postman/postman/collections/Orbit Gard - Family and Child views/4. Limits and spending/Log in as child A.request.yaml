@@ -1,0 +1,26 @@
+$kind: http-request
+url: "{{baseUrl}}/auth/login"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "username": "{{childAUsername}}",
+      "password": "{{childPassword}}",
+      "rememberMe": false
+    }
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Child login succeeded', () => pm.response.to.have.status(200));
+      const b = pm.response.json();
+      pm.collectionVariables.set('childToken', b.accessToken);
+      pm.test('Token is for a CHILD account', () => {
+          pm.expect(b.user.accountType).to.eql('CHILD');
+      });
+    language: text/javascript
+order: 1000
