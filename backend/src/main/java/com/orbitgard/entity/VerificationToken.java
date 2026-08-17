@@ -26,7 +26,7 @@ public class VerificationToken {
     @Column(name = "purpose", nullable = false, length = 24)
     private TokenPurpose purpose;
 
-    @Column(name = "target_email", nullable = false)
+    @Column(name = "target_email", nullable = true)
     private String targetEmail;
 
     @Column(name = "created_at", insertable = false, updatable = false)
