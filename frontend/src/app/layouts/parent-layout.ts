@@ -1,7 +1,9 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AssetUrlPipe, assetUrl } from '../core/asset-url';
 import { AuthFacade } from '../features/auth/data-access';
+import { UserAccountSummary } from '../features/wallet/data-access/user-api.adapter';
+import { WalletFacade } from '../features/wallet/data-access/wallet.facade';
 import { OrbitLogo } from '../shared/ui/orbit-logo';
 
 interface NavigationItem {
@@ -57,7 +59,9 @@ interface NavigationItem {
           <a class="nav-item" routerLink="/family" routerLinkActive="active">
             <img [src]="'assets/nav-family.svg' | assetUrl" alt="" aria-hidden="true" />
             <span>Family</span>
-            <span class="badge">2</span>
+            @if (childrenCount(); as count) {
+              <span class="badge">{{ count }}</span>
+            }
           </a>
         </nav>
 
@@ -79,8 +83,8 @@ interface NavigationItem {
             </button>
 
         <a class="account-chip" routerLink="/settings">
-          <span class="avatar">MM</span>
-          <span><strong>Mohamed Mahmoud</strong><small>&#64;mohamed</small></span>
+          <span class="avatar">{{ initials() }}</span>
+          <span><strong>{{ fullName() }}</strong><small>&#64;{{ username() }}</small></span>
           <span aria-hidden="true">›</span>
         </a>
       </aside>
@@ -101,7 +105,33 @@ interface NavigationItem {
 })
 export class ParentLayout {
   private readonly auth = inject(AuthFacade);
+  private readonly wallet = inject(WalletFacade);
   private readonly router = inject(Router);
+
+  /**
+   * Seeded from the session so the chip renders a real name on first paint,
+   * then refreshed from GET /users/me — the session copy is only as fresh as
+   * the last login.
+   */
+  private readonly account = signal<UserAccountSummary | null>(this.sessionAccount());
+
+  protected readonly fullName = computed(() => {
+    const account = this.account();
+    return account ? `${account.firstName} ${account.lastName}`.trim() : '';
+  });
+
+  protected readonly username = computed(() => this.account()?.username ?? '');
+
+  /** Null until /users/me answers — the badge stays hidden rather than guessing. */
+  protected readonly childrenCount = computed(() => this.account()?.childrenCount ?? null);
+
+  protected readonly initials = computed(() => {
+    const account = this.account();
+    if (!account) {
+      return '';
+    }
+    return `${account.firstName.charAt(0)}${account.lastName.charAt(0)}`.toUpperCase();
+  });
 
   protected readonly mainNavigation: readonly NavigationItem[] = [
     {
@@ -130,9 +160,33 @@ export class ParentLayout {
     { label: 'Settings', route: '/settings', icon: assetUrl('assets/nav-settings.svg') },
   ];
 
+  constructor() {
+    // Keeping the seeded name on failure beats blanking the chip over a
+    // transient network error.
+    this.wallet.getCurrentUser().subscribe({
+      next: (account) => this.account.set(account),
+      error: () => undefined,
+    });
+  }
+
   protected logout(): void {
     this.auth.logout().subscribe(() => {
       void this.router.navigateByUrl('/auth/login');
     });
+  }
+
+  private sessionAccount(): UserAccountSummary | null {
+    const user = this.auth.currentUser();
+    if (!user) {
+      return null;
+    }
+    return {
+      firstName: user.firstName,
+      lastName: user.lastName,
+      username: user.username,
+      accountType: user.accountType,
+      childrenCount: null,
+      parentFirstName: null,
+    };
   }
 }

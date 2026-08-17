@@ -26,7 +26,6 @@ public class DashboardServiceImpl implements DashboardService {
         this.userRepository = userRepository;
         this.authenticatedUserService = authenticatedUserService;
     }
-
     @Override
     public UserProfileResponse getCurrentUser() {
 
@@ -36,8 +35,14 @@ public class DashboardServiceImpl implements DashboardService {
                 .orElseThrow(() ->
                         new NoSuchElementException("User not found: " + userId));
 
-        Integer childrenCount = user.getAccountType() == AccountType.USER
+        boolean isParent = user.getAccountType() == AccountType.USER;
+
+        Integer childrenCount = isParent
                 ? (int) userRepository.countByParent_Id(user.getId())
+                : null;
+
+        String parentFirstName = !isParent && user.getParent() != null
+                ? user.getParent().getFirstName()
                 : null;
 
         return new UserProfileResponse(
@@ -45,7 +50,8 @@ public class DashboardServiceImpl implements DashboardService {
                 user.getLastName(),
                 user.getUsername(),
                 user.getAccountType().name(),
-                childrenCount
+                childrenCount,
+                parentFirstName
         );
     }
 }
