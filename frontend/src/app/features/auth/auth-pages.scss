@@ -16,12 +16,11 @@
   display: grid;
   justify-items: stretch;
   width: min(100%, 420px);
-  min-width: 0;
+  width: auto;
   max-width: 100%;
   margin-inline: auto;
   gap: 10px;
   padding: 2rem;
-  // border: 3px solid white;
   border-radius: 20px;
   transition: all 0.7s ease;
   position: relative;
@@ -47,6 +46,7 @@
 
 .auth-card-wide {
   width: min(100%, 520px);
+  width: auto;
 }
 
 .auth-card > .notice {
@@ -59,6 +59,7 @@
 .auth-actions {
   display: grid;
   gap: 10px;
+  width: 500px
 }
 
 .auth-form .btn,
