@@ -1,0 +1,11 @@
+$kind: http-request
+description: Upper bound stops a caller pulling an entire ledger in one request.
+url: "{{baseUrl}}/family/children/{{childAId}}/transactions?size=101"
+method: GET
+queryParams:
+  size: "101"
+scripts:
+  - type: afterResponse
+    code: pm.test('400 Bad Request', () => pm.response.to.have.status(400));
+    language: text/javascript
+order: 8000

@@ -1,0 +1,18 @@
+$kind: http-request
+description: If this ever fails, INSUFFICIENT_BALANCE has been wired into the blocked-attempt recorder — which would make the parent's blocked counter mean two different things at once.
+url: "{{baseUrl}}/family/children/{{childBId}}/transactions?page=0&size=20"
+method: GET
+queryParams:
+  page: "0"
+  size: "20"
+scripts:
+  - type: afterResponse
+    code: |-
+      const rows = pm.response.json().content;
+      // Only limit violations go through the recorder. Running out of money
+      // is not a parental block and should not inflate blockedCount.
+      pm.test('No REJECTED rows on child B', () => {
+          pm.expect(rows.filter(t => t.status === 'REJECTED').length).to.eql(0);
+      });
+    language: text/javascript
+order: 3000

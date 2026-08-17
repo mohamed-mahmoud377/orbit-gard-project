@@ -1,0 +1,22 @@
+$kind: http-request
+url: "{{baseUrl}}/family/children/{{childAId}}/transactions?page=0&size=1"
+method: GET
+queryParams:
+  page: "0"
+  size: "1"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+      const p = pm.response.json();
+      pm.test('Exactly one row returned', () => pm.expect(p.content.length).to.eql(1));
+      pm.test('Envelope reports the split', () => {
+          pm.expect(p.size).to.eql(1);
+          pm.expect(p.totalElements).to.be.at.least(2);
+          pm.expect(p.totalPages).to.be.at.least(2);
+          pm.expect(p.first).to.be.true;
+          pm.expect(p.last).to.be.false;
+      });
+      pm.collectionVariables.set('firstRowId', p.content[0].id);
+    language: text/javascript
+order: 5000

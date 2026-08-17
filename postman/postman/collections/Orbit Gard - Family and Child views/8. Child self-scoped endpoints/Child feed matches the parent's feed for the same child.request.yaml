@@ -1,0 +1,39 @@
+$kind: http-request
+url: "{{baseUrl}}/child/transactions?page=0&size=10"
+method: GET
+queryParams:
+  page: "0"
+  size: "10"
+auth:
+  type: bearer
+  credentials:
+    token: "{{childToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      const mine = pm.response.json();
+
+      pm.sendRequest({
+          url: pm.collectionVariables.get('baseUrl') + '/family/children/'
+               + pm.collectionVariables.get('childAId') + '/transactions?page=0&size=10',
+          method: 'GET',
+          header: { Authorization: 'Bearer ' + pm.collectionVariables.get('accessToken') }
+      }, (err, res) => {
+          pm.test('Parent feed fetch succeeded', () => pm.expect(res.code).to.eql(200));
+          const theirs = res.json();
+
+          // Same rows, same order, same shape — the only difference between
+          // these endpoints is who may ask, not what comes back.
+          pm.test('Identical totals', () => {
+              pm.expect(mine.totalElements).to.eql(theirs.totalElements);
+          });
+          pm.test('Identical row ids in identical order', () => {
+              pm.expect(mine.content.map(t => t.id)).to.eql(theirs.content.map(t => t.id));
+          });
+          pm.test('Identical amounts and directions', () => {
+              pm.expect(mine.content.map(t => `${t.direction}:${t.amount}`))
+                  .to.eql(theirs.content.map(t => `${t.direction}:${t.amount}`));
+          });
+      });
+    language: text/javascript
+order: 5000

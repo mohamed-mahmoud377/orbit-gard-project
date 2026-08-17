@@ -1,0 +1,18 @@
+$kind: http-request
+description: A child must not read their own detail through the parent view — even their own id.
+url: "{{baseUrl}}/family/children/{{childAId}}"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{childToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('403 Forbidden', () => pm.response.to.have.status(403));
+      pm.test('ACCESS_DENIED', () => pm.expect(pm.response.json().code).to.eql('ACCESS_DENIED'));
+      pm.test('No wallet figures leaked', () => {
+          pm.expect(pm.response.text()).to.not.include('available');
+      });
+    language: text/javascript
+order: 5000

@@ -1,0 +1,39 @@
+$kind: http-request
+description: A null field means 'leave unchanged', not 'clear' — the columns are NOT NULL and a child must always have all three.
+url: "{{baseUrl}}/family/children/{{childAId}}/limits"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "monthlyLimit": 2000.0
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      // Money arrives as JSON numbers; compare in integer cents so 0.1+0.2 never bites.
+      const cents = (v) => Math.round(Number(v) * 100);
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+      const c = pm.response.json();
+
+      pm.test('Response is the refreshed detail view', () => {
+          pm.expect(c).to.have.property('walletOpenedAt');
+          pm.expect(c).to.have.property('allocatedThisMonth');
+      });
+
+      pm.test('monthlyLimit updated', () => pm.expect(cents(c.limits.month.max)).to.eql(200000));
+      pm.test('perTransaction untouched at 100.00', () => {
+          pm.expect(cents(c.limits.perTransaction)).to.eql(10000);
+      });
+      pm.test('dailyLimit untouched at 150.00', () => {
+          pm.expect(cents(c.limits.today.max)).to.eql(15000);
+      });
+
+      pm.test('remaining recomputed against the new ceiling', () => {
+          pm.expect(cents(c.limits.month.remaining))
+              .to.eql(Math.max(0, 200000 - cents(c.limits.month.spent)));
+      });
+    language: text/javascript
+order: 1000

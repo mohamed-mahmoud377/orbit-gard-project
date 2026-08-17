@@ -1,0 +1,38 @@
+$kind: http-request
+name: GET /child/transactions — same shape as the parent feed
+url: "{{baseUrl}}/child/transactions?page=0&size=10"
+method: GET
+queryParams:
+  page: "0"
+  size: "10"
+auth:
+  type: bearer
+  credentials:
+    token: "{{childToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      // Money arrives as JSON numbers; compare in integer cents so 0.1+0.2 never bites.
+      const cents = (v) => Math.round(Number(v) * 100);
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+      const p = pm.response.json();
+
+      pm.test('Page envelope', () => {
+          pm.expect(Object.keys(p).sort()).to.eql(['content', 'first', 'last',
+              'page', 'size', 'totalElements', 'totalPages']);
+      });
+
+      p.content.forEach((t, i) => {
+          pm.test(`row[${i}] — positive amount plus direction`, () => {
+              pm.expect(cents(t.amount)).to.be.above(0);
+              pm.expect(['DEBIT', 'CREDIT']).to.include(t.direction);
+          });
+          pm.test(`row[${i}] — blockedReason null`, () => pm.expect(t.blockedReason).to.be.null);
+      });
+
+      pm.test('Ordered newest first', () => {
+          const times = p.content.map(t => new Date(t.occurredAt).getTime());
+          pm.expect(times).to.eql([...times].sort((a, b) => b - a));
+      });
+    language: text/javascript
+order: 4000

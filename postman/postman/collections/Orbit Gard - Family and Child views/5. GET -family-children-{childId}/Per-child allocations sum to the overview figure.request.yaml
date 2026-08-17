@@ -1,0 +1,28 @@
+$kind: http-request
+description: Overview runs one set-wide query; detail runs one per child. They must agree to the cent.
+url: "{{baseUrl}}/family/children/{{childAId}}"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      // Money arrives as JSON numbers; compare in integer cents so 0.1+0.2 never bites.
+      const cents = (v) => Math.round(Number(v) * 100);
+      const a = cents(pm.response.json().allocatedThisMonth);
+      const base = pm.collectionVariables.get('baseUrl');
+      const hdr = { Authorization: 'Bearer ' + pm.collectionVariables.get('accessToken') };
+
+      pm.sendRequest({ url: base + '/family/children/' + pm.collectionVariables.get('childBId'),
+                       method: 'GET', header: hdr }, (e1, rB) => {
+          pm.sendRequest({ url: base + '/family/overview', method: 'GET', header: hdr }, (e2, rO) => {
+              pm.test('Both cross-check fetches succeeded', () => {
+                  pm.expect(rB.code).to.eql(200);
+                  pm.expect(rO.code).to.eql(200);
+              });
+              const b = cents(rB.json().allocatedThisMonth);
+              pm.test('overview.allocatedThisMonth === sum of per-child allocations', () => {
+                  pm.expect(cents(rO.json().allocatedThisMonth)).to.eql(a + b);
+              });
+          });
+      });
+    language: text/javascript
+order: 3000

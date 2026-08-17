@@ -1,0 +1,26 @@
+$kind: http-request
+description: Confirms the progress bar reads the same sum that ChildSpendingLimitServiceImpl enforces against.
+url: "{{baseUrl}}/family/children"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      // Money arrives as JSON numbers; compare in integer cents so 0.1+0.2 never bites.
+      const cents = (v) => Math.round(Number(v) * 100);
+      const a = pm.response.json().find(r => r.id === pm.collectionVariables.get('childAId'));
+      const before = cents(pm.collectionVariables.get('snapChildATodaySpent'));
+      const spent = cents(pm.collectionVariables.get('spendAmount'));
+
+      pm.test('today.spent rose by exactly the amount spent', () => {
+          pm.expect(cents(a.limits.today.spent)).to.eql(before + spent);
+      });
+
+      pm.test('today.spent still under the daily ceiling', () => {
+          pm.expect(cents(a.limits.today.spent)).to.be.at.most(cents(a.limits.today.max));
+      });
+
+      pm.test('month.spent covers today.spent', () => {
+          pm.expect(cents(a.limits.month.spent)).to.be.at.least(cents(a.limits.today.spent));
+      });
+    language: text/javascript
+order: 4000

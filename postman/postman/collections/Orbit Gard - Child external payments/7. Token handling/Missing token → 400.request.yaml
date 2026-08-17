@@ -1,0 +1,26 @@
+$kind: http-request
+url: "{{baseUrl}}/external/pay"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "verificationToken": "",
+      "merchantName": "School canteen",
+      "productName": "Sandwich",
+      "cashAmount": 10.0
+    }
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('400 Bad Request', () => pm.response.to.have.status(400));
+      pm.test('FIELD_REQUIRED on verificationToken', () => {
+          const fields = (pm.response.json().fieldErrors || []).map(e => e.field);
+          pm.expect(fields).to.include('verificationToken');
+      });
+    language: text/javascript
+order: 3000

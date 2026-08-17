@@ -1,0 +1,23 @@
+$kind: http-request
+description: The whole product falls apart if a child can raise their own ceiling.
+url: "{{baseUrl}}/family/children/{{childAId}}/limits"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "monthlyLimit": 999999.0
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{childToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('403 Forbidden', () => pm.response.to.have.status(403));
+      pm.test('ACCESS_DENIED', () => pm.expect(pm.response.json().code).to.eql('ACCESS_DENIED'));
+    language: text/javascript
+order: 7000

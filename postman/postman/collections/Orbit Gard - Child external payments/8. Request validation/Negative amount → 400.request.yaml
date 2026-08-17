@@ -1,0 +1,27 @@
+$kind: http-request
+description: A negative charge would be a credit — it must never reach the ledger.
+url: "{{baseUrl}}/external/pay"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "verificationToken": "placeholder",
+      "merchantName": "School canteen",
+      "productName": "Sandwich",
+      "cashAmount": -25.0
+    }
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('400 Bad Request', () => pm.response.to.have.status(400));
+      pm.test('AMOUNT_INVALID', () => {
+          const fields = (pm.response.json().fieldErrors || []).map(e => e.field);
+          pm.expect(fields).to.include('cashAmount');
+      });
+    language: text/javascript
+order: 2000

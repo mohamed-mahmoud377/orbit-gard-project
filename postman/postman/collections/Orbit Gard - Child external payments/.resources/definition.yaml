@@ -1,0 +1,44 @@
+$kind: collection
+name: Orbit Gard - Child external payments
+description: |-
+  End-to-end tests for a CHILD paying a merchant through POST /external/verify then POST /external/pay.
+
+  PREREQUISITES
+    1. Set parentUsername / parentPassword to an existing, email-verified USER account. This collection does not run the activation flow.
+    2. That parent needs at least allocationAmount (default 500.00) available.
+    3. Run the folders in order — limits are consumed cumulatively and later folders depend on exactly how much earlier ones spent.
+
+  KNOWN BLOCKER — READ BEFORE RUNNING
+    Folder 1 is expected to fail with 500 INTERNAL_ERROR on a stock build. verification_token.target_email is NOT NULL (V1 schema, and nullable=false on the entity), ExternalPaymentServiceImpl.verify() sets it from user.getEmail(), and AuthServiceImpl.addChild() stores a CHILD with email = null. A child therefore cannot mint a payment token at all, which makes the whole child-payment feature unreachable. Everything after folder 1 fails as a consequence, not on its own merits. Fixes worth considering: fall back to the parent's email, make target_email nullable, or skip the column for EXTERNAL_TRANSFER tokens.
+
+  LIMITS USED
+    Child A: 60.00 per transaction, 150.00 daily, 1000.00 monthly. Chosen so both boundaries are hit exactly in one run — a 60.00 payment sits on the per-transaction cap, and 60+50+40 lands on the daily cap.
+    Child B: 1000.00 across the board and no money, so a payment reaches the balance check instead of a ceiling.
+
+  NOT COVERED
+    The monthly limit cannot be tested in a single run. Daily is always <= monthly, and for a fresh child spent-today equals spent-this-month, so the daily ceiling always trips first. Testing it needs spending on an earlier day of the same month.
+    Token expiry (1 hour) is not tested for the same reason.
+
+  SIDE EFFECTS
+    Creates two child accounts per run (timestamped usernames) and spends real wallet balance. Point it at a dev database.
+variables:
+  baseUrl: http://localhost:8081/api/v1
+  parentUsername: mohsen
+  parentPassword: Password123
+  childPassword: Testpass123
+  allocationAmount: "500.00"
+  accessToken: ""
+  childAUsername: ""
+  childAId: ""
+  childBUsername: ""
+  childBId: ""
+  payToken: ""
+  payTokenB: ""
+  firstPaymentId: ""
+  longString: ""
+auth:
+  - id: 61b9b71c-f9a2-446c-9fe9-b9292ed6a156
+    type: bearer
+    name: bearer auth
+    credentials:
+      token: "{{accessToken}}"

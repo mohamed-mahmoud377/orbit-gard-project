@@ -1,0 +1,22 @@
+$kind: http-request
+description: Mints a one-time token. Each successful payment needs its own.
+url: "{{baseUrl}}/external/verify"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "username": "{{childAUsername}}",
+      "password": "{{childPassword}}"
+    }
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+      pm.collectionVariables.set('payToken', pm.response.json().verificationToken);
+    language: text/javascript
+order: 4000

@@ -1,0 +1,24 @@
+$kind: http-request
+description: A forged token must fail on signature, not on the database lookup.
+url: "{{baseUrl}}/external/pay"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "verificationToken": "{{supabase_service_role_api_key_0cnz}}",
+      "merchantName": "School canteen",
+      "productName": "Sandwich",
+      "cashAmount": 10.0
+    }
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('400 Bad Request', () => pm.response.to.have.status(400));
+      pm.test('TOKEN_INVALID', () => pm.expect(pm.response.json().code).to.eql('TOKEN_INVALID'));
+    language: text/javascript
+order: 2000

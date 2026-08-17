@@ -1,0 +1,3 @@
+$kind: collection
+description: A child transferring to a sibling is a debit, so it consumes the same daily/monthly budget as a merchant payment.
+order: 5000

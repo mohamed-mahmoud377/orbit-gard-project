@@ -1,0 +1,27 @@
+$kind: http-request
+description: "The key PATCH behaviour: raising one ceiling in isolation is still checked against the two it must sit between. Also proves the app catches this before chk_spending_limit_order turns it into a 500."
+url: "{{baseUrl}}/family/children/{{childAId}}/limits"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "maxPerTransaction": 500.0
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      // Sent alone, but merged against the stored dailyLimit of 150.00,
+      // so 500 > 150 breaks perTransaction <= daily and is rejected.
+      pm.test('400 Bad Request', () => pm.response.to.have.status(400));
+      pm.test('VALIDATION_ERROR', () => pm.expect(pm.response.json().code).to.eql('VALIDATION_ERROR'));
+      pm.test('LIMIT_ORDER_INVALID attributed to dailyLimit', () => {
+          const fe = pm.response.json().fieldErrors || [];
+          const hit = fe.find(e => e.field === 'dailyLimit');
+          pm.expect(hit, 'expected a dailyLimit field error').to.not.be.undefined;
+          pm.expect(hit.code).to.eql('LIMIT_ORDER_INVALID');
+      });
+    language: text/javascript
+order: 2000

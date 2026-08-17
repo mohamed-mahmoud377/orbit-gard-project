@@ -1,0 +1,22 @@
+$kind: http-request
+description: Mirrors chk_spending_limit_positive in V12.
+url: "{{baseUrl}}/family/children/{{childAId}}/limits"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "maxPerTransaction": 0
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('400 Bad Request', () => pm.response.to.have.status(400));
+      pm.test('Rejected on maxPerTransaction', () => {
+          const fe = pm.response.json().fieldErrors || [];
+          pm.expect(fe.map(e => e.field)).to.include('maxPerTransaction');
+      });
+    language: text/javascript
+order: 5000

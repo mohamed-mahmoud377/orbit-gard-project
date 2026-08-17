@@ -1,0 +1,43 @@
+$kind: http-request
+description: "The end-to-end proof that REQUIRES_NEW worked: this row was written inside a request that then threw and rolled back."
+url: "{{baseUrl}}/family/children/{{childAId}}/transactions?page=0&size=50"
+method: GET
+queryParams:
+  page: "0"
+  size: "50"
+scripts:
+  - type: afterResponse
+    code: |-
+      // Money arrives as JSON numbers; compare in integer cents so 0.1+0.2 never bites.
+      const cents = (v) => Math.round(Number(v) * 100);
+      const rows = pm.response.json().content;
+      const blocked = rows.filter(t => t.status === 'REJECTED');
+
+      pm.test('The refused transfer was persisted', () => {
+          pm.expect(blocked.length, 'no REJECTED row — is the audit write being rolled back?')
+              .to.be.at.least(1);
+      });
+
+      const row = blocked.find(t => cents(t.amount) === 12000);
+      pm.test('Recorded at the attempted amount, positive', () => {
+          pm.expect(row, 'no REJECTED row of 120.00').to.not.be.undefined;
+          pm.expect(row.direction).to.eql('DEBIT');
+      });
+
+      pm.test('Reason names the ceiling that refused it', () => {
+          pm.expect(row.blockedReason).to.eql('MAX_PER_TRANSACTION_EXCEEDED');
+      });
+
+      // The reason is appended to the description; merchant is parsed from
+      // the same string. If the parser did not strip the suffix first, this
+      // would come back as '@child | BLOCKED: MAX_PER_TRANSACTION_EXCEEDED'.
+      pm.test('Merchant is clean despite the appended reason', () => {
+          pm.expect(row.merchant).to.eql('@' + pm.collectionVariables.get('childBUsername'));
+      });
+
+      pm.test('Blocked row has a ledger reference like any other', () => {
+          pm.expect(row.reference).to.match(/^TXN-/);
+          pm.expect(row.channel).to.eql('/transfer');
+      });
+    language: text/javascript
+order: 3000

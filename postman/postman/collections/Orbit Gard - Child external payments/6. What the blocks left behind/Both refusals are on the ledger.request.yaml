@@ -1,0 +1,56 @@
+$kind: http-request
+description: These rows were written inside requests that then threw and rolled back. Their existence is the proof the recorder commits separately.
+url: "{{baseUrl}}/family/children/{{childAId}}/transactions?page=0&size=50"
+method: GET
+queryParams:
+  page: "0"
+  size: "50"
+scripts:
+  - type: afterResponse
+    code: |-
+      const cents = (v) => Math.round(Number(v) * 100);
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+      const rows = pm.response.json().content;
+      const rejected = rows.filter(t => t.status === 'REJECTED');
+
+      pm.test('Exactly the two limit refusals were recorded', () => {
+          pm.expect(rejected.length,
+              'expected 2 REJECTED rows — if 0, the audit write is being rolled back')
+              .to.eql(2);
+      });
+
+      const perTx = rejected.find(t => cents(t.amount) === 6100);
+      const daily = rejected.find(t => cents(t.amount) === 100);
+
+      pm.test('The 61.00 attempt names the per-transaction cap', () => {
+          pm.expect(perTx, 'no REJECTED row of 61.00').to.not.be.undefined;
+          pm.expect(perTx.blockedReason).to.eql('MAX_PER_TRANSACTION_EXCEEDED');
+      });
+      pm.test('The 1.00 attempt names the daily cap', () => {
+          pm.expect(daily, 'no REJECTED row of 1.00').to.not.be.undefined;
+          pm.expect(daily.blockedReason).to.eql('DAILY_LIMIT_EXCEEDED');
+      });
+
+      // The reason is appended to the same description string the merchant
+      // name is parsed out of. If the parser did not strip the suffix first,
+      // this would read 'Corner shop | BLOCKED: MAX_PER_TRANSACTION_EXCEEDED'.
+      pm.test('Merchant survives the appended reason intact', () => {
+          pm.expect(perTx.merchant).to.eql('Corner shop');
+          pm.expect(daily.merchant).to.eql('Late night shop');
+      });
+
+      pm.test('Blocked rows look like payments, not transfers', () => {
+          rejected.forEach(t => {
+              pm.expect(t.channel).to.eql('/pay');
+              pm.expect(t.direction).to.eql('DEBIT');
+              pm.expect(cents(t.amount)).to.be.above(0);
+              pm.expect(t.reference).to.match(/^TXN-/);
+          });
+      });
+
+      pm.test('Successful payments carry no reason', () => {
+          rows.filter(t => t.status === 'COMPLETED')
+              .forEach(t => pm.expect(t.blockedReason).to.be.null);
+      });
+    language: text/javascript
+order: 1000

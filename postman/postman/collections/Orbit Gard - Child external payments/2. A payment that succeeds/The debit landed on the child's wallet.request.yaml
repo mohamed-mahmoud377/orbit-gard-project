@@ -1,0 +1,23 @@
+$kind: http-request
+url: "{{baseUrl}}/family/children/{{childAId}}"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      const cents = (v) => Math.round(Number(v) * 100);
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+      const c = pm.response.json();
+      const allocated = cents(pm.collectionVariables.get('allocationAmount'));
+
+      pm.test('Balance fell by exactly the amount paid', () => {
+          pm.expect(cents(c.balance)).to.eql(allocated - 6000);
+      });
+      pm.test('Counted against the daily window', () => {
+          pm.expect(cents(c.limits.today.spent)).to.eql(6000);
+          pm.expect(cents(c.limits.today.remaining)).to.eql(15000 - 6000);
+      });
+      pm.test('Replay did not charge a second time', () => {
+          pm.expect(cents(c.balance)).to.not.eql(allocated - 7000);
+      });
+    language: text/javascript
+order: 3000

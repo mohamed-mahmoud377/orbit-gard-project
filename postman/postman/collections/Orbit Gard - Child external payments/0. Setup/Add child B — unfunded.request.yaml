@@ -1,0 +1,31 @@
+$kind: http-request
+description: Deliberately given high limits and no money, so a payment reaches the balance check instead of stopping at a ceiling.
+url: "{{baseUrl}}/auth/add-child"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "firstName": "Sara",
+      "lastName": "Mahmoud",
+      "username": "{{childBUsername}}",
+      "password": "{{childPassword}}",
+      "confirmPassword": "{{childPassword}}",
+      "maxPerTransaction": 1000.0,
+      "dailyLimit": 1000.0,
+      "monthlyLimit": 1000.0
+    }
+scripts:
+  - type: beforeRequest
+    code: |-
+      const suffix = Date.now().toString().slice(-8);
+      pm.collectionVariables.set('childBUsername', 'ext.child.b' + suffix);
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      pm.test('Child B created', () => pm.response.to.have.status(200));
+      pm.collectionVariables.set('childBId', pm.response.json().id);
+    language: text/javascript
+order: 5000

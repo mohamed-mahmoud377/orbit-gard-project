@@ -1,0 +1,73 @@
+$kind: http-request
+name: GET /child/wallet — shape and windows
+description: No id is sent — the wallet is resolved from the JWT, so there is no parameter a child could tamper with to reach a sibling.
+url: "{{baseUrl}}/child/wallet"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{childToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      // Money arrives as JSON numbers; compare in integer cents so 0.1+0.2 never bites.
+      const cents = (v) => Math.round(Number(v) * 100);
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+      const w = pm.response.json();
+
+      pm.test('Documented field set', () => {
+          pm.expect(Object.keys(w).sort()).to.eql(['available', 'balance', 'held',
+              'month', 'pending', 'perTransaction', 'recentActivity', 'today']);
+          pm.expect(Object.keys(w.today).sort()).to.eql(['max', 'remaining', 'resetsAt', 'spent']);
+          pm.expect(Object.keys(w.month).sort()).to.eql(['max', 'remaining', 'resetsOn', 'spent']);
+      });
+
+      pm.test('available === balance - held', () => {
+          pm.expect(cents(w.available)).to.eql(cents(w.balance) - cents(w.held));
+      });
+
+      pm.test('today.remaining === max(0, max - spent)', () => {
+          pm.expect(cents(w.today.remaining))
+              .to.eql(Math.max(0, cents(w.today.max) - cents(w.today.spent)));
+      });
+      pm.test('month.remaining === max(0, max - spent)', () => {
+          pm.expect(cents(w.month.remaining))
+              .to.eql(Math.max(0, cents(w.month.max) - cents(w.month.spent)));
+      });
+
+      pm.test('resetsAt is the midnight label', () => pm.expect(w.today.resetsAt).to.eql('midnight'));
+
+      // resetsOn is the NEXT reset, so it must be the 1st of a month and
+      // strictly in the future — not the day the window opened.
+      pm.test('resetsOn is the 1st of a future month', () => {
+          pm.expect(w.month.resetsOn).to.match(/^\d{4}-\d{2}-01$/);
+          pm.expect(new Date(w.month.resetsOn).getTime()).to.be.above(Date.now());
+      });
+
+      pm.test('pending and recentActivity are arrays', () => {
+          pm.expect(w.pending).to.be.an('array');
+          pm.expect(w.recentActivity).to.be.an('array');
+      });
+      pm.test('recentActivity is capped at 5', () => {
+          pm.expect(w.recentActivity.length).to.be.at.most(5);
+      });
+
+      w.recentActivity.forEach((t, i) => {
+          pm.test(`recentActivity[${i}] — same row shape as the paged feed`, () => {
+              pm.expect(Object.keys(t).sort()).to.eql(['amount', 'blockedReason',
+                  'channel', 'direction', 'id', 'merchant', 'occurredAt',
+                  'reference', 'status']);
+              pm.expect(cents(t.amount)).to.be.above(0);
+              pm.expect(['DEBIT', 'CREDIT']).to.include(t.direction);
+          });
+      });
+
+      w.pending.forEach((t, i) => {
+          pm.test(`pending[${i}] — shape`, () => {
+              pm.expect(Object.keys(t).sort()).to.eql(['amount', 'id', 'merchant', 'time']);
+              pm.expect(t.time).to.match(/^\d{2}:\d{2}$/);
+              pm.expect(cents(t.amount)).to.be.above(0);
+          });
+      });
+    language: text/javascript
+order: 1000

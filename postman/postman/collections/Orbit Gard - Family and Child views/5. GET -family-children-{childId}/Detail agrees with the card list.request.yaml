@@ -1,0 +1,46 @@
+$kind: http-request
+description: The detail endpoint assembles its figures independently of the list endpoint. Any drift between them is a bug in one of the two.
+url: "{{baseUrl}}/family/children/{{childAId}}"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      // Money arrives as JSON numbers; compare in integer cents so 0.1+0.2 never bites.
+      const cents = (v) => Math.round(Number(v) * 100);
+      const d = pm.response.json();
+
+      pm.sendRequest({
+          url: pm.collectionVariables.get('baseUrl') + '/family/children',
+          method: 'GET',
+          header: { Authorization: 'Bearer ' + pm.collectionVariables.get('accessToken') }
+      }, (err, res) => {
+          pm.test('List fetch for cross-check succeeded', () => {
+              pm.expect(err).to.be.null;
+              pm.expect(res.code).to.eql(200);
+          });
+          const l = res.json().find(r => r.id === d.id);
+          pm.test('Child present in both endpoints', () => pm.expect(l).to.not.be.undefined);
+
+          pm.test('Header fields identical', () => {
+              pm.expect(d.name).to.eql(l.name);
+              pm.expect(d.handle).to.eql(l.handle);
+              pm.expect(d.status).to.eql(l.status);
+          });
+
+          pm.test('Wallet snapshot identical', () => {
+              pm.expect(cents(d.balance)).to.eql(cents(l.balance));
+              pm.expect(cents(d.held)).to.eql(cents(l.held));
+              pm.expect(cents(d.available)).to.eql(cents(l.available));
+          });
+
+          // Both read the same sums over the same UTC windows.
+          pm.test('Limit figures identical', () => {
+              pm.expect(cents(d.limits.perTransaction)).to.eql(cents(l.limits.perTransaction));
+              pm.expect(cents(d.limits.today.spent)).to.eql(cents(l.limits.today.spent));
+              pm.expect(cents(d.limits.today.max)).to.eql(cents(l.limits.today.max));
+              pm.expect(cents(d.limits.month.spent)).to.eql(cents(l.limits.month.spent));
+              pm.expect(cents(d.limits.month.max)).to.eql(cents(l.limits.month.max));
+          });
+      });
+    language: text/javascript
+order: 2000

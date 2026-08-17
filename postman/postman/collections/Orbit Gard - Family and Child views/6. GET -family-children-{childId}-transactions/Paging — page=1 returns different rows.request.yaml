@@ -1,0 +1,18 @@
+$kind: http-request
+url: "{{baseUrl}}/family/children/{{childAId}}/transactions?page=1&size=1"
+method: GET
+queryParams:
+  page: "1"
+  size: "1"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+      const p = pm.response.json();
+      pm.test('Page number echoed', () => pm.expect(p.page).to.eql(1));
+      pm.test('Not the first page', () => pm.expect(p.first).to.be.false);
+      pm.test('Second page holds a different transaction', () => {
+          pm.expect(p.content[0].id).to.not.eql(pm.collectionVariables.get('firstRowId'));
+      });
+    language: text/javascript
+order: 6000

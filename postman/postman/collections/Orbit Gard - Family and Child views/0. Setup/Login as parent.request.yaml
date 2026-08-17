@@ -1,0 +1,27 @@
+$kind: http-request
+description: Stores accessToken for every later request. The parent must already be email-verified — this collection does not run the activation flow.
+url: "{{baseUrl}}/auth/login"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "username": "{{parentUsername}}",
+      "password": "{{parentPassword}}",
+      "rememberMe": false
+    }
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Parent login succeeded', () => pm.response.to.have.status(200));
+      const b = pm.response.json();
+      pm.collectionVariables.set('accessToken', b.accessToken);
+      pm.test('Account is a parent (USER), not a CHILD', () => {
+          pm.expect(b.user.accountType, 'set parentUsername to a USER account').to.eql('USER');
+      });
+    language: text/javascript
+order: 1000

@@ -1,0 +1,71 @@
+$kind: http-request
+url: "{{baseUrl}}/family/children/{{childAId}}/transactions?page=0&size=10"
+method: GET
+queryParams:
+  page: "0"
+  size: "10"
+scripts:
+  - type: afterResponse
+    code: |-
+      // Money arrives as JSON numbers; compare in integer cents so 0.1+0.2 never bites.
+      const cents = (v) => Math.round(Number(v) * 100);
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+      const p = pm.response.json();
+
+      pm.test('Page envelope', () => {
+          pm.expect(Object.keys(p).sort()).to.eql(['content', 'first', 'last',
+              'page', 'size', 'totalElements', 'totalPages']);
+          pm.expect(p.page).to.eql(0);
+          pm.expect(p.size).to.eql(10);
+      });
+
+      pm.test('Child A has activity — the allocation and the spend', () => {
+          pm.expect(p.content.length).to.be.at.least(2);
+      });
+
+      p.content.forEach((t, i) => {
+          const at = `row[${i}]`;
+          pm.test(`${at} — documented field set`, () => {
+              pm.expect(Object.keys(t).sort()).to.eql(['amount', 'blockedReason',
+                  'channel', 'direction', 'id', 'merchant', 'occurredAt',
+                  'reference', 'status']);
+          });
+          pm.test(`${at} — channel is a known flow`, () => {
+              pm.expect(['/pay', '/transfer', '/topup', '/promo']).to.include(t.channel);
+          });
+          pm.test(`${at} — status is a known TransactionStatus`, () => {
+              pm.expect(['PENDING', 'COMPLETED', 'REJECTED']).to.include(t.status);
+          });
+          pm.test(`${at} — reference is a ledger reference`, () => {
+              pm.expect(t.reference).to.match(/^TXN-/);
+          });
+          pm.test(`${at} — direction is DEBIT or CREDIT`, () => {
+              pm.expect(['DEBIT', 'CREDIT']).to.include(t.direction);
+          });
+          // Amount is never signed — direction carries that, so a consumer
+          // never has to re-derive which way the money moved.
+          pm.test(`${at} — amount is strictly positive`, () => {
+              pm.expect(cents(t.amount)).to.be.above(0);
+          });
+      });
+
+      // Newest first. The ascending query is reserved for the ledger-chain view.
+      pm.test('Ordered newest first', () => {
+          const times = p.content.map(t => new Date(t.occurredAt).getTime());
+          const sorted = [...times].sort((a, b) => b - a);
+          pm.expect(times).to.eql(sorted);
+      });
+
+      // blockedReason is parsed off the end of the description, so it must
+      // be present exactly on REJECTED rows and absent everywhere else.
+      pm.test('blockedReason is set iff the row is REJECTED', () => {
+          p.content.forEach(t => {
+              if (t.status === 'REJECTED') {
+                  pm.expect(t.blockedReason, 'REJECTED row missing a reason').to.be.a('string');
+              } else {
+                  pm.expect(t.blockedReason, 'non-REJECTED row carries a reason').to.be.null;
+              }
+          });
+      });
+    language: text/javascript
+order: 1000

@@ -1,0 +1,20 @@
+$kind: http-request
+url: "{{baseUrl}}/family/children/{{childAId}}"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      const cents = (v) => Math.round(Number(v) * 100);
+      const c = pm.response.json();
+      const allocated = cents(pm.collectionVariables.get('allocationAmount'));
+
+      // Every spend aggregate filters status = COMPLETED, so a REJECTED row
+      // sitting in the same table must be invisible to them.
+      pm.test('Spent today is only the three successful payments', () => {
+          pm.expect(cents(c.limits.today.spent)).to.eql(15000);
+      });
+      pm.test('Balance fell by 150.00, not by 212.00', () => {
+          pm.expect(cents(c.balance)).to.eql(allocated - 15000);
+      });
+    language: text/javascript
+order: 2000

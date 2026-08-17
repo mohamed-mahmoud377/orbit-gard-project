@@ -1,0 +1,20 @@
+$kind: http-request
+description: Cannot be fully proven without a second household; asserts the shape of the guarantee against an id this parent does not own.
+url: "{{baseUrl}}/family/children/{{$randomUUID}}"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      // Ownership lives in the query (findByIdAndParent_Id), so a child
+      // belonging to someone else is indistinguishable from a nonexistent
+      // id. A 403 here would confirm the id exists and allow enumeration.
+      pm.test('404, never 403', () => {
+          pm.expect(pm.response.code).to.eql(404);
+          pm.expect(pm.response.code).to.not.eql(403);
+      });
+      pm.test('No child data in the error body', () => {
+          pm.expect(pm.response.text()).to.not.include('handle');
+          pm.expect(pm.response.text()).to.not.include('balance');
+      });
+    language: text/javascript
+order: 5000

@@ -1,0 +1,30 @@
+$kind: http-request
+url: "{{baseUrl}}/external/pay"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "verificationToken": "placeholder",
+      "merchantName": "{{longString}}",
+      "productName": "Sandwich",
+      "cashAmount": 10.0
+    }
+auth:
+  type: noauth
+scripts:
+  - type: beforeRequest
+    code: pm.collectionVariables.set('longString', 'x'.repeat(256));
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      pm.test('400 Bad Request', () => pm.response.to.have.status(400));
+      pm.test('MERCHANT_NAME_TOO_LONG', () => {
+          const e = (pm.response.json().fieldErrors || []).find(x => x.field === 'merchantName');
+          pm.expect(e).to.not.be.undefined;
+          pm.expect(e.code).to.eql('MERCHANT_NAME_TOO_LONG');
+      });
+    language: text/javascript
+order: 4000

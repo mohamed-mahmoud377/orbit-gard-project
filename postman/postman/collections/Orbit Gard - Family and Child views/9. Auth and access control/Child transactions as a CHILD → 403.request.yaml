@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{baseUrl}}/family/children/{{childAId}}/transactions"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{childToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('403 Forbidden', () => pm.response.to.have.status(403));
+      pm.test('ACCESS_DENIED', () => pm.expect(pm.response.json().code).to.eql('ACCESS_DENIED'));
+    language: text/javascript
+order: 6000

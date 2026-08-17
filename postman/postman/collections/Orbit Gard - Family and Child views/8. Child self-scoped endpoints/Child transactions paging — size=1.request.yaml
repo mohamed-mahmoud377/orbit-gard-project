@@ -1,0 +1,22 @@
+$kind: http-request
+url: "{{baseUrl}}/child/transactions?page=0&size=1"
+method: GET
+queryParams:
+  page: "0"
+  size: "1"
+auth:
+  type: bearer
+  credentials:
+    token: "{{childToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+      const p = pm.response.json();
+      pm.test('One row, more pages available', () => {
+          pm.expect(p.content.length).to.eql(1);
+          pm.expect(p.first).to.be.true;
+          pm.expect(p.last).to.be.false;
+      });
+    language: text/javascript
+order: 6000

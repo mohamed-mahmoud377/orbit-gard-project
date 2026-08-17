@@ -1,0 +1,20 @@
+$kind: http-request
+url: "{{baseUrl}}/family/children/{{childAId}}/limits"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: "{}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('400 Bad Request', () => pm.response.to.have.status(400));
+      pm.test('FIELD_REQUIRED on limits', () => {
+          const fe = pm.response.json().fieldErrors || [];
+          const hit = fe.find(e => e.field === 'limits');
+          pm.expect(hit, 'at least one ceiling must be sent').to.not.be.undefined;
+          pm.expect(hit.code).to.eql('FIELD_REQUIRED');
+      });
+    language: text/javascript
+order: 4000

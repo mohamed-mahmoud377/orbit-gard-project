@@ -1,0 +1,44 @@
+$kind: collection
+name: Orbit Gard - Family and Child views
+description: |-
+  Tests the five /family endpoints and the three /child endpoints.
+
+  PREREQUISITES
+    1. Set parentUsername / parentPassword to an existing, email-verified USER account. This collection does not run the activation flow.
+    2. That parent's wallet needs at least 2x allocationAmount available. Folder 0 checks this and fails early with a clear message.
+    3. Run the folders in order — each depends on variables the previous ones set.
+
+  WHAT IT COVERS
+    Response shape and field sets, money invariants (available = balance - held), limit ordering and headroom, cross-endpoint agreement (overview vs list, list vs detail, parent view vs child view), allocation and spending deltas, PATCH merge semantics, paging, limit enforcement, and access control on both the /family and /child sides.
+
+  TRANSACTION SHAPE
+    Amounts are always positive; `direction` (DEBIT/CREDIT) carries which way the money moved. The same row shape is served by /family/children/{id}/transactions and /child/transactions, and a folder asserts the two return identical rows.
+
+  BLOCKED-ATTEMPT RECORDING
+    Folder 4 triggers a real limit block. BlockedAttemptRecorder writes it as a REJECTED ledger row in its own REQUIRES_NEW transaction, so it survives the rollback the 422 causes. Folders 4, 6 and 8 then assert the row exists, carries its reason, keeps a clean merchant name, and does NOT move any spend total. A flat blockedAttempts or a missing REJECTED row means the audit write is being rolled back with the caller.
+
+  SIDE EFFECTS
+    Creates two child accounts per run (unique usernames) and moves real money between wallets. Point it at a dev database.
+variables:
+  baseUrl: http://localhost:8081/api/v1
+  parentUsername: mohsen
+  parentPassword: Password123
+  childPassword: Testpass123
+  allocationAmount: "300.00"
+  spendAmount: "60.00"
+  accessToken: ""
+  childToken: ""
+  childAId: ""
+  childAUsername: ""
+  childBId: ""
+  childBUsername: ""
+  snapAllocated: ""
+  snapSpent: ""
+  snapBlocked: ""
+  snapChildATodaySpent: ""
+auth:
+  - id: 681861de-3b05-4665-aee3-5491b73c2ae7
+    type: bearer
+    name: bearer auth
+    credentials:
+      token: "{{accessToken}}"

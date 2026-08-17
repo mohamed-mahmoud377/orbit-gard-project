@@ -1,0 +1,30 @@
+$kind: http-request
+description: 60.00 passed in folder 2; 61.00 must not. Together they pin the boundary exactly.
+url: "{{baseUrl}}/external/pay"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "verificationToken": "{{payToken}}",
+      "merchantName": "Corner shop",
+      "productName": "Overpriced headphones",
+      "cashAmount": 61.0
+    }
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));
+      pm.test('MAX_PER_TRANSACTION_EXCEEDED', () => {
+          pm.expect(pm.response.json().code).to.eql('MAX_PER_TRANSACTION_EXCEEDED');
+      });
+      pm.test('Attributed to the amount field', () => {
+          const fields = (pm.response.json().fieldErrors || []).map(e => e.field);
+          pm.expect(fields).to.include('amount');
+      });
+    language: text/javascript
+order: 2000

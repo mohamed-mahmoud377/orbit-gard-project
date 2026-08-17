@@ -1,0 +1,30 @@
+$kind: http-request
+url: "{{baseUrl}}/wallet/internal/transfer"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "receiverUsername": "{{childBUsername}}",
+      "amount": 120.0
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{childToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      // Cap is 100.00; 120.00 must be refused before any money moves.
+      pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));
+      pm.test('MAX_PER_TRANSACTION_EXCEEDED', () => {
+          pm.expect(pm.response.json().code).to.eql('MAX_PER_TRANSACTION_EXCEEDED');
+      });
+      pm.test('Error names the offending field', () => {
+          const fe = pm.response.json().fieldErrors || [];
+          pm.expect(fe.map(e => e.field)).to.include('amount');
+      });
+    language: text/javascript
+order: 2000
