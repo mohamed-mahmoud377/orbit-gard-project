@@ -1,7 +1,7 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   debounceTime,
   distinctUntilChanged,
@@ -197,7 +197,9 @@ type PromoState = 'idle' | 'checking' | 'valid' | 'invalid' | 'expired';
             maxlength="32"
             [attr.aria-describedby]="promoDescribedBy()"
           />
-          @if (promoState() === 'checking') {
+          @if (promoState() === 'idle' && promoFromLink()) {
+            <p class="field-hint" id="promo-status">Promotional code applied from your link.</p>
+          } @else if (promoState() === 'checking') {
             <p class="field-hint" id="promo-status">Checking promotional code…</p>
           } @else if (promoState() === 'valid' && promoAmount() !== null) {
             <p class="field-hint field-hint-success" id="promo-status">
@@ -233,6 +235,7 @@ type PromoState = 'idle' | 'checking' | 'valid' | 'invalid' | 'expired';
 export class SignUpPage {
   private readonly auth = inject(AuthFacade);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -244,6 +247,7 @@ export class SignUpPage {
   protected readonly availability = signal<AvailabilityState>('idle');
   protected readonly promoState = signal<PromoState>('idle');
   protected readonly promoAmount = signal<number | null>(null);
+  protected readonly promoFromLink = signal(false);
   protected readonly showPassword = signal(false);
   protected readonly submitting = signal(false);
 
@@ -310,6 +314,7 @@ export class SignUpPage {
           if (!trimmed) {
             this.promoState.set('idle');
             this.promoAmount.set(null);
+            this.promoFromLink.set(false);
             return of(null);
           }
           this.promoState.set('checking');
@@ -336,6 +341,22 @@ export class SignUpPage {
         if (response.status === 'EXPIRED') this.promoState.set('expired');
         else this.promoState.set('invalid');
       });
+
+    this.applyPromoCodeFromLink();
+  }
+
+  /**
+   * Prefills the promotional code from a share link such as
+   * `/auth/sign-up?promoCode=welcome500`. Setting the control value runs the
+   * same validation pipeline as typing it by hand.
+   */
+  private applyPromoCodeFromLink(): void {
+    const params = this.route.snapshot.queryParamMap;
+    const raw = params.get('promoCode') ?? params.get('promo') ?? '';
+    const code = raw.trim().toUpperCase().slice(0, 32);
+    if (!code) return;
+    this.promoFromLink.set(true);
+    this.form.controls.promoCode.setValue(code);
   }
 
   protected usernameDescribedBy(): string | null {
@@ -352,7 +373,7 @@ export class SignUpPage {
   }
 
   protected promoDescribedBy(): string | null {
-    if (this.promoState() !== 'idle') return 'promo-status';
+    if (this.promoState() !== 'idle' || this.promoFromLink()) return 'promo-status';
     if (this.fieldErrors()['promoCode']) return 'promo-error';
     return null;
   }
