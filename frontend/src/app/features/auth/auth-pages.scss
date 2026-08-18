@@ -14,6 +14,7 @@
 .auth-card {
   background-color: white;
   display: grid;
+  flex-direction: column;
   justify-items: stretch;
   width: min(100%, 420px);
   width: auto;
@@ -25,6 +26,7 @@
   transition: all 0.7s ease;
   position: relative;
   z-index: 2;
+  box-sizing: border-box;
 
   h1 {
     margin: 0;
@@ -58,13 +60,14 @@
 .auth-fields,
 .auth-actions {
   display: grid;
-  gap: 10px;
-  width: 500px
+  gap: 3px;
+  width: 500px;
 }
 
 .auth-form .btn,
 .auth-actions .btn {
   width: 100%;
+  margin-top: .5rem;
 }
 
 .grid-2 {
@@ -78,7 +81,7 @@
 
 .field {
   display: grid;
-  gap: 6px;
+  gap: 3px;
 
   label {
     font-size: 13px;
@@ -93,10 +96,11 @@
 }
 
 .field-error {
-  margin: 0;
+  margin-bottom: 0;
   color: var(--danger, #c0392b);
-  font-size: 12px;
-  line-height: 1.35;
+  font-size: 11px;
+  line-height: 1;
+  min-height: 15px;
 }
 
 .field-hint {
