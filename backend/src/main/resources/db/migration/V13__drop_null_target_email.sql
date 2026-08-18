@@ -1,0 +1,1 @@
+ALTER TABLE verification_token ALTER COLUMN target_email DROP NOT NULL;
