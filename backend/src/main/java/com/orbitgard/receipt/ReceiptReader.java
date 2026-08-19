@@ -9,6 +9,7 @@ import com.orbitgard.dto.response.GeminiCandidate;
 import com.orbitgard.dto.response.GeminiGenerateContentResponse;
 import com.orbitgard.dto.response.GeminiUsageMetadata;
 import com.orbitgard.enums.ReceiptReadFailure;
+
 import com.orbitgard.gemini.GeminiCallException;
 import com.orbitgard.gemini.GeminiClient;
 import com.orbitgard.gemini.GeminiContent;
@@ -51,10 +52,10 @@ public class ReceiptReader {
     private final ObjectMapper objectMapper;
 
     public ReceiptReader(GeminiClient geminiClient,
-                         GeminiProperties props,
-                         ReceiptImageDownscaler downscaler,
-                         ReceiptExtractionValidator validator,
-                         ObjectMapper objectMapper) {
+            GeminiProperties props,
+            ReceiptImageDownscaler downscaler,
+            ReceiptExtractionValidator validator,
+            ObjectMapper objectMapper) {
         this.geminiClient = geminiClient;
         this.props = props;
         this.downscaler = downscaler;
@@ -169,8 +170,8 @@ public class ReceiptReader {
     }
 
     private ReceiptReadResult failed(ReceiptReadFailure failure,
-                                     GeminiUsageMetadata usage,
-                                     Duration callDuration) {
+            GeminiUsageMetadata usage,
+            Duration callDuration) {
         return ReceiptReadResult.builder()
                 .failure(failure)
                 .model(props.getModel())
