@@ -1,0 +1,19 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": "{\"isTransferReceipt\":true,\"isSuccessful\":true,\"amount\":\"1.00\",\"fees\":\"0.50\",\"totalAmount\":\"1.50\",\"currency\":\"EGP\",\"referenceNumber\":\"208665771080\",\"recipientPhone\":\"01111545710\"}"
+          }
+        ]
+      },
+      "finishReason": "STOP"
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 1450,
+    "candidatesTokenCount": 120,
+    "totalTokenCount": 1570
+  }
+}

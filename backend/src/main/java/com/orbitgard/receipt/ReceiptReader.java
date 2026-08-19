@@ -3,12 +3,16 @@ package com.orbitgard.receipt;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orbitgard.dto.request.GeminiGenerateContentRequest;
+import com.orbitgard.dto.request.GeminiGenerationConfig;
+import com.orbitgard.dto.request.GeminiSystemInstruction;
 import com.orbitgard.dto.response.GeminiCandidate;
 import com.orbitgard.dto.response.GeminiGenerateContentResponse;
 import com.orbitgard.dto.response.GeminiUsageMetadata;
 import com.orbitgard.enums.ReceiptReadFailure;
 import com.orbitgard.gemini.GeminiCallException;
 import com.orbitgard.gemini.GeminiClient;
+import com.orbitgard.gemini.GeminiContent;
+import com.orbitgard.gemini.GeminiPart;
 import com.orbitgard.gemini.GeminiProperties;
 
 import lombok.extern.slf4j.Slf4j;

@@ -1,0 +1,19 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": "{\"isTransferReceipt\":true,\"isSuccessful\":true,\"amount\":\"1.00\",\"amountAsShown\":\"1 EGP\",\"currency\":\"EGP\",\"referenceNumber\":\"461669173693\",\"recipientNameMasked\":\"MOHAMED M****** S*** I*****\",\"recipientPhone\":\"01111545710\",\"transferDateTime\":\"2026-08-17T19:47:00\",\"note\":\"Living Expenses\"}"
+          }
+        ]
+      },
+      "finishReason": "STOP"
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 1487,
+    "candidatesTokenCount": 142,
+    "totalTokenCount": 1629
+  }
+}

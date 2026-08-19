@@ -1,0 +1,19 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": "{\"isTransferReceipt\": true, \"amount\": "
+          }
+        ]
+      },
+      "finishReason": "MAX_TOKENS"
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 1400,
+    "candidatesTokenCount": 100,
+    "totalTokenCount": 1500
+  }
+}

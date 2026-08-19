@@ -2,6 +2,7 @@ package com.orbitgard.receipt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orbitgard.dto.response.GeminiGenerateContentResponse;
+import com.orbitgard.enums.ReceiptReadFailure;
 import com.orbitgard.gemini.GeminiClient;
 import com.orbitgard.gemini.GeminiProperties;
 
