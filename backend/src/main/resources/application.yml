@@ -73,8 +73,9 @@ orbitgard:
     connect-timeout: PT5S
     read-timeout: PT20S
   instapay:
-    account-name: ${INSTAPAY_ACCOUNT_NAME}
-    account-number: ${INSTAPAY_ACCOUNT_NUMBER}
+    account-name: ${INSTAPAY_ACCOUNT_NAME:Mohamed Mahmoud Said}
+    account-number: ${INSTAPAY_ACCOUNT_NUMBER:01111545710}
+    uploads-dir: ${ORBIT_UPLOADS_DIR:uploads}
     max-image-bytes: 1048576    # the 1 MB the user is told about
     min-amount: 0.01
     max-amount: 70000.00
