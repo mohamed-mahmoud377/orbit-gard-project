@@ -1,9 +1,8 @@
 package com.orbitgard.gemini;
 
-import org.springframework.boot.http.client.ClientHttpRequestFactoryBuilder;
-import org.springframework.boot.http.client.HttpClientSettings;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 
 @Configuration
@@ -19,14 +18,16 @@ public class GeminiConfig {
      */
     @Bean("geminiRestClient")
     public RestClient geminiRestClient(RestClient.Builder builder, GeminiProperties props) {
-
-        HttpClientSettings settings = HttpClientSettings
-                .defaults()
-                .withConnectTimeout(props.getConnectTimeout())
-                .withReadTimeout(props.getReadTimeout());
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        if (props.getConnectTimeout() != null) {
+            requestFactory.setConnectTimeout(props.getConnectTimeout());
+        }
+        if (props.getReadTimeout() != null) {
+            requestFactory.setReadTimeout(props.getReadTimeout());
+        }
 
         return builder
-                .requestFactory(ClientHttpRequestFactoryBuilder.detect().build(settings))
+                .requestFactory(requestFactory)
                 .baseUrl(props.getBaseUrl())
                 .defaultHeader("x-goog-api-key", props.getApiKey())
                 .build();
