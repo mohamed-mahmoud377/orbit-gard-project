@@ -56,7 +56,13 @@ public enum ErrorCode {
     MAX_PER_TRANSACTION_EXCEEDED(HttpStatus.UNPROCESSABLE_ENTITY, "max-per-transaction-exceeded", "Amount exceeds the per-transaction limit"),
     DAILY_LIMIT_EXCEEDED(HttpStatus.UNPROCESSABLE_ENTITY, "daily-limit-exceeded", "This would exceed the daily spending limit"),
     MONTHLY_LIMIT_EXCEEDED(HttpStatus.UNPROCESSABLE_ENTITY, "monthly-limit-exceeded", "This would exceed the monthly spending limit"),
-    SELF_TRANSFER_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "self-transfer-not-allowed", "You cannot send money to yourself");
+    SELF_TRANSFER_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "self-transfer-not-allowed", "You cannot send money to yourself"),
+    FILE_TOO_LARGE(HttpStatus.BAD_REQUEST, "file-too-large", "Image exceeds maximum allowed size of 1 MB"),
+    UNSUPPORTED_IMAGE_TYPE(HttpStatus.BAD_REQUEST, "unsupported-image-type", "Only PNG and JPG images are supported"),
+    INVALID_IMAGE(HttpStatus.BAD_REQUEST, "invalid-image", "File is not a valid image"),
+    DUPLICATE_RECEIPT_IMAGE(HttpStatus.CONFLICT, "duplicate-receipt-image", "This receipt image has already been uploaded"),
+    EMPTY_FILE(HttpStatus.BAD_REQUEST, "empty-file", "Receipt image is required"),
+    INSTAPAY_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "instapay-request-not-found", "InstaPay request not found");
     private final HttpStatus httpStatus;
     private final String typeSlug;
     private final String title;
