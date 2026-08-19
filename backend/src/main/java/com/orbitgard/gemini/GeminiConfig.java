@@ -1,7 +1,7 @@
 package com.orbitgard.gemini;
 
 import org.springframework.boot.http.client.ClientHttpRequestFactoryBuilder;
-import org.springframework.boot.http.client.ClientHttpRequestFactorySettings;
+import org.springframework.boot.http.client.HttpClientSettings;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestClient;
@@ -20,7 +20,7 @@ public class GeminiConfig {
     @Bean("geminiRestClient")
     public RestClient geminiRestClient(RestClient.Builder builder, GeminiProperties props) {
 
-        ClientHttpRequestFactorySettings settings = ClientHttpRequestFactorySettings
+        HttpClientSettings settings = HttpClientSettings
                 .defaults()
                 .withConnectTimeout(props.getConnectTimeout())
                 .withReadTimeout(props.getReadTimeout());
