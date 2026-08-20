@@ -11,13 +11,45 @@
 
 }
 
+// The card is not always a direct child of the host. Login wraps it in an
+// extra unstyled `<section class="login-page">`; every other auth page does
+// not. That wrapper is a flex item, so it shrink-to-fits to its contents and
+// then becomes the card's containing block — which is why `width: 100%` on
+// the card resolved to the card's own content width instead of the panel's,
+// and the max-width cap never had anything to cap.
+//
+// Giving whatever sits directly under the host a full-width box makes both
+// structures behave identically, so the card no longer cares how deeply the
+// page happens to nest it.
+:host > * {
+  width: 100%;
+  min-width: 0;
+}
+
 .auth-card {
   background-color: white;
   display: grid;
   justify-items: stretch;
-  width: min(100%, 420px);
-  width: auto;
-  max-width: 100%;
+  // Fill the panel, capped at the desktop size — NOT shrink-to-fit.
+  //
+  // `width: auto` here was half of a circular sizing loop that made the card
+  // impossible to shrink: the card sized itself to its widest child, the
+  // child was the 500px .auth-form, and the form's `max-width: 100%`
+  // resolved against the card it had just sized — so 100% *was* 500px and
+  // the cap constrained nothing. The card sat at 564px inside a 327px
+  // column on an iPhone and the overflow:hidden on .auth-shell quietly cut
+  // 94px off each side.
+  //
+  // Driving the width down the tree instead of up breaks the loop. 564px is
+  // the 500px form plus its 2rem padding either side, so the desktop card is
+  // exactly the size it has always been.
+  //
+  // The `min(100%, 420px)` that used to sit above `width: auto` was dead —
+  // same specificity, later declaration won — so it read like responsive
+  // capping while doing nothing at all.
+  width: 100%;
+  max-width: 564px;
+  min-width: 0;
   margin-inline: auto;
   gap: 10px;
   padding: 2rem;
@@ -45,8 +77,13 @@
 }
 
 .auth-card-wide {
-  width: min(100%, 520px);
-  width: auto;
+  // Inert today, and left that way on purpose. Its `min(100%, 520px)` was
+  // overridden by a `width: auto` on the next line, and the card was really
+  // sized by the 500px form — so "wide" has always rendered identically to a
+  // normal card. Matching .auth-card's cap keeps that true rather than
+  // silently widening the sign-up page by 20px as a side effect of a
+  // responsiveness fix.
+  max-width: 564px;
 }
 
 .auth-card > .notice {
@@ -59,7 +96,11 @@
 .auth-actions {
   display: grid;
   gap: 10px;
-  width: 500px
+  // Fill whatever the card allows. The card is now the one deciding the
+  // width (500px of content on desktop, the phone's width below that), so a
+  // fixed 500px here would only reintroduce the loop it caps.
+  width: 100%;
+  min-width: 0;
 }
 
 .auth-form .btn,

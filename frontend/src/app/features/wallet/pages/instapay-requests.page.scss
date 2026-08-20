@@ -275,4 +275,11 @@
     grid-column: 1 / -1;
     text-align: left;
   }
+
+  // The em dash is a table convention — it holds an AMOUNT column open when
+  // there is no amount yet. Once the columns are gone it is just a stray
+  // dash on its own line under the status text, so it goes with them.
+  .instapay-amount.is-muted {
+    display: none;
+  }
 }

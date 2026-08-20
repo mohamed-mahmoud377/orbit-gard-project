@@ -238,6 +238,12 @@ export class ResetPasswordPage {
   }
 
   protected goToLogin(): void {
-    void this.router.navigateByUrl('/auth/login');
+    // The password just changed, so whatever session this browser was still
+    // holding is dead on the server. Clearing it locally is what makes the
+    // trip to /auth/login land: guestGuard reads the token store, and stale
+    // tokens would bounce a user who genuinely needs to sign in again
+    // straight back to a dashboard whose every call is about to 401.
+    this.authFacade.logoutLocal();
+    void this.router.navigateByUrl('/auth/login', { replaceUrl: true });
   }
 }
