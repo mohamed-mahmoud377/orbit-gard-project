@@ -1,0 +1,477 @@
+// Geometry and type scale transcribed from Figma node 448:329.
+// Every colour resolves to a token already in src/styles/_tokens.scss — the
+// design was built from that same set, so nothing here introduces a new hex.
+
+:host {
+  display: block;
+}
+
+.instapay-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 676px) minmax(0, 400px);
+  gap: 24px;
+  align-items: start;
+}
+
+.instapay-transfer-card {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 28px;
+  border-radius: 18px;
+}
+
+.instapay-step-heading {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 22px;
+  color: var(--text-primary);
+}
+
+// ── Step 1 · the account to pay ──────────────────────────────────────────
+
+.instapay-details {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px;
+  border: 1px solid var(--accent-primary);
+  border-radius: 14px;
+  background: var(--accent-wash);
+}
+
+.instapay-details-label {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 14px;
+  letter-spacing: 0.154px;
+  color: var(--accent-primary);
+}
+
+.instapay-number-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 40px;
+}
+
+.instapay-number {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 34px;
+  letter-spacing: -0.14px;
+  color: var(--text-primary);
+}
+
+.instapay-copy-btn {
+  flex-shrink: 0;
+  width: 84px;
+  height: 38px;
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  background: var(--bg-surface);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  color: var(--accent-primary);
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    border-color: var(--accent-primary);
+  }
+
+  &:disabled {
+    color: var(--text-muted);
+    cursor: not-allowed;
+  }
+}
+
+.instapay-details-divider {
+  height: 1px;
+  background: var(--border-default);
+}
+
+.instapay-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.instapay-name-label {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+  color: var(--text-secondary);
+}
+
+.instapay-name-value {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 18px;
+  color: var(--text-primary);
+}
+
+// ── Step 2 · what the screenshot has to show ─────────────────────────────
+
+.instapay-requirement {
+  display: flex;
+  gap: 14px;
+  padding: 16px 18px;
+  border: 1px solid var(--held);
+  border-radius: 14px;
+  background: var(--held-wash);
+}
+
+.instapay-requirement-mark {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--held);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 16px;
+  color: var(--text-inverse);
+}
+
+.instapay-requirement-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.instapay-requirement-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  color: var(--text-primary);
+}
+
+.instapay-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 18px;
+    color: var(--text-secondary);
+  }
+}
+
+.instapay-check {
+  flex-shrink: 0;
+  width: 12px;
+  font-weight: 700;
+  color: var(--held);
+}
+
+.instapay-requirement-note {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+  color: var(--text-muted);
+}
+
+// ── The dropzone ─────────────────────────────────────────────────────────
+
+.instapay-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.instapay-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 158px;
+  padding: 26px 20px;
+  border: 1.5px dashed var(--border-default);
+  border-radius: 14px;
+  background: var(--bg-raised);
+  font-family: inherit;
+  text-align: center;
+  cursor: pointer;
+
+  &:hover,
+  &-active {
+    border-color: var(--accent-primary);
+    background: var(--accent-wash);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+  }
+}
+
+.instapay-dropzone-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: var(--accent-wash);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 22px;
+  color: var(--accent-primary);
+}
+
+.instapay-dropzone-title {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--text-primary);
+}
+
+.instapay-dropzone-hint {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+  color: var(--text-muted);
+}
+
+// Filled state. Not in the Figma — the design only specifies the empty
+// dropzone — so it reuses the same frame, border and radius and simply swaps
+// the contents for the chosen image.
+.instapay-dropzone-filled {
+  flex-direction: row;
+  gap: 16px;
+  justify-content: flex-start;
+  text-align: left;
+  border-style: solid;
+  border-color: var(--accent-primary);
+  background: var(--accent-wash);
+  cursor: default;
+}
+
+.instapay-preview {
+  flex-shrink: 0;
+  width: 84px;
+  height: 106px;
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  object-fit: cover;
+  background: var(--bg-surface);
+}
+
+.instapay-preview-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.instapay-preview-name {
+  margin: 0;
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--text-primary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.instapay-preview-size {
+  margin: 4px 0 0;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+  color: var(--text-muted);
+}
+
+.instapay-preview-remove {
+  flex-shrink: 0;
+  height: 38px;
+  padding: 0 16px;
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  background: var(--bg-surface);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--danger);
+  cursor: pointer;
+
+  &:disabled {
+    color: var(--text-muted);
+    cursor: not-allowed;
+  }
+}
+
+// ── Submit ───────────────────────────────────────────────────────────────
+
+.instapay-submit {
+  height: 50px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 18px;
+
+  &:disabled {
+    border-color: var(--border-default);
+    background: var(--border-default);
+    color: var(--text-muted);
+    cursor: not-allowed;
+  }
+}
+
+.instapay-uploaded {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  p {
+    margin: 0;
+  }
+}
+
+// ── Right column ─────────────────────────────────────────────────────────
+
+.instapay-side {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.instapay-how {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 26px;
+  border-radius: 18px;
+}
+
+.instapay-how-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 22px;
+  color: var(--text-primary);
+}
+
+.instapay-how-step {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.instapay-how-number {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--accent-wash);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  color: var(--accent-primary);
+}
+
+.instapay-how-step-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 18px;
+  color: var(--text-primary);
+}
+
+.instapay-how-step-desc {
+  margin: 4px 0 0;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+  color: var(--text-muted);
+}
+
+.instapay-single-use {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--held-wash);
+
+  p {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 18px;
+    color: var(--text-secondary);
+  }
+}
+
+.instapay-single-use-dot {
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  margin-top: 6px;
+}
+
+.instapay-link-row {
+  display: flex;
+  padding: 12px 0;
+}
+
+.instapay-link {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  color: var(--accent-dim);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+@media (max-width: 1100px) {
+  .instapay-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .instapay-transfer-card {
+    padding: 20px;
+  }
+
+  .instapay-number {
+    font-size: 22px;
+  }
+
+  .instapay-dropzone-filled {
+    flex-wrap: wrap;
+  }
+}

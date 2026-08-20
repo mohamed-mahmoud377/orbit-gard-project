@@ -1,0 +1,278 @@
+// Figma nodes 450:404 (table) and 450:553 (empty state).
+// Column widths are the designed 190 / 420 / 180 / 254 inside 28px gutters,
+// expressed as fractions so the table still fills a narrower viewport.
+
+.instapay-table {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 18px;
+}
+
+.instapay-thead,
+.instapay-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 190fr) minmax(200px, 420fr) minmax(90px, 180fr) minmax(110px, 254fr);
+  align-items: center;
+  padding: 0 28px;
+}
+
+.instapay-thead {
+  height: 44px;
+  background: var(--bg-raised);
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 16px;
+  letter-spacing: 0.132px;
+  color: var(--text-muted);
+}
+
+.instapay-row {
+  padding-top: 16px;
+  padding-bottom: 16px;
+
+  & + .instapay-row {
+    border-top: 1px solid var(--border-subtle);
+  }
+}
+
+.col-amount,
+.col-status {
+  text-align: right;
+}
+
+.col-status {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.instapay-submitted {
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 20px;
+  color: var(--text-secondary);
+}
+
+.instapay-reference {
+  min-width: 0;
+  padding-right: 16px;
+}
+
+.instapay-reference-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+
+  &.is-muted {
+    color: var(--text-muted);
+  }
+}
+
+.instapay-reference-detail {
+  margin: 3px 0 0;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+  color: var(--text-muted);
+}
+
+.instapay-amount {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  color: var(--text-primary);
+
+  &.is-muted {
+    font-weight: 400;
+    color: var(--text-muted);
+  }
+}
+
+// ── Status badges ────────────────────────────────────────────────────────
+//
+// Scoped to this table rather than added to the global .pill scale on
+// purpose. The design gives FAILED a neutral grey to separate "we could not
+// read it" from REJECTED's red, but the global rule pairs `.pill-rejected`
+// and `.pill-failed` on the same colour, and shared/ui/transaction-list.ts
+// builds its class as 'pill pill-' + status — so widening that rule would
+// quietly repaint failed wallet transactions too.
+
+.instapay-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 16px;
+  letter-spacing: 0.132px;
+  white-space: nowrap;
+}
+
+.instapay-badge-pending {
+  background: var(--held-wash);
+  color: var(--held);
+}
+
+.instapay-badge-processing {
+  background: var(--accent-wash);
+  color: var(--accent-primary);
+}
+
+.instapay-badge-completed {
+  background: var(--success-wash);
+  color: var(--success);
+}
+
+.instapay-badge-rejected {
+  background: var(--danger-wash);
+  color: var(--danger);
+}
+
+.instapay-badge-failed {
+  background: var(--bg-raised);
+  color: var(--text-secondary);
+}
+
+// ── Live refresh indicator ───────────────────────────────────────────────
+// Not in the Figma. Without it a one-second refresh is invisible, and a user
+// watching a PENDING row has no way to tell the page is still working.
+
+.instapay-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: var(--accent-wash);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.132px;
+  color: var(--accent-primary);
+}
+
+.instapay-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--accent-primary);
+  animation: instapay-pulse 1s ease-in-out infinite;
+}
+
+@keyframes instapay-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .instapay-live-dot {
+    animation: none;
+  }
+}
+
+// ── Empty state ──────────────────────────────────────────────────────────
+
+.instapay-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 72px 40px;
+  border-radius: 18px;
+  text-align: center;
+}
+
+.instapay-empty-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  background: var(--accent-wash);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 26px;
+  color: var(--accent-primary);
+}
+
+.instapay-empty-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 24px;
+  color: var(--text-primary);
+}
+
+.instapay-empty-copy {
+  max-width: 420px;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 20px;
+  color: var(--text-muted);
+}
+
+.instapay-empty-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 240px;
+  height: 46px;
+  border-radius: 12px;
+  background: var(--accent-primary);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 18px;
+  color: var(--text-inverse);
+  text-decoration: none;
+
+  &:hover {
+    background: var(--accent-deep);
+  }
+}
+
+// Below the designed 1100px the four columns stop fitting, so each row
+// becomes a stacked card rather than a horizontally scrolling table.
+@media (max-width: 820px) {
+  .instapay-thead {
+    display: none;
+  }
+
+  .instapay-row {
+    grid-template-columns: 1fr auto;
+    gap: 4px 12px;
+    padding: 16px 20px;
+  }
+
+  .col-submitted {
+    order: 1;
+  }
+
+  .col-status {
+    order: 2;
+  }
+
+  .instapay-reference {
+    order: 3;
+    grid-column: 1 / -1;
+    padding-right: 0;
+  }
+
+  .col-amount {
+    order: 4;
+    grid-column: 1 / -1;
+    text-align: left;
+  }
+}

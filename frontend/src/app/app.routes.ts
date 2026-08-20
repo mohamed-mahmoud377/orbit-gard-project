@@ -85,6 +85,14 @@ export const routes: Routes = [
           import('./features/wallet/wallet-pages').then((module) => module.TopUpPage),
       },
       {
+        path: 'top-up/instapay/requests',
+        title: 'InstaPay requests · Orbit',
+        loadComponent: () =>
+          import('./features/wallet/pages/instapay-requests.page').then(
+            (module) => module.InstapayRequestsPage,
+          ),
+      },
+      {
         path: 'send',
         title: 'Send money · Orbit',
         loadComponent: () =>
