@@ -9,6 +9,7 @@ import com.orbitgard.enums.TransactionType;
 import com.orbitgard.repository.WalletRepository;
 import com.orbitgard.repository.WalletTransactionRepository;
 import com.orbitgard.service.WalletTransactionService;
+import com.orbitgard.wallet.TransactionDescriptions;
 import com.orbitgard.wallet.TransactionReferenceGenerator;
 import com.orbitgard.wallet.TransactionRules;
 import org.springframework.stereotype.Service;
@@ -95,6 +96,23 @@ public class WalletTransactionServiceImpl implements WalletTransactionService {
                 .amountCents(amountCents)
                 .description("Wallet top-up")
                 .paymentId(paymentId)
+                .build());
+    }
+
+    @Override
+    @Transactional
+    public WalletTransaction recordInstapayTopUpCredit(UUID walletId, long amountCents, String instapayReference) {
+        // TOPUP, so TransactionRules.initialCreditStatus lands on COMPLETED
+        // immediately and nothing is held. An InstaPay credit is money that
+        // has already arrived at a bank — there is nothing left to clear.
+        return record(RecordTransactionRequest.builder()
+                .walletId(walletId)
+                .type(TransactionType.TOPUP)
+                .direction(TransactionDirection.CREDIT)
+                .amountCents(amountCents)
+                .description(TransactionDescriptions.instapayTopUp(instapayReference))
+                // No paymentId: no card was charged, so there is no Payment
+                // row to point at. The column is nullable for exactly this.
                 .build());
     }
 

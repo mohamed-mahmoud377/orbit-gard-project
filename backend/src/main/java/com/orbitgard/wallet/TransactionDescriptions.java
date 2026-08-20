@@ -27,6 +27,15 @@ public final class TransactionDescriptions {
     private static final String BLOCKED_MARKER = " | BLOCKED: ";
 
     /**
+     * Introduces the bank reference on an InstaPay top-up.
+     *
+     * Deliberately not " | " — that prefix belongs to the blocked suffix,
+     * and two markers that look alike is how a parser starts finding the
+     * wrong one.
+     */
+    private static final String INSTAPAY_REFERENCE_MARKER = " - InstaPay ref: ";
+
+    /**
      * Anchored at the end and restricted to the shape of an ErrorCode name,
      * so a merchant who names themselves "Cafe | BLOCKED: WHATEVER" cannot
      * inject a reason into the middle of a description.
@@ -44,6 +53,25 @@ public final class TransactionDescriptions {
 
     public static String internalTransferOut(String receiverUsername) {
         return "Transfer to @" + receiverUsername;
+    }
+
+    /**
+     * An InstaPay top-up, carrying the reference number off the receipt.
+     *
+     * The reference is the thread that ties a line in the wallet back to a
+     * real transfer at a real bank. Without it nobody can answer "where did
+     * this money come from" six weeks later — which is a question that gets
+     * asked precisely when it is hardest to reconstruct.
+     *
+     * There is no matching parser here, unlike the merchant and blocked
+     * markers above. Nothing in Orbit reads the reference back out of a
+     * description: the requests page reads it from the receipt row, where
+     * it is a real column. This exists so a human reading the ledger can
+     * follow the thread, and a parser with no caller would just be dead
+     * code drifting out of step.
+     */
+    public static String instapayTopUp(String referenceNumber) {
+        return "Wallet top-up" + INSTAPAY_REFERENCE_MARKER + referenceNumber;
     }
 
     /** Appends the refusal reason to whatever the attempt would have been described as. */

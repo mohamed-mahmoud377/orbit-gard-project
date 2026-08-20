@@ -4,7 +4,7 @@
       "content": {
         "parts": [
           {
-            "text": "{\"isTransferReceipt\":true,\"isSuccessful\":true,\"amount\":\"1.00\",\"amountAsShown\":\"1 EGP\",\"currency\":\"EGP\",\"referenceNumber\":null,\"recipientNameMasked\":null,\"recipientPhone\":\"01111545710\",\"transferDateTime\":null,\"note\":null}"
+            "text": "{\"isTransferReceipt\":true,\"isSuccessful\":true,\"amount\":\"1.00\",\"amountAsShown\":\"1 EGP\",\"currency\":\"EGP\",\"fees\":null,\"totalAmount\":null,\"referenceNumber\":null,\"recipientNameMasked\":\"MOHAMED M****** S*** I*****\",\"recipientPhone\":\"01111545710\",\"senderHandle\":\"jerryscb@instapay\",\"senderBank\":\"Suez Canal Bank\",\"transferDateTime\":null,\"note\":null}"
           }
         ]
       },
@@ -12,8 +12,8 @@
     }
   ],
   "usageMetadata": {
-    "promptTokenCount": 1400,
-    "candidatesTokenCount": 100,
-    "totalTokenCount": 1500
+    "promptTokenCount": 1502,
+    "candidatesTokenCount": 131,
+    "totalTokenCount": 1633
   }
 }

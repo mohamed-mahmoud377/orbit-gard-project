@@ -1,5 +1,8 @@
 package com.orbitgard.service.Impl;
 
+import com.orbitgard.dto.response.InstapayAccountResponse;
+import com.orbitgard.dto.response.InstapayRequestListResponse;
+import com.orbitgard.dto.response.InstapayRequestResponse;
 import com.orbitgard.dto.response.InstapayUploadResponse;
 import com.orbitgard.entity.InstapayTopUpRequest;
 import com.orbitgard.entity.User;
@@ -8,17 +11,20 @@ import com.orbitgard.enums.InstapayRequestStatus;
 import com.orbitgard.exceptions.ApiException;
 import com.orbitgard.exceptions.ErrorCode;
 import com.orbitgard.instapay.InstapayProperties;
+import com.orbitgard.mapper.InstapayRequestMapper;
 import com.orbitgard.repository.InstapayTopUpRequestRepository;
 import com.orbitgard.repository.UserRepository;
 import com.orbitgard.service.AuthenticatedUserService;
 import com.orbitgard.service.InstapayStorageService;
 import com.orbitgard.service.InstapayTopUpService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
@@ -31,17 +37,20 @@ public class InstapayTopUpServiceImpl implements InstapayTopUpService {
     private final InstapayStorageService storageService;
     private final InstapayProperties properties;
     private final AuthenticatedUserService authenticatedUserService;
+    private final InstapayRequestMapper requestMapper;
 
     public InstapayTopUpServiceImpl(UserRepository userRepository,
                                     InstapayTopUpRequestRepository requestRepository,
                                     InstapayStorageService storageService,
                                     InstapayProperties properties,
-                                    AuthenticatedUserService authenticatedUserService) {
+                                    AuthenticatedUserService authenticatedUserService,
+                                    InstapayRequestMapper requestMapper) {
         this.userRepository = userRepository;
         this.requestRepository = requestRepository;
         this.storageService = storageService;
         this.properties = properties;
         this.authenticatedUserService = authenticatedUserService;
+        this.requestMapper = requestMapper;
     }
 
     @Override
@@ -111,7 +120,22 @@ public class InstapayTopUpServiceImpl implements InstapayTopUpService {
                 .attemptCount(0)
                 .build();
 
-        request = requestRepository.save(request);
+        // saveAndFlush, not save: the insert has to hit the database inside
+        // this try block. Left to flush at commit, a unique-index violation
+        // would surface outside every catch here and reach the client as a
+        // 500 instead of "you have already uploaded this".
+        try {
+            request = requestRepository.saveAndFlush(request);
+        } catch (DataIntegrityViolationException e) {
+            // The existsByFileSha256 check above races: two identical
+            // uploads can both pass it and both try to insert. The unique
+            // index on file_sha256 is the guarantee, this is just how the
+            // loser is told. Same code either way — the user has uploaded
+            // this image before, and which of the two mechanisms noticed is
+            // not their concern.
+            log.info("Duplicate receipt image rejected by the unique index: userId={}", userId);
+            throw new ApiException(ErrorCode.DUPLICATE_RECEIPT_IMAGE, "file");
+        }
 
         log.info("InstaPay top-up request created in PENDING: id={}, userId={}, sha256={}",
                 request.getId(), userId, sha256);
@@ -122,5 +146,53 @@ public class InstapayTopUpServiceImpl implements InstapayTopUpService {
                 .createdAt(request.getCreatedAt())
                 .message("Receipt received and queued for processing")
                 .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public InstapayRequestListResponse listRequests() {
+        UUID userId = authenticatedUserService.currentPrincipal().userId();
+
+        List<InstapayRequestResponse> content = requestRepository
+                .findByUserIdOrderByCreatedAtDesc(userId)
+                .stream()
+                .map(requestMapper::toResponse)
+                .toList();
+
+        // Computed from the same statuses the job writes, so the polling
+        // rule and the queue cannot drift apart.
+        boolean anyUnresolved = content.stream().anyMatch(response ->
+                response.status() == InstapayRequestStatus.PENDING
+                        || response.status() == InstapayRequestStatus.PROCESSING);
+
+        return new InstapayRequestListResponse(content, anyUnresolved);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public InstapayRequestResponse getRequest(UUID requestId) {
+        UUID userId = authenticatedUserService.currentPrincipal().userId();
+
+        // Scoped by user in the query itself rather than fetched and then
+        // checked. Somebody else's request is simply not found, which is
+        // also the only thing a caller is entitled to learn about it.
+        return requestRepository.findByIdAndUserId(requestId, userId)
+                .map(requestMapper::toResponse)
+                .orElseThrow(() -> new ApiException(ErrorCode.INSTAPAY_REQUEST_NOT_FOUND));
+    }
+
+    @Override
+    public InstapayAccountResponse getAccountDetails() {
+        // Straight from configuration. Nothing here is a secret — it is
+        // exactly what the user is about to type into their bank app — but
+        // it must come from the same place the rules read it from, or the
+        // screen can tell somebody to pay a number Orbit no longer checks.
+        return new InstapayAccountResponse(
+                properties.getAccountName(),
+                properties.getAccountNumber(),
+                properties.getMinAmount(),
+                properties.getMaxAmount(),
+                properties.getMaxImageBytes()
+        );
     }
 }

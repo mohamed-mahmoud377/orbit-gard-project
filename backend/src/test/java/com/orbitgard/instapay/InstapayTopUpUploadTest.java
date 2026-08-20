@@ -7,6 +7,7 @@ import com.orbitgard.enums.AccountType;
 import com.orbitgard.enums.InstapayRequestStatus;
 import com.orbitgard.exceptions.ApiException;
 import com.orbitgard.exceptions.ErrorCode;
+import com.orbitgard.mapper.InstapayRequestMapper;
 import com.orbitgard.repository.InstapayTopUpRequestRepository;
 import com.orbitgard.repository.UserRepository;
 import com.orbitgard.security.JwtPrincipal;
@@ -19,6 +20,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.mock.web.MockMultipartFile;
 
 import javax.imageio.ImageIO;
@@ -69,7 +71,8 @@ class InstapayTopUpUploadTest {
                 requestRepository,
                 storageService,
                 properties,
-                authenticatedUserService
+                authenticatedUserService,
+                new InstapayRequestMapper()
         );
 
         parentUserId = UUID.randomUUID();
@@ -113,7 +116,7 @@ class InstapayTopUpUploadTest {
         MockMultipartFile file = new MockMultipartFile("file", "receipt.jpg", "image/jpeg", jpegBytes);
 
         when(requestRepository.existsByFileSha256(anyString())).thenReturn(false);
-        when(requestRepository.save(any(InstapayTopUpRequest.class))).thenAnswer(invocation -> {
+        when(requestRepository.saveAndFlush(any(InstapayTopUpRequest.class))).thenAnswer(invocation -> {
             InstapayTopUpRequest req = invocation.getArgument(0);
             req.setId(UUID.randomUUID());
             return req;
@@ -136,7 +139,7 @@ class InstapayTopUpUploadTest {
         MockMultipartFile file = new MockMultipartFile("file", "receipt.png", "image/png", pngBytes);
 
         when(requestRepository.existsByFileSha256(anyString())).thenReturn(false);
-        when(requestRepository.save(any(InstapayTopUpRequest.class))).thenAnswer(invocation -> {
+        when(requestRepository.saveAndFlush(any(InstapayTopUpRequest.class))).thenAnswer(invocation -> {
             InstapayTopUpRequest req = invocation.getArgument(0);
             req.setId(UUID.randomUUID());
             return req;
@@ -158,7 +161,7 @@ class InstapayTopUpUploadTest {
                 .isInstanceOf(ApiException.class)
                 .satisfies(ex -> assertThat(((ApiException) ex).getErrorCode()).isEqualTo(ErrorCode.FILE_TOO_LARGE));
 
-        verify(requestRepository, never()).save(any());
+        verify(requestRepository, never()).saveAndFlush(any());
     }
 
     @Test
@@ -171,7 +174,7 @@ class InstapayTopUpUploadTest {
                 .isInstanceOf(ApiException.class)
                 .satisfies(ex -> assertThat(((ApiException) ex).getErrorCode()).isEqualTo(ErrorCode.UNSUPPORTED_IMAGE_TYPE));
 
-        verify(requestRepository, never()).save(any());
+        verify(requestRepository, never()).saveAndFlush(any());
     }
 
     @Test
@@ -186,7 +189,27 @@ class InstapayTopUpUploadTest {
                 .isInstanceOf(ApiException.class)
                 .satisfies(ex -> assertThat(((ApiException) ex).getErrorCode()).isEqualTo(ErrorCode.DUPLICATE_RECEIPT_IMAGE));
 
-        verify(requestRepository, never()).save(any());
+        verify(requestRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    @DisplayName("A duplicate that slips past the hash check is caught by the unique index")
+    void duplicateUploadLosingTheRaceIsAlsoRejected() throws IOException {
+        // The existsByFileSha256 check races: two identical uploads can both
+        // pass it and both try to insert. The index is the guarantee — this
+        // is only about the loser being told the same thing as everyone
+        // else, rather than being handed a 500.
+        byte[] jpegBytes = createTestImageBytes("jpg");
+        MockMultipartFile file = new MockMultipartFile("file", "receipt.jpg", "image/jpeg", jpegBytes);
+
+        when(requestRepository.existsByFileSha256(anyString())).thenReturn(false);
+        when(requestRepository.saveAndFlush(any(InstapayTopUpRequest.class)))
+                .thenThrow(new DataIntegrityViolationException("uq_instapay_topup_request_file_sha256"));
+
+        assertThatThrownBy(() -> topUpService.uploadReceipt(file))
+                .isInstanceOf(ApiException.class)
+                .satisfies(ex -> assertThat(((ApiException) ex).getErrorCode())
+                        .isEqualTo(ErrorCode.DUPLICATE_RECEIPT_IMAGE));
     }
 
     @Test
@@ -202,7 +225,7 @@ class InstapayTopUpUploadTest {
                 .isInstanceOf(ApiException.class)
                 .satisfies(ex -> assertThat(((ApiException) ex).getErrorCode()).isEqualTo(ErrorCode.CHILD_CANNOT_TOP_UP));
 
-        verify(requestRepository, never()).save(any());
+        verify(requestRepository, never()).saveAndFlush(any());
     }
 
     @Test
@@ -214,6 +237,6 @@ class InstapayTopUpUploadTest {
                 .isInstanceOf(ApiException.class)
                 .satisfies(ex -> assertThat(((ApiException) ex).getErrorCode()).isEqualTo(ErrorCode.EMPTY_FILE));
 
-        verify(requestRepository, never()).save(any());
+        verify(requestRepository, never()).saveAndFlush(any());
     }
 }
