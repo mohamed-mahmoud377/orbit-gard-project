@@ -86,6 +86,7 @@ public class ReceiptReader {
             ReceiptReadFailure failure = e.getKind() == GeminiCallException.Kind.RATE_LIMITED
                     ? ReceiptReadFailure.RATE_LIMITED
                     : ReceiptReadFailure.TRANSPORT_ERROR;
+            log.warn("gemini call failed {}", e.getMessage().toString());
             log.warn("Gemini call failed after {} ms: {}", elapsed.toMillis(), failure);
             return failed(failure, GeminiUsageMetadata.builder().build(), elapsed);
         }

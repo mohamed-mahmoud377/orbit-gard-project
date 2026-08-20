@@ -5,7 +5,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Configuration
+@Slf4j
 public class GeminiConfig {
 
     /**
@@ -25,6 +28,7 @@ public class GeminiConfig {
         if (props.getReadTimeout() != null) {
             requestFactory.setReadTimeout(props.getReadTimeout());
         }
+        log.info("api key is: {}", props.getApiKey());
 
         return builder
                 .requestFactory(requestFactory)

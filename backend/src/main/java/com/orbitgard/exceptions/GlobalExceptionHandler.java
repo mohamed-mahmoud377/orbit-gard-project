@@ -71,11 +71,27 @@ public class GlobalExceptionHandler {
         return buildResponse(ErrorCode.MALFORMED_REQUEST, "The request body is missing or malformed.", request, List.of());
     }
 
-    @ExceptionHandler(MissingServletRequestParameterException.class)
-    public ResponseEntity<ErrorResponse> handleMissingParameter(MissingServletRequestParameterException ex,
+    @ExceptionHandler({MissingServletRequestParameterException.class, org.springframework.web.multipart.support.MissingServletRequestPartException.class})
+    public ResponseEntity<ErrorResponse> handleMissingParameter(Exception ex,
                                                                 HttpServletRequest request) {
+        String paramName = ex instanceof MissingServletRequestParameterException p
+                ? p.getParameterName()
+                : (ex instanceof org.springframework.web.multipart.support.MissingServletRequestPartException part
+                ? part.getRequestPartName()
+                : "parameter");
         return buildResponse(ErrorCode.MISSING_REQUEST_PARAMETER,
-                "Required request parameter '" + ex.getParameterName() + "' is missing.", request, List.of());
+                "Required request parameter or part '" + paramName + "' is missing.", request, List.of(
+                        FieldErrorResponse.builder()
+                                .field(paramName)
+                                .code(ErrorCode.MISSING_REQUEST_PARAMETER.name())
+                                .build()
+                ));
+    }
+
+    @ExceptionHandler(org.springframework.web.multipart.MultipartException.class)
+    public ResponseEntity<ErrorResponse> handleMultipartException(org.springframework.web.multipart.MultipartException ex,
+                                                                  HttpServletRequest request) {
+        return buildResponse(ErrorCode.MALFORMED_REQUEST, "Failed to parse multipart request.", request, List.of());
     }
 
     @ExceptionHandler({MethodArgumentTypeMismatchException.class, ConstraintViolationException.class})

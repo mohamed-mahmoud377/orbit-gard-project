@@ -129,7 +129,7 @@ class InstapayTopUpUploadTest {
         assertThat(response.status()).isEqualTo(InstapayRequestStatus.PENDING);
         assertThat(response.message()).contains("queued for processing");
 
-        verify(requestRepository, times(1)).save(any(InstapayTopUpRequest.class));
+        verify(requestRepository, times(1)).saveAndFlush(any(InstapayTopUpRequest.class));
     }
 
     @Test

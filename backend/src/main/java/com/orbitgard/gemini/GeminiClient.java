@@ -39,8 +39,8 @@ public class GeminiClient {
     private final ObjectMapper objectMapper;
 
     public GeminiClient(@Qualifier("geminiRestClient") RestClient restClient,
-                        GeminiProperties props,
-                        ObjectMapper objectMapper) {
+            GeminiProperties props,
+            ObjectMapper objectMapper) {
         this.restClient = restClient;
         this.props = props;
         this.objectMapper = objectMapper;
@@ -48,13 +48,16 @@ public class GeminiClient {
 
     /**
      * @throws GeminiCallException when no answer was obtained at all. A
-     *         response that arrives but says something unwelcome is not an
-     *         exception — that is the caller's to interpret.
+     *                             response that arrives but says something
+     *                             unwelcome is not an
+     *                             exception — that is the caller's to interpret.
      */
     public GeminiGenerateContentResponse generateContent(GeminiGenerateContentRequest request) {
         String body = serialize(request);
 
         String raw;
+        log.info("body is: {}", body);
+        log.info("api key is: {}", props.getApiKey());
         try {
             raw = restClient.post()
                     .uri(uriBuilder -> uriBuilder
@@ -65,6 +68,7 @@ public class GeminiClient {
                     // which will stamp text/plain if the content type is not
                     // pinned here — and the API rejects that.
                     .contentType(MediaType.APPLICATION_JSON)
+                    .header("x-goog-api-key", props.getApiKey())
                     .body(body)
                     .exchange((httpRequest, httpResponse) -> {
                         HttpStatusCode status = httpResponse.getStatusCode();
@@ -78,7 +82,7 @@ public class GeminiClient {
                             // Status only. The body echoes back the prompt,
                             // which contains somebody's bank receipt.
                             throw new GeminiCallException(GeminiCallException.Kind.TRANSPORT,
-                                    "Gemini returned " + status.value(), null);
+                                    "Gemini returned " + status.value() + "and res body is: " + text, null);
                         }
                         return text;
                     });
