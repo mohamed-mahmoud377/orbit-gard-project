@@ -29,6 +29,78 @@
   <link rel="icon" href="favicon.ico" sizes="any">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+
+  <!--
+    Boot recovery. Inline on purpose — this is the one guard that still runs
+    when the app's own bundles cannot be fetched.
+
+    Bundles are content-hashed and a deploy deletes the previous build's
+    filenames, so a browser holding a cached index.html asks for files that
+    are gone. Nginx now answers those with 404 (it used to answer with the
+    HTML page, which the browser then tried to execute as JavaScript), but
+    either way no script runs: Angular never boots, its ErrorHandler never
+    exists, and the user gets a silent white page with nothing to tap.
+
+    One reload against a fresh URL fixes it. The sessionStorage flag makes
+    that at most once per tab, so a genuinely broken deploy cannot become a
+    refresh loop.
+  -->
+  <script>
+    (function () {
+      var KEY = 'orbit.boot-recovery';
+
+      function recover(reason) {
+        try {
+          if (sessionStorage.getItem(KEY)) return;
+          sessionStorage.setItem(KEY, reason);
+        } catch (e) {
+          return; // Private mode refuses storage; never reload unguarded.
+        }
+        var url = new URL(window.location.href);
+        url.searchParams.set('_r', Date.now().toString(36));
+        window.location.replace(url.toString());
+      }
+
+      // A <script> or <link> that fails to load fires a non-bubbling error
+      // event on the element itself, so this has to listen in the capture
+      // phase. Restricted to same-origin so a Google Fonts blip cannot
+      // reload the page.
+      window.addEventListener(
+        'error',
+        function (event) {
+          var el = event.target;
+          if (!el || (el.tagName !== 'SCRIPT' && el.tagName !== 'LINK')) return;
+          var url = el.src || el.href || '';
+          if (url && url.indexOf(window.location.origin) !== 0) return;
+          recover('asset');
+        },
+        true
+      );
+
+      // Belt and braces for a bundle that loads but never renders. Only
+      // fires while <app-root> is still empty, so a slow API cannot trigger
+      // it — by then the shell has already rendered children.
+      window.addEventListener('load', function () {
+        setTimeout(function () {
+          var root = document.querySelector('app-root');
+          if (root && root.children.length === 0) recover('empty');
+        }, 10000);
+      });
+
+      // Once the app has actually painted, clear the flag so a later,
+      // unrelated failure still gets its one recovery attempt.
+      document.addEventListener('DOMContentLoaded', function () {
+        var check = setInterval(function () {
+          var root = document.querySelector('app-root');
+          if (root && root.children.length > 0) {
+            clearInterval(check);
+            try { sessionStorage.removeItem(KEY); } catch (e) { /* ignore */ }
+          }
+        }, 500);
+        setTimeout(function () { clearInterval(check); }, 30000);
+      });
+    })();
+  </script>
 </head>
 <body>
   <app-root></app-root>

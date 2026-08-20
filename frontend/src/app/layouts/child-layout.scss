@@ -120,9 +120,23 @@ main {
 
   .child-badge,
   .spacer,
-  .sign-out,
   .account {
     display: none;
+  }
+
+  // .sign-out used to be hidden here along with the rest of the desktop
+  // sidebar furniture. A child has no Settings page to fall back on — their
+  // only routes are /my-wallet and /my-activity — so hiding it left them
+  // signed in with nothing anywhere on screen to get out with. It stays,
+  // compacted onto the top bar beside the two nav icons.
+  .sign-out {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    margin-left: 10px;
+    padding: 8px 12px;
+    font-size: 13px;
+    white-space: nowrap;
   }
 
   main {

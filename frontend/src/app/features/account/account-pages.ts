@@ -17,6 +17,7 @@ import {
   toApiPhone,
   toDisplayPhone,
 } from './account-session.utils';
+import { AuthFacade } from '../auth/data-access';
 import { LoadingSpinner } from '../../shared/ui/loading-spinner';
 import { PageHeader } from '../../shared/ui/page-header';
 import { StatusView } from '../../shared/ui/status-view';
@@ -125,6 +126,27 @@ const FIGMA_JOURNEY_ACCOUNT_SECURITY = '32:156';
               </div>
               <a class="btn btn-secondary" routerLink="/settings/devices">Manage devices</a>
             </div>
+            <!--
+              Signing out of THIS device. "Manage devices" deliberately cannot
+              do it — the backend refuses with CANNOT_SIGN_OUT_CURRENT_DEVICE —
+              and the sidebar button that used to be the only way out is
+              display:none on phones, which left a signed-in mobile user with
+              no control anywhere on screen to leave.
+            -->
+            <div class="security-row">
+              <div class="security-row-copy">
+                <strong>This device</strong>
+                <p>End your session on this phone or computer.</p>
+              </div>
+              <button
+                class="btn btn-secondary"
+                type="button"
+                [disabled]="signingOutThisDevice()"
+                (click)="signOutThisDevice()"
+              >
+                {{ signingOutThisDevice() ? 'Signing out…' : 'Sign out' }}
+              </button>
+            </div>
           </aside>
         </div>
       }
@@ -135,6 +157,9 @@ const FIGMA_JOURNEY_ACCOUNT_SECURITY = '32:156';
 export default class SettingsPage implements OnInit {
   protected readonly figmaJourney = FIGMA_JOURNEY_ACCOUNT_SECURITY;
   private readonly profile = inject(ProfileFacade);
+  private readonly auth = inject(AuthFacade);
+  private readonly router = inject(Router);
+  protected readonly signingOutThisDevice = signal(false);
   protected readonly loading = signal(true);
   protected readonly loadError = signal('');
   protected readonly saving = signal(false);
@@ -147,6 +172,19 @@ export default class SettingsPage implements OnInit {
   protected email = '';
   protected phoneLocal = '';
   private snapshot = { firstName: '', lastName: '', phoneLocal: '' };
+
+  /**
+   * Mirrors the sidebar's logout: revoke the session server-side, clear it
+   * locally, then replace the current history entry so Back cannot aim at a
+   * screen this session no longer opens.
+   */
+  protected signOutThisDevice(): void {
+    if (this.signingOutThisDevice()) return;
+    this.signingOutThisDevice.set(true);
+    this.auth.logout().subscribe(() => {
+      void this.router.navigateByUrl('/auth/login', { replaceUrl: true });
+    });
+  }
 
   ngOnInit(): void {
     this.profile.getProfile().subscribe({

@@ -1,0 +1,28 @@
+/*
+  The e2e specs were not covered by any tsconfig: tsconfig.app.json includes
+  only src/**\/*.ts, tsconfig.spec.json only src/**\/*.spec.ts, and the root
+  config has "files": [] because it exists purely to hold the references.
+
+  Nothing was broken by that — Playwright transpiles specs itself, so the
+  suite ran fine — but an editor opening anything under e2e/ found a file
+  belonging to no project and reported "File is not listed within the file
+  list of project". This config gives the folder a home so the language
+  service resolves it like any other source file.
+*/
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../out-tsc/e2e",
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    // Empty, matching tsconfig.app.json. @types/node is not a dependency of
+    // this project, so naming it here would trade the original error for
+    // "Cannot find type definition file for 'node'". Everything the specs
+    // need comes from the explicit @playwright/test import.
+    "types": []
+  },
+  // Specs only. playwright.config.ts lives at the root and reads process.env,
+  // which would need @types/node — it is left to the editor's default
+  // handling rather than dragged in here.
+  "include": ["**/*.ts"]
+}

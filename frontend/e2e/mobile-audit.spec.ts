@@ -165,15 +165,20 @@ async function mockApi(page: Page): Promise<void> {
       );
     }
 
+    // NOTE the casing: /users/me is lowercase (firstname/lastname) but
+    // /profile is camelCase with phoneNumber. They are different contracts
+    // with different adapters, and getting this wrong does not fail loudly —
+    // SettingsPage.applyProfile() throws on the undefined phone before
+    // loading.set(false) runs, leaving the page on its spinner forever.
     if (path === '/profile') {
       return route.fulfill(
         json({
-          firstname: 'Mohamed',
-          lastname: 'Mahmoud Said Ibrahim',
+          firstName: 'Mohamed',
+          lastName: 'Mahmoud Said Ibrahim',
           username: 'mohamed.mahmoud.said',
           email: 'mohamed.mahmoud.said@example.com',
-          phone: '01111545710',
-          role: 'USER',
+          phoneNumber: '01111545710',
+          nonRevokedSessionCount: 2,
         }),
       );
     }
@@ -192,6 +197,23 @@ async function mockApi(page: Page): Promise<void> {
     }
 
     return route.fulfill(json({}));
+  });
+}
+
+async function seedChild(page: Page): Promise<void> {
+  await page.goto('/auth/login');
+  await page.evaluate(() => {
+    window.localStorage.setItem(
+      'orbit.auth-session.v1',
+      JSON.stringify({
+        accessToken: 'audit-access-token',
+        refreshToken: 'audit-refresh-token',
+        tokenType: 'Bearer',
+        expiresAt: Date.now() + 3_600_000,
+        rememberMe: false,
+        user: { id: '2', username: 'omar', firstName: 'Omar', lastName: 'Mahmoud', accountType: 'CHILD' },
+      }),
+    );
   });
 }
 
@@ -482,6 +504,43 @@ test.describe('iPhone layout audit @ 375px', () => {
       ).toEqual([]);
     });
   }
+
+  /**
+   * There has to be a way out on a phone.
+   *
+   * Sign out lived only in the desktop sidebar, which both layouts set to
+   * display:none on mobile — so a signed-in phone had no control anywhere on
+   * screen to leave, and "Manage devices" cannot substitute because the
+   * backend refuses to revoke the session making the request
+   * (CANNOT_SIGN_OUT_CURRENT_DEVICE).
+   */
+  test('a parent can sign out from a phone', async ({ page }) => {
+    await seedParent(page);
+    await page.goto('/settings');
+    await page.waitForLoadState('networkidle');
+
+    const signOut = page.getByRole('button', { name: 'Sign out', exact: true });
+    await expect(signOut, 'no sign-out control on the settings page').toBeVisible();
+
+    await signOut.click();
+    await expect(page).toHaveURL(/\/auth\/login/);
+    expect(
+      await page.evaluate(() => window.localStorage.getItem('orbit.auth-session.v1')),
+      'the stored session should be gone after signing out',
+    ).toBeNull();
+  });
+
+  test('a child can sign out from a phone', async ({ page }) => {
+    await seedChild(page);
+    await page.goto('/my-wallet');
+    await page.waitForLoadState('networkidle');
+
+    const signOut = page.getByRole('button', { name: 'Sign out', exact: true });
+    await expect(signOut, 'no sign-out control in the child top bar').toBeVisible();
+
+    await signOut.click();
+    await expect(page).toHaveURL(/\/auth\/login/);
+  });
 
   test('top-up InstaPay tab fits the viewport', async ({ page }) => {
     await seedParent(page);
