@@ -28,7 +28,7 @@ interface Pillar {
       <!-- ── Hero ───────────────────────────────────────────────────── -->
       <header class="hero" data-node-id="547:4">
         <nav class="wrap hero-nav" data-node-id="547:5">
-          <a class="logo" [routerLink]="[]" aria-label="Orbit home">
+          <a class="logo" routerLink="/" aria-label="Orbit home">
             <span class="logo-mark" aria-hidden="true">◎</span>
             <span class="logo-word">Orbit</span>
           </a>

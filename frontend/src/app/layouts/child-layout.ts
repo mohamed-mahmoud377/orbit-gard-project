@@ -68,8 +68,8 @@ export class ChildLayout {
 
   protected logout(): void {
     this.auth.logout().subscribe(() => {
-      // Mirrors the login navigation — see the note in parent-layout.
-      void this.router.navigateByUrl('/auth/login', { replaceUrl: true });
+      // Landing page, mirroring parent-layout — see the note there.
+      void this.router.navigateByUrl('/', { replaceUrl: true });
     });
   }
 

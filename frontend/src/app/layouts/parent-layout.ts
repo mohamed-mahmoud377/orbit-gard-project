@@ -166,10 +166,12 @@ export class ParentLayout {
 
   protected logout(): void {
     this.auth.logout().subscribe(() => {
-      // The mirror of the login navigation: replace the page being left so
-      // Back cannot aim at a screen the session no longer opens. parentGuard
-      // would refuse it anyway — this just stops the user watching it happen.
-      void this.router.navigateByUrl('/auth/login', { replaceUrl: true });
+      // Signed out means the landing page — that is the home for anyone
+      // without a session, and it is where the logo goes from every other
+      // signed-out screen. replaceUrl mirrors the login navigation, so Back
+      // cannot aim at a screen the session no longer opens; parentGuard
+      // would refuse it anyway, this just stops the user watching it happen.
+      void this.router.navigateByUrl('/', { replaceUrl: true });
     });
   }
 

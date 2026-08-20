@@ -40,7 +40,21 @@ function formatBytes(bytes: number): string {
           <div class="notice notice-danger" role="alert">{{ accountError() }}</div>
         } @else {
           <div class="instapay-details" data-node-id="448:341">
-            <p class="instapay-details-label" data-node-id="448:342">INSTAPAY MOBILE NUMBER</p>
+            <!--
+              The InstaPay mark, at the moment it is most useful: the user is
+              about to leave for their bank app and needs to be sure this is
+              the same network they are sending on.
+            -->
+            <div class="instapay-details-head">
+              <img
+                class="instapay-logo"
+                [src]="'assets/instapay-logo.png' | assetUrl"
+                alt="InstaPay"
+                width="28"
+                height="28"
+              />
+              <p class="instapay-details-label" data-node-id="448:342">INSTAPAY MOBILE NUMBER</p>
+            </div>
             <div class="instapay-number-row" data-node-id="448:343">
               <p class="instapay-number" data-node-id="448:344">
                 {{ account()?.accountNumber ?? '—' }}

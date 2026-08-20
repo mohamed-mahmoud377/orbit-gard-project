@@ -523,7 +523,9 @@ test.describe('iPhone layout audit @ 375px', () => {
     await expect(signOut, 'no sign-out control on the settings page').toBeVisible();
 
     await signOut.click();
-    await expect(page).toHaveURL(/\/auth\/login/);
+    // Signed out lands on the landing page, not the login form.
+    await expect(page).toHaveURL(/\/$|\/\?/);
+    await expect(page.locator('body')).toContainText('nothing but a username');
     expect(
       await page.evaluate(() => window.localStorage.getItem('orbit.auth-session.v1')),
       'the stored session should be gone after signing out',
@@ -539,7 +541,37 @@ test.describe('iPhone layout audit @ 375px', () => {
     await expect(signOut, 'no sign-out control in the child top bar').toBeVisible();
 
     await signOut.click();
-    await expect(page).toHaveURL(/\/auth\/login/);
+    await expect(page).toHaveURL(/\/$|\/\?/);
+    await expect(page.locator('body')).toContainText('nothing but a username');
+  });
+
+  /**
+   * The landing page is home for anyone without a session, and the logo is
+   * how you get back to it. It used to go nowhere from the auth screens (the
+   * logo was not a link at all) and the 404 page pointed at /dashboard,
+   * which a signed-out visitor cannot open.
+   */
+  for (const from of ['/auth/login', '/auth/sign-up', '/auth/forgot-password']) {
+    test(`the logo returns a signed-out visitor to the landing page from ${from}`, async ({ page }) => {
+      await page.goto('/auth/login');
+      await page.evaluate(() => window.localStorage.clear());
+      await page.goto(from);
+
+      await page.getByLabel('Orbit home').click();
+      await expect(page).toHaveURL(/\/$|\/\?/);
+      await expect(page.locator('body')).toContainText('nothing but a username');
+    });
+  }
+
+  test('an unknown URL offers a signed-out visitor the landing page', async ({ page }) => {
+    await page.goto('/auth/login');
+    await page.evaluate(() => window.localStorage.clear());
+    await page.goto('/this-route-does-not-exist');
+
+    const cta = page.getByRole('link', { name: 'Back to Orbit' });
+    await expect(cta, '404 should not send a signed-out visitor to /dashboard').toBeVisible();
+    await cta.click();
+    await expect(page.locator('body')).toContainText('nothing but a username');
   });
 
   test('top-up InstaPay tab fits the viewport', async ({ page }) => {

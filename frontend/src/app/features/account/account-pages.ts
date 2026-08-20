@@ -176,13 +176,14 @@ export default class SettingsPage implements OnInit {
   /**
    * Mirrors the sidebar's logout: revoke the session server-side, clear it
    * locally, then replace the current history entry so Back cannot aim at a
-   * screen this session no longer opens.
+   * screen this session no longer opens. Lands on the landing page, which is
+   * home for anyone without a session.
    */
   protected signOutThisDevice(): void {
     if (this.signingOutThisDevice()) return;
     this.signingOutThisDevice.set(true);
     this.auth.logout().subscribe(() => {
-      void this.router.navigateByUrl('/auth/login', { replaceUrl: true });
+      void this.router.navigateByUrl('/', { replaceUrl: true });
     });
   }
 

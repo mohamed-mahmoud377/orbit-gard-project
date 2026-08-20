@@ -41,6 +41,23 @@
   background: var(--accent-wash);
 }
 
+.instapay-details-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+// The source is the InstaPay app icon — a white rounded square. The border
+// keeps it from dissolving into the pale accent-wash panel behind it.
+.instapay-logo {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 7px;
+  background: #fff;
+}
+
 .instapay-details-label {
   margin: 0;
   font-size: 11px;

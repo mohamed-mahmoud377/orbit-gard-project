@@ -1,5 +1,7 @@
 import { Component, input, output } from '@angular/core';
 
+import { AssetUrlPipe } from '../../../core/asset-url';
+
 export type TopUpMethod = 'paymob' | 'instapay';
 
 /**
@@ -11,6 +13,7 @@ export type TopUpMethod = 'paymob' | 'instapay';
  */
 @Component({
   selector: 'app-top-up-method-selector',
+  imports: [AssetUrlPipe],
   template: `
     <div class="method-selector" role="tablist" aria-label="Top-up method" data-node-id="448:335">
       <button
@@ -33,6 +36,14 @@ export type TopUpMethod = 'paymob' | 'instapay';
         (click)="select('instapay')"
         data-node-id="448:338"
       >
+        <img
+          class="method-mark"
+          [src]="'assets/instapay-logo.png' | assetUrl"
+          alt=""
+          aria-hidden="true"
+          width="16"
+          height="16"
+        />
         InstaPay transfer
       </button>
     </div>

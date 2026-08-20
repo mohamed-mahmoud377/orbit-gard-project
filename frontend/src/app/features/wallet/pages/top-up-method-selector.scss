@@ -18,8 +18,21 @@
   background: var(--bg-raised);
 }
 
+// Small enough to read as a mark rather than an app icon, and decorative —
+// the label beside it already names the method, so it is aria-hidden.
+.method-mark {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  vertical-align: -3px;
+  margin-right: 6px;
+}
+
 .method-segment {
   flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   height: 36px;
   border: 1px solid transparent;
   border-radius: 9px;

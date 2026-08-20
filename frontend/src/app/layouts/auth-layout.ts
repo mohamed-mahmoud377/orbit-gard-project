@@ -1,16 +1,23 @@
 import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { RouterLink, RouterOutlet } from '@angular/router';
 import { AssetUrlPipe } from '../core/asset-url';
 import { OrbitLogo } from '../shared/ui/orbit-logo';
 
 @Component({
   selector: 'app-auth-layout',
-  imports: [RouterOutlet, OrbitLogo, AssetUrlPipe],
+  imports: [RouterOutlet, RouterLink, OrbitLogo, AssetUrlPipe],
   template: `
     <main class="auth-shell">
       <section class="brand-panel" aria-label="Orbit">
         <div class="brand-content">
-          <app-orbit-logo />
+          <!--
+            The way back out of the auth screens. Anyone looking at this
+            layout is signed out by definition — guestGuard sends everyone
+            else to their dashboard — so the logo goes to the landing page.
+          -->
+          <a class="brand-logo-link" routerLink="/" aria-label="Orbit home">
+            <app-orbit-logo />
+          </a>
           <h1>Your money moves around you.</h1>
           <p>One wallet, and the people you are responsible for orbiting your rules.</p>
         </div>
