@@ -405,6 +405,7 @@ async function smallTapTargets(page: Page) {
 }
 
 const ROUTES: readonly { name: string; path: string; ready: string; guest?: boolean }[] = [
+  { name: 'landing', path: '/', ready: 'nothing but a username', guest: true },
   { name: 'login', path: '/auth/login', ready: 'Welcome back', guest: true },
   { name: 'sign-up', path: '/auth/sign-up', ready: 'Orbit', guest: true },
   { name: 'forgot-password', path: '/auth/forgot-password', ready: 'Orbit', guest: true },
