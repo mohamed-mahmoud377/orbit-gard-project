@@ -32,6 +32,10 @@ spring:
           auth: true
           starttls:
             enable: true
+  servlet:
+    multipart:
+      max-file-size: 2MB        # NOT 1MB — see the trap below
+      max-request-size: 4MB
 
 app:
   frontend:
@@ -68,3 +72,23 @@ orbitgard:
     payment-method-ids: ${PAYMOB_PAYMENT_METHOD_IDS:}
     connect-timeout: PT5S
     read-timeout: PT20S
+  instapay:
+    account-name: ${INSTAPAY_ACCOUNT_NAME:Mohamed Mahmoud Said}
+    account-number: ${INSTAPAY_ACCOUNT_NUMBER:01111545710}
+    uploads-dir: ${ORBIT_UPLOADS_DIR:uploads}
+    max-image-bytes: 1048576    # the 1 MB the user is told about
+    min-amount: 0.01
+    max-amount: 70000.00
+    receipt-max-age-days: 7
+    job:
+      enabled: true
+      fixed-delay: 30s
+      batch-size: 5             # see the rate-limit note in section 7
+      max-attempts: 3
+
+gemini:
+  api-key: ${GEMINI_API_KEY}
+  model: gemini-3.1-flash-lite
+  base-url: https://generativelanguage.googleapis.com
+  connect-timeout: 5s
+  read-timeout: 30s

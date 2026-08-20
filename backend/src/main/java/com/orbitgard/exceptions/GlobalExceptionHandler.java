@@ -22,6 +22,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 /**
  * Single place that converts every error the Identity module can produce -
@@ -54,27 +55,43 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<ErrorResponse> handleMethodNotAllowed(HttpRequestMethodNotSupportedException ex,
-                                                                  HttpServletRequest request) {
+                                                                HttpServletRequest request) {
         return buildResponse(ErrorCode.METHOD_NOT_ALLOWED, "This HTTP method is not supported for the requested resource.", request, List.of());
     }
 
     @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
     public ResponseEntity<ErrorResponse> handleUnsupportedMediaType(HttpMediaTypeNotSupportedException ex,
-                                                                      HttpServletRequest request) {
+                                                                    HttpServletRequest request) {
         return buildResponse(ErrorCode.UNSUPPORTED_MEDIA_TYPE, "Use a supported Content-Type for this request.", request, List.of());
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handleMalformedRequest(HttpMessageNotReadableException ex,
-                                                                  HttpServletRequest request) {
+                                                                HttpServletRequest request) {
         return buildResponse(ErrorCode.MALFORMED_REQUEST, "The request body is missing or malformed.", request, List.of());
     }
 
-    @ExceptionHandler(MissingServletRequestParameterException.class)
-    public ResponseEntity<ErrorResponse> handleMissingParameter(MissingServletRequestParameterException ex,
-                                                                  HttpServletRequest request) {
+    @ExceptionHandler({MissingServletRequestParameterException.class, org.springframework.web.multipart.support.MissingServletRequestPartException.class})
+    public ResponseEntity<ErrorResponse> handleMissingParameter(Exception ex,
+                                                                HttpServletRequest request) {
+        String paramName = ex instanceof MissingServletRequestParameterException p
+                ? p.getParameterName()
+                : (ex instanceof org.springframework.web.multipart.support.MissingServletRequestPartException part
+                ? part.getRequestPartName()
+                : "parameter");
         return buildResponse(ErrorCode.MISSING_REQUEST_PARAMETER,
-                "Required request parameter '" + ex.getParameterName() + "' is missing.", request, List.of());
+                "Required request parameter or part '" + paramName + "' is missing.", request, List.of(
+                        FieldErrorResponse.builder()
+                                .field(paramName)
+                                .code(ErrorCode.MISSING_REQUEST_PARAMETER.name())
+                                .build()
+                ));
+    }
+
+    @ExceptionHandler(org.springframework.web.multipart.MultipartException.class)
+    public ResponseEntity<ErrorResponse> handleMultipartException(org.springframework.web.multipart.MultipartException ex,
+                                                                  HttpServletRequest request) {
+        return buildResponse(ErrorCode.MALFORMED_REQUEST, "Failed to parse multipart request.", request, List.of());
     }
 
     @ExceptionHandler({MethodArgumentTypeMismatchException.class, ConstraintViolationException.class})
@@ -95,9 +112,9 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleApiException(ApiException ex, HttpServletRequest request) {
         List<FieldErrorResponse> fieldErrors = ex.getField() != null
                 ? List.of(FieldErrorResponse.builder()
-                        .field(ex.getField())
-                        .code(ex.getErrorCode().name())
-                        .build())
+                .field(ex.getField())
+                .code(ex.getErrorCode().name())
+                .build())
                 : List.of();
 
         return buildResponse(ex.getErrorCode(), ex.getErrorCode().name(), request, fieldErrors);
@@ -109,9 +126,34 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(ValidationException.class)
     public ResponseEntity<ErrorResponse> handleValidationException(ValidationException ex,
-                                                                    HttpServletRequest request) {
+                                                                   HttpServletRequest request) {
         return buildResponse(ErrorCode.VALIDATION_ERROR, "One or more fields failed validation.",
                 request, ex.getFieldErrors());
+    }
+
+    /**
+     * A file bigger than Spring's own multipart limit (TECH-003 section 3).
+     *
+     * The InstaPay upload endpoint enforces the real 1 MB limit itself, so
+     * that the user reads Orbit's wording rather than a container error.
+     * But Spring's limit sits in front of it and is deliberately set
+     * higher, and anything above THAT is rejected before a single line of
+     * application code runs. Without this handler the catch-all below turns
+     * it into a 500 "Something went wrong", which is the one thing a
+     * too-large file is definitely not.
+     *
+     * Same code as the 1 MB check, because from the user's side it is the
+     * same problem: their picture is too big. They do not need to know
+     * which of two limits caught it.
+     */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handleUploadTooLarge(MaxUploadSizeExceededException ex,
+                                                              HttpServletRequest request) {
+        return buildResponse(ErrorCode.FILE_TOO_LARGE, ErrorCode.FILE_TOO_LARGE.name(), request,
+                List.of(FieldErrorResponse.builder()
+                        .field("file")
+                        .code(ErrorCode.FILE_TOO_LARGE.name())
+                        .build()));
     }
 
     /**

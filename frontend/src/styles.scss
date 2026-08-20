@@ -4,6 +4,9 @@
 @use 'components';
 @use 'utilities';
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+// 800 is for the landing page headlines, which the design sets in Inter Extra
+// Bold. Without it the browser synthesises the weight from 700 — no error and
+// no warning, just headlines quietly lighter and narrower than the design.
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 @include meta.load-css('tailwindcss');

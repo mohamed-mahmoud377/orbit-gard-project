@@ -63,6 +63,16 @@ services:
       DB_PASSWORD: ${POSTGRES_PASSWORD}
       SERVER_PORT: "8080"
       SPRING_PROFILES_ACTIVE: prod
+      # Where uploaded InstaPay receipts live (TECH-003 section 3). Must point
+      # at the mounted volume below and never at a path inside the image:
+      # without the volume every stored receipt disappears on the next
+      # container rebuild, and nobody notices until the day it matters.
+      ORBIT_UPLOADS_DIR: /var/orbit/uploads
+      # GEMINI_API_KEY comes from /root/orbit/.env through env_file above. It
+      # is never written here, and it is sent as a header rather than a query
+      # parameter so it stays out of access logs and stack traces.
+    volumes:
+      - orbit-uploads:/var/orbit/uploads
     ports:
       - "8080:8080"
     healthcheck:
@@ -141,3 +151,5 @@ services:
 
 volumes:
   orbit-db-data:
+  # Uploaded receipt images. Named, so `docker compose down && up` keeps them.
+  orbit-uploads:

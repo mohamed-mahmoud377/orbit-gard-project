@@ -35,6 +35,8 @@ import {
   bannerMessageFromPaymentError,
   bannerMessageFromWalletError,
 } from './data-access';
+import { InstapayTopUpSection } from './pages/instapay-top-up.section';
+import { TopUpMethod, TopUpMethodSelector } from './pages/top-up-method-selector';
 import { isRecipientReadyForSend } from './send-recipient.validation';
 
 function signedAmount(transaction: Transaction): number {
@@ -179,13 +181,17 @@ type TopUpStage = 'form' | 'redirecting';
 
 @Component({
   selector: 'app-top-up-page',
-  imports: [DecimalPipe, FormsModule, PageHeader, StatusView],
+  imports: [
+    DecimalPipe,
+    FormsModule,
+    PageHeader,
+    StatusView,
+    TopUpMethodSelector,
+    InstapayTopUpSection,
+  ],
   template: `
     <section class="page stack" data-node-id="11:2">
-      <app-page-header
-        title="Top up your wallet"
-        subtitle="Add money through Paymob. The exact amount you pay lands in your wallet."
-      />
+      <app-page-header title="Top up your wallet" [subtitle]="subtitle()" />
 
       @switch (stage()) {
         @case ('redirecting') {
@@ -198,8 +204,20 @@ type TopUpStage = 'form' | 'redirecting';
           </div>
         }
         @default {
+          @if (method() === 'instapay') {
+            <app-instapay-top-up>
+              <app-top-up-method-selector
+                [method]="method()"
+                (methodChange)="method.set($event)"
+              />
+            </app-instapay-top-up>
+          } @else {
           <div class="feature-grid">
             <article class="card panel amount-entry">
+              <app-top-up-method-selector
+                [method]="method()"
+                (methodChange)="method.set($event)"
+              />
               <div>
                 <h2>How much would you like to add?</h2>
                 <p class="muted" id="top-up-amount-hint">Minimum EGP 50.00 · Maximum EGP 20,000.00</p>
@@ -300,6 +318,7 @@ type TopUpStage = 'form' | 'redirecting';
               </div>
             </aside>
           </div>
+          }
         }
       }
     </section>
@@ -308,6 +327,12 @@ type TopUpStage = 'form' | 'redirecting';
 })
 export class TopUpPage {
   private readonly payments = inject(PaymentFacade);
+  protected readonly method = signal<TopUpMethod>('paymob');
+  protected readonly subtitle = computed(() =>
+    this.method() === 'instapay'
+      ? 'Send us an InstaPay transfer and upload the confirmation. We read it and credit your wallet.'
+      : 'Add money through Paymob. The exact amount you pay lands in your wallet.',
+  );
   protected readonly stage = signal<TopUpStage>('form');
   protected readonly submitting = signal(false);
   protected readonly error = signal('');

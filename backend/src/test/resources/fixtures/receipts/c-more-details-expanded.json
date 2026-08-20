@@ -1,0 +1,19 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": "{\"isTransferReceipt\":true,\"isSuccessful\":true,\"amount\":\"1.00\",\"amountAsShown\":\"1 EGP\",\"currency\":\"EGP\",\"fees\":\"0.50\",\"totalAmount\":\"1.50\",\"referenceNumber\":\"208665771080\",\"recipientNameMasked\":\"MOHAMED M****** S*** I*****\",\"recipientPhone\":\"01111545710\",\"senderHandle\":\"jerryscb@instapay\",\"senderBank\":\"Suez Canal Bank\",\"transferDateTime\":\"2026-08-17T20:33:00\",\"note\":\"Living Expenses\"}"
+          }
+        ]
+      },
+      "finishReason": "STOP"
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 1450,
+    "candidatesTokenCount": 148,
+    "totalTokenCount": 1598
+  }
+}

@@ -1,0 +1,45 @@
+// Figma node 448:335 — 44px track, 36px segments, 4px inset.
+
+// Both hosts that project this — the Paymob card (grid) and the InstaPay card
+// (flex) — would blockify an inline host anyway, but relying on that means the
+// control silently collapses the day either card changes layout.
+:host {
+  display: block;
+  width: 100%;
+}
+
+.method-selector {
+  display: flex;
+  gap: 4px;
+  width: 100%;
+  height: 44px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--bg-raised);
+}
+
+.method-segment {
+  flex: 1;
+  height: 36px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 16px;
+  color: var(--text-muted);
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 1px;
+  }
+}
+
+.method-segment-active {
+  border-color: var(--border-subtle);
+  background: var(--bg-surface);
+  font-weight: 600;
+  color: var(--text-primary);
+}

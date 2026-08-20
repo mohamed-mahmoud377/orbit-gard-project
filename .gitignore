@@ -26,7 +26,16 @@ node_modules/
 Thumbs.db
 
 # Environment
+#
+# Every real secret in this repo arrives through one of these: DB_PASSWORD,
+# JWT_SECRET, GEMINI_API_KEY, PAYMOB_SECRET_KEY, GMAIL_APP_PASSWORD.
+# The .example templates are the documented shape and stay tracked.
 .env
+.env.*
+*.env
+!.env.example
+!.env*.example
+!*.env.example
 .env.local
 *.local
 
@@ -34,3 +43,34 @@ Thumbs.db
 
 # Catalog builder cache (regenerate with shop/tools/build-catalog.mjs)
 shop/tools/.cache/
+
+# ─────────────────────────────────────────────────────────────────────────
+# Uploaded InstaPay receipts — NEVER COMMIT
+#
+# InstapayStorageService writes every uploaded receipt to
+# orbitgard.instapay.uploads-dir as {yyyy}/{MM}/{uuid}.{png|jpg}. In Docker
+# that is a named volume (/var/orbit/uploads, see backend/deploy/
+# docker-compose.yml), which is outside the repo and therefore safe.
+#
+# Running the backend locally is the dangerous case: ORBIT_UPLOADS_DIR
+# defaults to the relative path "uploads", so it lands next to wherever you
+# started the process — usually backend/uploads/ or ./uploads/. Those files
+# are real screenshots of real bank transfers, carrying account holder
+# names, masked recipient names, phone numbers, amounts and bank reference
+# numbers. One `git add .` after a test session publishes all of it.
+uploads/
+backend/uploads/
+receipts/
+
+# Local test fixtures — put throwaway receipt screenshots here
+scratch/
+
+# Test + report output
+test-results/
+playwright-report/
+coverage/
+.angular/cache/
+
+# Patch/merge leftovers
+*.orig
+*.rej

@@ -32,6 +32,27 @@ textarea {
   font: inherit;
 }
 
+// iOS Safari zooms the viewport in whenever a focused text field renders
+// below 16px — and it does not zoom back out afterwards, so the rest of the
+// app is left oversized and scrolling sideways until the user pinches it
+// back. `font: inherit` above hands every control the 14px body size, which
+// means every field on every form in this app triggers it.
+//
+// 16px on the control is the only thing Safari accepts; there is no opt-out
+// short of `maximum-scale=1` on the viewport meta, which would also block
+// deliberate pinch-zoom and is an accessibility failure.
+//
+// Scoped to narrow viewports so the desktop type scale is untouched, and to
+// text-entry controls only — a checkbox cannot be typed into and never
+// triggers the zoom.
+@media (max-width: 640px) {
+  input:not([type='checkbox']):not([type='radio']):not([type='button']):not([type='submit']),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
 button,
 a {
   -webkit-tap-highlight-color: transparent;

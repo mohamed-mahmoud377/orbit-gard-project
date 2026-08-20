@@ -139,13 +139,18 @@ export default class LoginPage {
     this.auth.login(value).subscribe({
       next: (response) => {
         this.submitting.set(false);
+        // replaceUrl, so the login screen is overwritten in history rather
+        // than pushed behind the destination. guestGuard turns a Back press
+        // away regardless, but a redirect the user can watch flicker is a
+        // worse answer than a history entry that was never created.
         const returnUrl = sanitizeReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl'));
         if (returnUrl) {
-          void this.router.navigateByUrl(returnUrl);
+          void this.router.navigateByUrl(returnUrl, { replaceUrl: true });
           return;
         }
         void this.router.navigateByUrl(
           response.user.accountType === 'CHILD' ? '/my-wallet' : '/dashboard',
+          { replaceUrl: true },
         );
       },
       error: (error: unknown) => {

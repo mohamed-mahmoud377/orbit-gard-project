@@ -12,6 +12,12 @@ spring:
   mail:
     host: localhost
     port: 3025
+    # Present only so the ${GMAIL_*} placeholders in the main application.yml
+    # resolve. A placeholder with no default and no value is not "empty" —
+    # it stops the context starting, which fails every @SpringBootTest for a
+    # reason that has nothing to do with what is being tested.
+    username: test@example.com
+    password: test-app-password
 
 app:
   frontend:
@@ -22,3 +28,23 @@ app:
 orbitgard:
   jwt:
     secret: test-jwt-secret-at-least-32-characters-long
+  paymob:
+    secret-key: test-paymob-secret
+    public-key: test-paymob-public
+  instapay:
+    # A temp directory, never a real one. Nothing in the suite writes a
+    # receipt to a path anyone shares.
+    uploads-dir: ${java.io.tmpdir}/orbit-test-uploads
+    job:
+      # Off. @EnableScheduling is on a configuration class, so any test that
+      # loads the full context would otherwise start draining the queue
+      # against H2 in the background — and the first thing that job does
+      # when it finds a row is call Gemini for real.
+      enabled: false
+
+gemini:
+  # Present so the context can start. Deliberately not a working key: a test
+  # that reaches the network is a test that spends money, and every receipt
+  # test in this suite runs against a stored envelope instead.
+  api-key: test-gemini-key-not-a-real-one
+  base-url: http://localhost:1

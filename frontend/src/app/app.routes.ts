@@ -2,7 +2,16 @@ import { Routes } from '@angular/router';
 import { childGuard, guestGuard, parentGuard } from './core/guards';
 
 export const routes: Routes = [
-  { path: '', pathMatch: 'full', redirectTo: 'auth/login' },
+  // The marketing landing page is the front door. guestGuard is the same one
+  // the /auth screens use, so a signed-in visitor who types the bare domain
+  // lands on their dashboard rather than on a page inviting them to sign up.
+  {
+    path: '',
+    pathMatch: 'full',
+    canActivate: [guestGuard],
+    title: 'Orbit · A digital wallet built for Egypt',
+    loadComponent: () => import('./features/marketing/landing.page'),
+  },
   {
     path: 'auth',
     canActivate: [guestGuard],
@@ -83,6 +92,14 @@ export const routes: Routes = [
         title: 'Top up · Orbit',
         loadComponent: () =>
           import('./features/wallet/wallet-pages').then((module) => module.TopUpPage),
+      },
+      {
+        path: 'top-up/instapay/requests',
+        title: 'InstaPay requests · Orbit',
+        loadComponent: () =>
+          import('./features/wallet/pages/instapay-requests.page').then(
+            (module) => module.InstapayRequestsPage,
+          ),
       },
       {
         path: 'send',
