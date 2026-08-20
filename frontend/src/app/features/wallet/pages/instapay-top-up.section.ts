@@ -1,6 +1,6 @@
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 import { AssetUrlPipe } from '../../../core/asset-url';
 import { formatMoney } from '../../../shared/utils/money';
@@ -140,15 +140,6 @@ function formatBytes(bytes: number): string {
           <div class="notice notice-danger" role="alert">{{ error() }}</div>
         }
 
-        @if (uploaded()) {
-          <div class="notice notice-info instapay-uploaded" role="status">
-            <p>{{ INSTAPAY_MESSAGES.uploadAccepted }}</p>
-            <a class="instapay-link" routerLink="/top-up/instapay/requests">
-              View your InstaPay requests&nbsp;&nbsp;→
-            </a>
-          </div>
-        }
-
         <button
           class="btn btn-primary instapay-submit"
           type="button"
@@ -226,6 +217,7 @@ function formatBytes(bytes: number): string {
 export class InstapayTopUpSection {
   private readonly instapay = inject(InstapayFacade);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly router = inject(Router);
 
   protected readonly INSTAPAY_MESSAGES = INSTAPAY_MESSAGES;
   protected readonly acceptAttr = INSTAPAY_ACCEPTED_TYPES.join(',');
@@ -237,7 +229,6 @@ export class InstapayTopUpSection {
   protected readonly previewUrl = signal('');
   protected readonly dragging = signal(false);
   protected readonly submitting = signal(false);
-  protected readonly uploaded = signal(false);
   protected readonly error = signal('');
   protected readonly copied = signal(false);
 
@@ -328,7 +319,6 @@ export class InstapayTopUpSection {
     if (!file || this.submitting()) return;
 
     this.error.set('');
-    this.uploaded.set(false);
     this.submitting.set(true);
 
     this.instapay
@@ -337,8 +327,15 @@ export class InstapayTopUpSection {
       .subscribe({
         next: () => {
           this.submitting.set(false);
-          this.uploaded.set(true);
           this.clearFile();
+          // Straight to the requests page. The 202 means the row is already
+          // committed as PENDING, so it is on the list by the time that page
+          // makes its first call — and because it is unresolved, the
+          // one-second refresh starts on arrival without being asked. The
+          // new row appearing at the top reading "Waiting to be read" is the
+          // upload confirmation; a banner here would say the same thing on a
+          // screen the user is about to leave.
+          void this.router.navigate(['/top-up/instapay/requests']);
         },
         error: (err: unknown) => {
           this.submitting.set(false);
@@ -359,8 +356,6 @@ export class InstapayTopUpSection {
    * only makes the obvious mistakes free.
    */
   private acceptFile(file: File | null): void {
-    this.uploaded.set(false);
-
     if (!file) {
       return;
     }

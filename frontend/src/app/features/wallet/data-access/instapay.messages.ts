@@ -21,7 +21,6 @@ export const INSTAPAY_MESSAGES = {
   networkError: 'We could not reach Orbit. Check your connection and try again.',
   unexpected: 'Something went wrong. Try again in a moment.',
 
-  uploadAccepted: 'Receipt received. We are checking it now — watch its status below.',
   accountUnavailable:
     'We could not load the InstaPay number right now. Refresh the page before sending a transfer.',
   numberCopied: 'Copied',
