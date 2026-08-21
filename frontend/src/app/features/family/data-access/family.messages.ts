@@ -9,6 +9,10 @@ export const FAMILY_MESSAGES = {
   loadChildError: 'We could not load this child wallet right now. Please try again shortly.',
   loadActivityError: 'We could not load activity right now. Please try again shortly.',
   childNotFound: 'Child wallet not found.',
+  // Second person: these are what a child reads about their own wallet, so
+  // they never say "child wallet" the way the parent-facing copy above does.
+  loadMyWalletError: 'We could not load your wallet right now. Please try again shortly.',
+  loadMyActivityError: 'We could not load your activity right now. Please try again shortly.',
   limitsUpdated: 'Limits updated.',
   limitsSaveFailed: 'We could not save these limits. Please try again.',
   fundSuccess: 'Money added to the child wallet.',

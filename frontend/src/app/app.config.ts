@@ -8,7 +8,7 @@ import { authBearerInterceptor } from './core/auth/auth-bearer.interceptor';
 import { ChunkLoadErrorHandler } from './core/chunk-load-error.handler';
 import { provideAuthGateway } from './features/auth/data-access';
 import { providePasswordGateway, provideProfileGateway, provideSessionGateway } from './features/account/data-access';
-import { provideFamilyGateway } from './features/family/data-access';
+import { provideChildSelfGateway, provideFamilyGateway } from './features/family/data-access';
 import { provideInstapayGateway, providePaymentGateway, provideWalletGateway } from './features/wallet/data-access';
 
 export const appConfig: ApplicationConfig = {
@@ -25,6 +25,7 @@ export const appConfig: ApplicationConfig = {
     provideInstapayGateway(),
     provideWalletGateway(),
     provideFamilyGateway(),
+    provideChildSelfGateway(),
     provideProfileGateway(),
     providePasswordGateway(),
     provideSessionGateway(),

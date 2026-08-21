@@ -269,6 +269,31 @@
   padding: 14px 16px;
 }
 
+.pending-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.pending-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--family-wash);
+}
+
+.pending-copy {
+  display: grid;
+
+  small {
+    color: var(--muted);
+  }
+}
+
 @include mixins.respond-to(2xl) {
   .detail-layout {
     grid-template-columns: 1fr;

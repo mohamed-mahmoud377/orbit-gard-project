@@ -67,11 +67,14 @@ export interface BackendFamilyChildDetailResponse {
   readonly limits: BackendFamilyChildDetailLimitsResponse;
 }
 
+export type BackendTransactionDirection = 'DEBIT' | 'CREDIT';
+
 export interface BackendChildTransactionResponse {
   readonly id: string;
   readonly merchant?: string | null;
   readonly reference?: string | null;
   readonly channel?: string | null;
+  readonly transactionDirection?: BackendTransactionDirection | null;
   readonly amount: number | string;
   readonly status: string;
   readonly reason?: string | null;
@@ -197,15 +200,33 @@ function channelLabel(channel: string | null | undefined): string {
   return CHANNEL_LABELS[channel] ?? channel;
 }
 
+/**
+ * The list renders the sign off the amount, but the server sends the ledger
+ * amount unsigned and keeps the direction in its own field (see
+ * FamilyMapper#toChildTransactionResponse). Deriving the sign here is what
+ * stops every debit from rendering as a credit. The fallback covers a payload
+ * that arrives without a direction, where the raw sign is all there is.
+ */
+export function signedChildAmountMinor(body: BackendChildTransactionResponse): number {
+  const amountMinor = majorUnitsToMinor(body.amount);
+  switch (body.transactionDirection) {
+    case 'DEBIT':
+      return -Math.abs(amountMinor);
+    case 'CREDIT':
+      return Math.abs(amountMinor);
+    default:
+      return amountMinor;
+  }
+}
+
 export function normalizeChildTransaction(
   body: BackendChildTransactionResponse,
 ): TransactionListItem {
-  const amountMinor = majorUnitsToMinor(body.amount);
   return {
     id: body.id,
     title: body.merchant?.trim() || channelLabel(body.channel),
     subtitle: body.reference?.trim() || body.channel || '',
-    amount: amountMinor,
+    amount: signedChildAmountMinor(body),
     status: body.status.toUpperCase(),
     createdAt: body.occurredAt,
   };

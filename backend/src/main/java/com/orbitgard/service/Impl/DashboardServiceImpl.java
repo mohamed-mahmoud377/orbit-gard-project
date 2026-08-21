@@ -8,6 +8,7 @@ import com.orbitgard.service.AuthenticatedUserService;
 import com.orbitgard.service.DashboardService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.NoSuchElementException;
 import java.util.UUID;
@@ -26,7 +27,15 @@ public class DashboardServiceImpl implements DashboardService {
         this.userRepository = userRepository;
         this.authenticatedUserService = authenticatedUserService;
     }
+
+    /**
+     * Transactional because of the parent read below: User#parent is LAZY and
+     * open-session-in-view is off, so touching it outside a transaction throws
+     * LazyInitializationException. Only a CHILD reaches that branch, which is
+     * why this failed for children alone while parents were served fine.
+     */
     @Override
+    @Transactional(readOnly = true)
     public UserProfileResponse getCurrentUser() {
 
         UUID userId = authenticatedUserService.currentPrincipal().userId();

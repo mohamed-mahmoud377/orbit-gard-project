@@ -125,7 +125,10 @@ describe('HttpFamilyGateway', () => {
           merchant: 'School canteen',
           reference: 'TXN-001',
           channel: '/pay',
-          amount: '-50.00',
+          // The server sends the ledger amount unsigned and puts the sign in
+          // transactionDirection — the list gets its minus from here.
+          transactionDirection: 'DEBIT',
+          amount: '50.00',
           status: 'COMPLETED',
           reason: null,
           occurredAt: '2026-08-01T12:00:00Z',

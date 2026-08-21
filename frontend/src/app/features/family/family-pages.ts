@@ -4,8 +4,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map, switchMap } from 'rxjs';
 import { AssetUrlPipe } from '../../core/asset-url';
-import { DemoStore } from '../../data-access';
-import { Transaction } from '../../shared/models';
+import { AuthFacade } from '../auth/data-access';
 import { LoadingSpinner } from '../../shared/ui/loading-spinner';
 import { PageHeader } from '../../shared/ui/page-header';
 import { StatusView } from '../../shared/ui/status-view';
@@ -22,7 +21,12 @@ import {
 } from '../wallet/data-access';
 import {
   bannerMessageFromFamilyError,
+  dailyResetLabel,
   fieldErrorsFromFamilyApi,
+  monthlyResetLabel,
+  ChildActivitySummary,
+  ChildSelfFacade,
+  ChildWalletSnapshot,
   FamilyApiError,
   FamilyChildCard,
   FamilyChildDetail,
@@ -41,18 +45,6 @@ import {
   statusLabel,
   statusPillClass,
 } from './family-limit.utils';
-
-function childActivityItem(transaction: Transaction): TransactionListItem {
-  const positive = transaction.type === 'transfer-in' || transaction.type === 'top-up';
-  return {
-    id: transaction.id,
-    title: transaction.title,
-    subtitle: transaction.subtitle,
-    amount: positive ? transaction.amountMinor : -transaction.amountMinor,
-    status: transaction.status === 'completed' ? 'COMPLETED' : transaction.status.toUpperCase(),
-    createdAt: transaction.occurredAt,
-  };
-}
 
 function majorFromInput(value: string): number {
   return parseMoney(value) / 100;
@@ -805,67 +797,291 @@ export class AddChildPage {
 
 @Component({
   selector: 'app-child-wallet-page',
-  imports: [RouterLink, PageHeader, TransactionList, AssetUrlPipe],
+  imports: [RouterLink, PageHeader, TransactionList, LoadingSpinner, StatusView, AssetUrlPipe],
   template: `
     <section class="page stack" data-node-id="31:2">
-      <app-page-header
-        [title]="'Hi ' + (store.currentUser()?.fullName?.split(' ')?.[0] ?? 'Youssef')"
-        subtitle="Mohamed adds money to your wallet. You cannot add money or send it to other people."
-      />
-      <article class="hero-child">
-        <div>
-          <span class="overline">You can spend</span>
-          <h2 class="amount">{{ money(store.wallet()?.availableMinor ?? 0) }}</h2>
-          <p>
-            Money in your wallet {{ money(store.wallet()?.totalMinor ?? 0) }} · Being checked
-            {{ money(store.wallet()?.heldMinor ?? 0) }}
-          </p>
+      <app-page-header [title]="greeting()" [subtitle]="fundingNote()" />
+      @if (loading()) {
+        <div class="page-center">
+          <app-loading-spinner label="Loading your wallet…" />
         </div>
-        <img [src]="'assets/child-orbit-graphic.svg' | assetUrl" alt="" aria-hidden="true" />
-      </article>
-      <div class="restriction">
-        Your parent funds this wallet. Direct top-ups and transfers are not available.
-      </div>
-      <div class="detail-layout">
-        <section class="card panel stack">
-          <h2>What you can spend</h2>
-          <div class="limit-row"><div class="limit-copy"><span>Today</span><span>EGP 90.00 of EGP 150.00</span></div><div class="progress"><span style="width:60%"></span></div><small class="muted">Resets at midnight</small></div>
-          <div class="limit-row"><div class="limit-copy"><span>This month</span><span>EGP 745.00 of EGP 1,000.00</span></div><div class="progress"><span style="width:74.5%"></span></div><small class="muted">Resets on 1 August</small></div>
-          <div class="summary-row"><span>Most you can spend at one time</span><strong>EGP 100.00</strong></div>
+      } @else if (error()) {
+        <div class="page-center">
+          <app-status-view title="Unable to load your wallet" [message]="error()" tone="danger" />
+        </div>
+      } @else if (wallet(); as w) {
+        <article class="hero-child">
+          <div>
+            <span class="overline">You can spend</span>
+            <h2 class="amount">{{ money(w.availableMinor) }}</h2>
+            <p>
+              Money in your wallet {{ money(w.balanceMinor) }} · Being checked
+              {{ money(w.heldMinor) }}
+            </p>
+          </div>
+          <img [src]="'assets/child-orbit-graphic.svg' | assetUrl" alt="" aria-hidden="true" />
+        </article>
+        <div class="restriction">
+          Your parent funds this wallet. Direct top-ups and transfers are not available.
+        </div>
+        <div class="detail-layout">
+          <section class="card panel stack">
+            <h2>What you can spend</h2>
+            <div class="limit-row">
+              <div class="limit-copy">
+                <span>Today</span>
+                <span [class.limit-danger]="todayDanger(w)">
+                  {{ limitLabel(w.today.spentMinor, w.today.maxMinor) }}
+                </span>
+              </div>
+              <div class="progress">
+                <span
+                  [style.width.%]="todayPercent(w)"
+                  [style.background]="todayDanger(w) ? 'var(--danger)' : ''"
+                ></span>
+              </div>
+              <small class="muted limit-remaining">
+                {{ money(w.today.remainingMinor) }} left · {{ dailyReset(w.today.resetsAt) }}
+              </small>
+            </div>
+            <div class="limit-row">
+              <div class="limit-copy">
+                <span>This month</span>
+                <span>{{ limitLabel(w.month.spentMinor, w.month.maxMinor) }}</span>
+              </div>
+              <div class="progress">
+                <span [style.width.%]="monthPercent(w)"></span>
+              </div>
+              <small class="muted limit-remaining">
+                {{ money(w.month.remainingMinor) }} left · {{ monthlyReset(w.month.resetsOn) }}
+              </small>
+            </div>
+            <div class="summary-row">
+              <span>Most you can spend at one time</span>
+              <strong>{{ money(w.perTransactionMinor) }}</strong>
+            </div>
+          </section>
+          <section class="card panel stack">
+            <h2>Being checked</h2>
+            @if (w.pending.length) {
+              <div class="notice notice-held">
+                {{ money(w.heldMinor) }} is waiting for settlement.
+              </div>
+              <ul class="pending-list">
+                @for (item of w.pending; track item.id) {
+                  <li class="pending-row">
+                    <span class="pending-copy">
+                      <strong>{{ item.merchant }}</strong>
+                      <small>{{ item.time }}</small>
+                    </span>
+                    <strong class="amount">{{ money(item.amountMinor) }}</strong>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p class="muted">Nothing is being checked right now.</p>
+            }
+            <div class="summary-row">
+              <span>Received this month</span>
+              <strong>{{ money(summary()?.receivedThisMonthMinor ?? 0) }}</strong>
+            </div>
+          </section>
+        </div>
+        <section class="card panel">
+          <div class="activity-header">
+            <h2>Recent activity</h2>
+            <a routerLink="/my-activity">View all</a>
+          </div>
+          <app-transaction-list [transactions]="w.recentActivity" />
         </section>
-        <section class="card panel stack">
-          <h2>Being checked</h2>
-          <div class="notice notice-held">{{ money(store.wallet()?.heldMinor ?? 0) }} is waiting for settlement.</div>
-        </section>
-      </div>
-      <section class="card panel">
-        <div class="activity-header"><h2>Recent activity</h2><a routerLink="/my-activity">View all</a></div>
-        <app-transaction-list [transactions]="activity()" />
-      </section>
+      }
     </section>
   `,
   styleUrl: './family-pages.scss',
 })
-export class ChildWalletPage {
-  protected readonly store = inject(DemoStore);
+export class ChildWalletPage implements OnInit {
+  private readonly childSelf = inject(ChildSelfFacade);
+  private readonly auth = inject(AuthFacade);
+  private readonly walletFacade = inject(WalletFacade);
+
+  protected readonly loading = signal(true);
+  protected readonly error = signal('');
+  protected readonly wallet = signal<ChildWalletSnapshot | null>(null);
+  protected readonly summary = signal<ChildActivitySummary | null>(null);
   protected readonly money = formatMoney;
-  protected readonly activity = computed(() => this.store.recentActivity().map(childActivityItem));
+  protected readonly limitLabel = limitProgressLabel;
+  protected readonly dailyReset = dailyResetLabel;
+  protected readonly monthlyReset = monthlyResetLabel;
+
+  /** Seeded from the session so the header is never blank on first paint. */
+  private readonly firstName = signal(this.auth.currentUser()?.firstName ?? '');
+  private readonly parentFirstName = signal<string | null>(null);
+
+  protected readonly greeting = computed(() => {
+    const name = this.firstName();
+    return name ? `Hi ${name}` : 'My wallet';
+  });
+
+  /**
+   * Names the parent once /users/me has answered. Until then — and if it
+   * fails — the generic wording is still true, so there is nothing to retry.
+   */
+  protected readonly fundingNote = computed(() => {
+    const parent = this.parentFirstName();
+    const who = parent ? parent : 'Your parent';
+    return `${who} adds money to your wallet. You cannot add money or send it to other people.`;
+  });
+
+  ngOnInit(): void {
+    this.childSelf.loadWalletPage().subscribe({
+      next: ({ wallet, summary }) => {
+        this.wallet.set(wallet);
+        this.summary.set(summary);
+        this.loading.set(false);
+      },
+      error: (err: unknown) => {
+        this.loading.set(false);
+        this.error.set(
+          err instanceof FamilyApiError
+            ? bannerMessageFromFamilyError(err)
+            : FAMILY_MESSAGES.loadMyWalletError,
+        );
+      },
+    });
+
+    // Only supplies the two names in the header, so a failure here must not
+    // take down a wallet that loaded fine.
+    this.walletFacade.getCurrentUser().subscribe({
+      next: (account) => {
+        this.firstName.set(account.firstName);
+        this.parentFirstName.set(account.parentFirstName);
+      },
+      error: () => undefined,
+    });
+  }
+
+  protected todayPercent(wallet: ChildWalletSnapshot): number {
+    return limitProgressPercent(wallet.today.spentMinor, wallet.today.maxMinor);
+  }
+
+  protected monthPercent(wallet: ChildWalletSnapshot): number {
+    return limitProgressPercent(wallet.month.spentMinor, wallet.month.maxMinor);
+  }
+
+  protected todayDanger(wallet: ChildWalletSnapshot): boolean {
+    return limitProgressDanger(wallet.today.spentMinor, wallet.today.maxMinor);
+  }
 }
+
+/** Rows fetched per page on the activity screen. */
+const CHILD_ACTIVITY_PAGE_SIZE = 20;
 
 @Component({
   selector: 'app-child-activity-page',
-  imports: [PageHeader, TransactionList],
+  imports: [PageHeader, TransactionList, LoadingSpinner, StatusView],
   template: `
     <section class="page stack" data-node-id="31:194">
-      <app-page-header title="My activity" subtitle="Every movement in your child wallet." />
-      <section class="card panel">
-        <app-transaction-list [transactions]="activity()" [showDate]="true" />
-      </section>
+      <app-page-header title="My activity" subtitle="Every movement in your wallet." />
+      @if (loading()) {
+        <div class="page-center">
+          <app-loading-spinner label="Loading your activity…" />
+        </div>
+      } @else if (error()) {
+        <div class="page-center">
+          <app-status-view title="Unable to load your activity" [message]="error()" tone="danger" />
+        </div>
+      } @else {
+        @if (summary(); as counters) {
+          <div class="family-summary">
+            <div class="summary-stat">
+              <span>Spent today</span>
+              <strong>{{ money(counters.spentTodayMinor) }}</strong>
+            </div>
+            <div class="summary-stat">
+              <span>Spent this month</span>
+              <strong>{{ money(counters.spentThisMonthMinor) }}</strong>
+            </div>
+            <div class="summary-stat summary-stat-allocated">
+              <span>Received this month</span>
+              <strong>{{ money(counters.receivedThisMonthMinor) }}</strong>
+            </div>
+            <div class="summary-stat summary-stat-blocked">
+              <span>Blocked by limits</span>
+              <strong>{{ blockedLabel(counters.blockedCount) }}</strong>
+            </div>
+          </div>
+        }
+        <section class="card panel">
+          <app-transaction-list [transactions]="activity()" [showDate]="true" />
+          @if (!last()) {
+            <button
+              class="btn btn-secondary"
+              type="button"
+              [disabled]="loadingMore()"
+              (click)="loadMore()"
+            >
+              {{ loadingMore() ? 'Loading…' : 'Load more' }}
+            </button>
+          }
+        </section>
+      }
     </section>
   `,
   styleUrl: './family-pages.scss',
 })
-export class ChildActivityPage {
-  private readonly store = inject(DemoStore);
-  protected readonly activity = computed(() => this.store.recentActivity().map(childActivityItem));
+export class ChildActivityPage implements OnInit {
+  private readonly childSelf = inject(ChildSelfFacade);
+
+  protected readonly loading = signal(true);
+  protected readonly loadingMore = signal(false);
+  protected readonly error = signal('');
+  protected readonly activity = signal<TransactionListItem[]>([]);
+  protected readonly summary = signal<ChildActivitySummary | null>(null);
+  protected readonly last = signal(true);
+  protected readonly money = formatMoney;
+  protected readonly blockedLabel = blockedAttemptsLabel;
+
+  private page = 0;
+
+  ngOnInit(): void {
+    this.childSelf.loadActivity(0, CHILD_ACTIVITY_PAGE_SIZE).subscribe({
+      next: (result) => {
+        this.activity.set([...result.items]);
+        this.last.set(result.last);
+        this.page = result.page;
+        this.loading.set(false);
+      },
+      error: (err: unknown) => {
+        this.loading.set(false);
+        this.error.set(
+          err instanceof FamilyApiError
+            ? bannerMessageFromFamilyError(err)
+            : FAMILY_MESSAGES.loadMyActivityError,
+        );
+      },
+    });
+
+    // Counters are a header above the feed, not the feed itself — losing them
+    // should not blank the page.
+    this.childSelf.loadActivitySummary().subscribe({
+      next: (counters) => this.summary.set(counters),
+      error: () => undefined,
+    });
+  }
+
+  protected loadMore(): void {
+    if (this.loadingMore() || this.last()) return;
+
+    this.loadingMore.set(true);
+    this.childSelf.loadActivity(this.page + 1, CHILD_ACTIVITY_PAGE_SIZE).subscribe({
+      next: (result) => {
+        this.activity.update((rows) => [...rows, ...result.items]);
+        this.last.set(result.last);
+        this.page = result.page;
+        this.loadingMore.set(false);
+      },
+      // The rows already on screen stay; the button comes back for a retry.
+      error: () => this.loadingMore.set(false),
+    });
+  }
 }
