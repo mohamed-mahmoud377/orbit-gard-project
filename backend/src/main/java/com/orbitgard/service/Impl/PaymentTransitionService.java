@@ -41,10 +41,9 @@ public class PaymentTransitionService {
 
         UUID userId = payment.getUser().getId();
         Wallet wallet = walletService.requireByUserId(userId);
-
         walletTransactionService.recordTopUpCredit(
                 wallet.getId(),
-                payment.getAmountCents(),
+                payment.getCreditCents(),
                 payment.getId());
     }
 

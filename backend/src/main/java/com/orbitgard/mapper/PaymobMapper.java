@@ -13,11 +13,12 @@ public final class PaymobMapper {
     private PaymobMapper() {
     }
 
-    public static Payment toStartedPayment(UUID paymentId, User user, int amountCents) {
+    public static Payment toStartedPayment(UUID paymentId, User user, int chargeCents, int creditCents) {
         return Payment.builder()
                 .id(paymentId)
                 .user(user)
-                .amountCents(amountCents)
+                .amountCents(chargeCents)
+                .creditCents(creditCents)
                 .currency("EGP")
                 .status(PaymentStatus.STARTED)
                 .build();

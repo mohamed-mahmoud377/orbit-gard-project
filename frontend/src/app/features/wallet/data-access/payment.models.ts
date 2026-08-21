@@ -17,6 +17,17 @@ export interface TopUpInitiateRequest {
 export interface TopUpInitiateResponse {
   readonly paymentId: string;
   readonly redirectUrl: string;
+  /**
+   * The breakdown the server committed to, in minor units.
+   *
+   * The summary on the top-up screen is computed locally so it can update as
+   * the user types, but once the server has decided, its numbers win — those
+   * are what Paymob was actually asked for. Optional so a server predating
+   * the fee still parses.
+   */
+  readonly creditMinor?: number;
+  readonly feeMinor?: number;
+  readonly chargeMinor?: number;
 }
 
 export interface PaymentStatusResponse {

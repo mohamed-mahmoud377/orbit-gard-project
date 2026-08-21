@@ -10,6 +10,7 @@ import com.orbitgard.exceptions.ApiException;
 import com.orbitgard.exceptions.ErrorCode;
 import com.orbitgard.mapper.PaymobMapper;
 import com.orbitgard.paymob.PaymobClient;
+import com.orbitgard.paymob.TopUpFee;
 import com.orbitgard.dto.response.PaymobIntentionResponse;
 import com.orbitgard.paymob.PaymobProperties;
 import com.orbitgard.repository.PaymentRepository;
@@ -70,16 +71,18 @@ public class TopUpServiceImpl implements TopUpService {
             throw new ApiException(ErrorCode.CHILD_CANNOT_TOP_UP);
         }
 
-        int amountCents = toMinorUnits(request.amount());
+
+        int creditCents = toMinorUnits(request.amount());
+        int chargeCents = TopUpFee.chargeCents(creditCents);
         UUID paymentId = UUID.randomUUID();
 
         // 1) Create the row first, as STARTED — before Paymob even knows this
         //    payment exists. Gives you an audit trail even if the Paymob call
         //    never completes (network failure, timeout, etc).
-        Payment payment = PaymobMapper.toStartedPayment(paymentId, user, amountCents);
+        Payment payment = PaymobMapper.toStartedPayment(paymentId, user, chargeCents, creditCents);
         paymentRepository.save(payment);
 
-        var intentionRequest = PaymobMapper.toIntentionRequest(user, paymobProperties, amountCents, paymentId);
+        var intentionRequest = PaymobMapper.toIntentionRequest(user, paymobProperties, chargeCents, paymentId);
 
         PaymobIntentionResponse intentionResponse;
         try {
@@ -106,7 +109,16 @@ public class TopUpServiceImpl implements TopUpService {
         paymentRepository.save(payment);
 
         String redirectUrl = paymobClient.buildCheckoutRedirectUrl(intentionResponse.getClientSecret());
-        return new TopUpResponse(paymentId, redirectUrl);
+        return new TopUpResponse(
+                paymentId,
+                redirectUrl,
+                toMajor(creditCents),
+                toMajor(chargeCents - creditCents),
+                toMajor(chargeCents));
+    }
+
+    private static BigDecimal toMajor(int cents) {
+        return BigDecimal.valueOf(cents).movePointLeft(2).setScale(2, RoundingMode.UNNECESSARY);
     }
 
     private int toMinorUnits(BigDecimal amount) {

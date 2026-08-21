@@ -19,12 +19,20 @@ export class PaymentFacade {
   private readonly gateway = inject(PAYMENT_GATEWAY);
   private readonly session = inject(TopUpSessionStore);
 
+  /**
+   * @param amountMinor the charge to remember for the callback screen — the
+   *        credit plus the fee, since that screen talks about the payment.
+   *        Used only as a fallback if the server sent no breakdown.
+   */
   initiateTopUp(request: TopUpInitiateRequest, amountMinor: number): Observable<TopUpInitiateResponse> {
     return this.gateway.initiateTopUp(request).pipe(
       map((response) => {
         this.session.save({
           paymentId: response.paymentId,
-          amountMinor,
+          // The server's figure wins: it is what Paymob was actually asked
+          // for, so the callback screen quotes the same number the card
+          // statement will show rather than one the client worked out.
+          amountMinor: response.chargeMinor ?? amountMinor,
           initiatedAt: Date.now(),
         });
         return response;

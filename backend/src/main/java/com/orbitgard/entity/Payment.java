@@ -37,8 +37,23 @@ public class Payment {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    /**
+     * What the card is charged — the wallet credit plus the service fee.
+     *
+     * This is the number sent to Paymob, and the one
+     * PaymentConfirmationServiceImpl compares against the amount the webhook
+     * reports back. Changing what it means would silently disarm that check.
+     */
     @Column(name = "amount_cents", nullable = false)
     private int amountCents;
+
+    /**
+     * What lands in the wallet — the amount the user asked for, before the
+     * fee was added on top. This is what gets credited on success, and the
+     * reason the two are separate columns.
+     */
+    @Column(name = "credit_cents", nullable = false)
+    private int creditCents;
 
     @Column(name = "currency", nullable = false, length = 3)
     private String currency;

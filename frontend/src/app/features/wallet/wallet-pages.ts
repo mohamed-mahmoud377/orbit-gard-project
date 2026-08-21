@@ -16,8 +16,11 @@ import {
   sanitizeTopUpAmountInput,
   sanitizeTransferAmountInput,
   TRANSFER_AMOUNT_MAX_WHOLE_DIGITS,
+  TOP_UP_FEE_PERCENT,
   TOP_UP_MAX_MINOR,
   TOP_UP_MIN_MINOR,
+  topUpChargeMinor,
+  topUpFeeMinor,
 } from '../../shared/utils/money';
 import { AuthFacade } from '../auth/data-access/auth.facade';
 import { normalizeUsername } from '../auth/data-access/auth.messages';
@@ -257,11 +260,22 @@ type TopUpStage = 'form' | 'redirecting';
                   </button>
                 }
               </div>
+              <!--
+                Ordered so it reads downward as the money moves: the amount
+                chosen, the fee added on top, then the single total the card
+                is actually charged. "You pay" is last because that is the
+                number the user is consenting to.
+              -->
               <div class="summary-list">
-                <div class="summary-row"><span>You pay</span><strong>{{ money(amountMinor()) }}</strong></div>
-                <div class="summary-row"><span>Orbit fee</span><strong>EGP 0.00</strong></div>
                 <div class="summary-row">
-                  <strong>Lands in your wallet</strong><strong>{{ money(amountMinor()) }}</strong>
+                  <span>Lands in your wallet</span><strong>{{ money(amountMinor()) }}</strong>
+                </div>
+                <div class="summary-row">
+                  <span>Orbit fee ({{ TOP_UP_FEE_PERCENT }}%)</span>
+                  <strong>{{ money(feeMinor()) }}</strong>
+                </div>
+                <div class="summary-row">
+                  <strong>You pay</strong><strong>{{ money(chargeMinor()) }}</strong>
                 </div>
               </div>
               @if (error()) {
@@ -337,7 +351,12 @@ export class TopUpPage {
   protected readonly quickAmounts = [100, 250, 500, 1000, 2000] as const;
   protected readonly money = formatMoney;
   protected readonly amount = signal('500');
+  /** What the user asked for — the amount that lands in the wallet. */
   protected readonly amountMinor = computed(() => parseMoney(this.amount()));
+  /** The 1% added on top, and the total the card is charged for it. */
+  protected readonly feeMinor = computed(() => topUpFeeMinor(this.amountMinor()));
+  protected readonly chargeMinor = computed(() => topUpChargeMinor(this.amountMinor()));
+  protected readonly TOP_UP_FEE_PERCENT = TOP_UP_FEE_PERCENT;
   protected readonly amountValidationError = computed(() => {
     const value = this.amount().trim();
     if (!value) return PAYMENT_MESSAGES.amountInvalid;
@@ -393,8 +412,11 @@ export class TopUpPage {
     this.error.set('');
     this.submitting.set(true);
 
+    // `amount` is what the user wants in their wallet — the server adds the
+    // fee. The second argument is the charge, which is what the callback
+    // screen quotes back as "your EGP … payment".
     const amountMajor = Math.round(amountMinor) / 100;
-    this.payments.initiateTopUp({ amount: amountMajor }, amountMinor).subscribe({
+    this.payments.initiateTopUp({ amount: amountMajor }, this.chargeMinor()).subscribe({
       next: (response) => {
         this.submitting.set(false);
         this.stage.set('redirecting');

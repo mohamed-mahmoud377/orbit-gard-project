@@ -6,6 +6,34 @@ export const TOP_UP_MAX_INPUT_LENGTH = 5;
 /** Max digits in the whole-number part of transfer amounts (e.g. 999999.99). */
 export const TRANSFER_AMOUNT_MAX_WHOLE_DIGITS = 6;
 
+/**
+ * The card top-up service fee, as a percentage of the wallet credit.
+ *
+ * Mirrors TopUpFee.RATE on the server, which is the authority — the server
+ * decides what Paymob is asked for, and this exists only so the summary can
+ * show the total before the user commits. Keep the two in step, or the round
+ * trip reveals a different number than the screen promised.
+ *
+ * The InstaPay route has no fee: that money arrives by bank transfer, with no
+ * gateway in the middle to pay for.
+ */
+export const TOP_UP_FEE_PERCENT = 1;
+
+/**
+ * The fee in minor units, matching the server's HALF_UP rounding at cent
+ * precision. Integer maths throughout, for the same reason the server uses
+ * BigDecimal — a float would put a half-piastre between the number shown here
+ * and the number actually charged.
+ */
+export function topUpFeeMinor(creditMinor: number): number {
+  return Math.round((creditMinor * TOP_UP_FEE_PERCENT) / 100);
+}
+
+/** What the card is charged: the wallet credit plus the fee. */
+export function topUpChargeMinor(creditMinor: number): number {
+  return creditMinor + topUpFeeMinor(creditMinor);
+}
+
 export function formatMoney(minorUnits: number, currency = 'EGP'): string {
   const value = minorUnits / 100;
   return `${currency} ${new Intl.NumberFormat('en-EG', {

@@ -16,6 +16,15 @@ import {
 interface BackendTopUpResponse {
   readonly paymentId: string;
   readonly redirectUrl: string;
+  /** EGP, as BigDecimal-serialised JSON numbers. Absent on a pre-fee server. */
+  readonly creditAmount?: number;
+  readonly feeAmount?: number;
+  readonly chargeAmount?: number;
+}
+
+/** EGP → minor units, rounded the same way parseMoney does. */
+function toMinor(major: number | undefined): number | undefined {
+  return major === undefined || major === null ? undefined : Math.round(major * 100);
 }
 
 interface BackendPaymentStatusResponse {
@@ -37,6 +46,9 @@ export class HttpPaymentGateway implements PaymentGateway {
         map((body) => ({
           paymentId: body.paymentId,
           redirectUrl: body.redirectUrl,
+          creditMinor: toMinor(body.creditAmount),
+          feeMinor: toMinor(body.feeAmount),
+          chargeMinor: toMinor(body.chargeAmount),
         })),
         catchError((error) => this.mapError(error)),
       );
