@@ -90,9 +90,7 @@ function currentDate(): string {
         <app-page-header
           [title]="greetingPrefix + ', ' + (user()?.firstName ?? 'there')"
           [subtitle]="currentDate"
-        >
-          <img [src]="'assets/notifications.svg' | assetUrl" width="40" height="40" alt="Notifications" />
-        </app-page-header>
+        />
 
         <div class="balance-card">
           <div>
