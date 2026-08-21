@@ -76,11 +76,8 @@ public class TopUpServiceImpl implements TopUpService {
         int chargeCents = TopUpFee.chargeCents(creditCents);
         UUID paymentId = UUID.randomUUID();
 
-        // 1) Create the row first, as STARTED — before Paymob even knows this
-        //    payment exists. Gives you an audit trail even if the Paymob call
-        //    never completes (network failure, timeout, etc).
         Payment payment = PaymobMapper.toStartedPayment(paymentId, user, chargeCents, creditCents);
-        paymentRepository.save(payment);
+        paymentRepository.saveAndFlush(payment);
 
         var intentionRequest = PaymobMapper.toIntentionRequest(user, paymobProperties, chargeCents, paymentId);
 
