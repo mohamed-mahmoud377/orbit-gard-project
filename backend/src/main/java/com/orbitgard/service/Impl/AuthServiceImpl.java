@@ -157,7 +157,11 @@ public class AuthServiceImpl implements AuthService {
             errors.add(new FieldErrorResponse("phoneNumber", ErrorCode.PHONE_INVALID.name()));
         } else if (phoneStatus == PhoneNumberNormalizer.Status.NOT_EGYPTIAN) {
             errors.add(new FieldErrorResponse("phoneNumber", ErrorCode.PHONE_NOT_EGYPTIAN.name()));
-        }
+        } else if (phoneStatus == PhoneNumberNormalizer.Status.INVALID_CHAR) {
+            errors.add(new FieldErrorResponse("phoneNumber", ErrorCode.PHONE_INVALID_CHAR.name()));
+        } else if (phoneStatus == PhoneNumberNormalizer.Status.TOO_LONG) {
+            errors.add(new FieldErrorResponse("phoneNumber", ErrorCode.PHONE_TOO_LONG.name()));
+    }
 
         return new NormalizedInput(normalizedUsername, normalizedEmail, phoneResult.canonicalNumber());
     }
