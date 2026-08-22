@@ -56,8 +56,6 @@ public class GeminiClient {
         String body = serialize(request);
 
         String raw;
-        log.info("body is: {}", body);
-        log.info("api key is: {}", props.getApiKey());
         try {
             raw = restClient.post()
                     .uri(uriBuilder -> uriBuilder
